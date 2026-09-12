@@ -40,8 +40,23 @@ export interface Message {
   severity: "info" | "error";
 }
 
+/** The per-logical-screen part of the state (ISPF split-screen mode). */
+export interface ScreenSession {
+  screen: ScreenFrame;
+  stack: ScreenFrame[];
+  editor?: EditorSession;
+  activeDataset?: string;
+  activeMember?: string;
+  message?: Message;
+  fieldValues: Record<string, string>;
+  focusField?: string;
+}
+
 export interface SimulatorState {
   userid: string;
+  /** all logical screens (snapshots); the entry at activeScreen may be stale — the live fields below win */
+  screens: ScreenSession[];
+  activeScreen: number;
   loggedIn: boolean;
   today: string;
   settings: Settings;
@@ -106,6 +121,9 @@ export type SimEvent =
   | { type: "TSO_COMMAND_ENTERED"; command: string }
   | { type: "SETTING_CHANGED"; setting: string; value: string }
   | { type: "ENVIRONMENT_RESET" }
+  | { type: "SCREEN_SPLIT"; screens: number; active: number }
+  | { type: "SCREEN_SWAPPED"; from: number; to: number; screens: number }
+  | { type: "SCREEN_CLOSED"; screens: number; active: number }
   | { type: "EXPLAIN_REQUESTED"; term: string }
   | { type: "MESSAGE_SHOWN"; text: string; severity: "info" | "error" };
 

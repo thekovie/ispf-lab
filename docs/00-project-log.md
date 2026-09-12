@@ -229,3 +229,27 @@ are fetched at build time rather than committed, to keep the repo free of font b
 **Verified by** · `pnpm check` and `pnpm build` clean; `curl` of `/robots.txt`, `/sitemap.xml`,
 `/manifest.webmanifest`, `/opengraph-image`, `/favicon.ico`, `/icon.png` all 200 with the right content types;
 head tags inspected on `/`; OG card and 512 px icon inspected visually.
+
+---
+
+## Phase 11 — Split-screen mode (SPLIT / SWAP)  (2026-09-12, branch `feat/split-screen`)
+
+**Goal** · Reproduce ISPF logical screens: PF2 SPLIT, PF9 SWAP, START, SWAP n/PREV/LIST, SWAPBAR, and ending a
+screen with PF3 — the "two tabs" workflow every ISPF user relies on.
+
+**Built**
+- `src/engine/splitScreen.ts` — `ScreenSession` snapshots (panel stack, editor, messages, drafts) with
+  `splitScreen`, `swapScreen`, `closeScreen`, `parseSystemCommand`, `allSessions`, `describeSession`; `MAX_SCREENS = 8`.
+- `SimulatorState` gains `screens` + `activeScreen`; the live per-screen fields stay flat so no screen handler changed.
+- `reducer.ts` intercepts PF2/PF9 and the system commands SPLIT / SWAP / START before the panel sees them (as ISPF
+  does); `render()` appends F2=Split / F9=Swap to every panel's legend once logged on.
+- Primary Option Menu: `Screen. . : n of m`; PF3 / X ends the screen when others are open, logs off otherwise.
+- Terminal: SWAPBAR row (`*2 PRIMARY  1 EDIT USER01.JCL(HELLO)`), `S2/2` in the status line.
+- Lesson 15 "Working in two screens" (module 6), glossary entries SPLIT and SWAP, events `SCREEN_SPLIT`,
+  `SCREEN_SWAPPED`, `SCREEN_CLOSED`.
+
+**Decisions** · Typed drafts travel with the screen they were typed on (SWAP keeps them), matching ISPF. Unsaved
+editor changes survive swapping. SWAP LIST is rendered as a long message rather than a pop-up panel.
+
+**Verified by** · `tests/engine/splitScreen.test.ts` (12) + lesson 15 walk in `tests/tutorial/lessons.test.ts`;
+140 tests green; browser check of PF2 → SWAPBAR → PF9.

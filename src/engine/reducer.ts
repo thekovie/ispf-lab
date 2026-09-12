@@ -6,17 +6,32 @@
 import { buildSeed } from "@/catalog/seed";
 import { push } from "./navigation";
 import { handlerFor } from "./registry";
+import { parseSystemCommand, splitScreen, swapScreen } from "./splitScreen";
 import type { RenderedScreen, SimAction, SimEvent, SimulatorState, StepResult } from "./types";
 
 export function reduce(state: SimulatorState, action: SimAction): StepResult {
   switch (action.type) {
     case "ENTER": {
+      if (state.loggedIn) {
+        // ISPF system commands (SPLIT, SWAP, START) are processed before the panel sees them.
+        const raw = action.fields.option ?? action.fields.command;
+        const sys = parseSystemCommand(raw);
+        if (sys) {
+          const drafts = { ...action.fields, option: "", command: "" };
+          const r = sys.kind === "swap" ? swapScreen(state, sys.target, drafts) : splitScreen(state, drafts);
+          return { state: r.state, events: [{ type: "COMMAND_ENTERED", screen: state.screen.id, command: (raw ?? "").trim().toUpperCase() }, ...r.events] };
+        }
+      }
       const handler = handlerFor(state.screen);
       return handler.onEnter(state, state.screen, action.fields);
     }
     case "PF": {
       const handler = handlerFor(state.screen);
       const pressed: SimEvent = { type: "PF_KEY_PRESSED", key: action.key, screen: state.screen.id };
+      if (state.loggedIn && (action.key === 2 || action.key === 9)) {
+        const r = action.key === 2 ? splitScreen(state, action.fields) : swapScreen(state, "NEXT", action.fields);
+        return { state: r.state, events: [pressed, ...r.events] };
+      }
       if (action.key === 1) {
         if (state.screen.id === "HELP") return { state, events: [pressed] };
         const r = push(state, { id: "HELP", topic: state.screen.id });
@@ -41,6 +56,8 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
       const home: SimulatorState = {
         ...state,
         catalog: buildSeed(state.userid),
+        screens: [],
+        activeScreen: 0,
         screen: state.loggedIn ? { id: "PRIMARY_OPTION_MENU" } : { id: "LOGIN" },
         stack: [],
         editor: undefined,
@@ -64,7 +81,7 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
     }
     case "LOGOFF":
       return {
-        state: { ...state, loggedIn: false, screen: { id: "LOGIN" }, stack: [], editor: undefined, message: undefined, fieldValues: {} },
+        state: { ...state, loggedIn: false, screens: [], activeScreen: 0, screen: { id: "LOGIN" }, stack: [], editor: undefined, message: undefined, fieldValues: {} },
         events: [{ type: "LOGGED_OFF" }, { type: "SCREEN_OPENED", screen: "LOGIN", frame: { id: "LOGIN" } }],
       };
     case "CLEAR_MESSAGE":
@@ -75,5 +92,9 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
 }
 
 export function render(state: SimulatorState): RenderedScreen {
-  return handlerFor(state.screen).render(state, state.screen);
+  const screen = handlerFor(state.screen).render(state, state.screen);
+  if (!state.loggedIn) return screen;
+  // Split-screen keys are available on every panel once logged on (ISPF default key table).
+  const pfKeys = [...screen.pfKeys, { key: 2, label: "Split" }, { key: 9, label: "Swap" }].sort((a, b) => a.key - b.key);
+  return { ...screen, pfKeys };
 }

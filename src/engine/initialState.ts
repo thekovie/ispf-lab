@@ -14,6 +14,8 @@ export function todayString(d = new Date()): string {
 export function createInitialState(userid = DEFAULT_USERID, today = "2026/01/01"): SimulatorState {
   return {
     userid,
+    screens: [],
+    activeScreen: 0,
     loggedIn: false,
     today,
     settings: DEFAULT_SETTINGS,

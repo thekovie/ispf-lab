@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { Fields, Row } from "@/engine/types";
 import { useSimulator } from "@/state/SimulatorProvider";
+import { allSessions, describeSession } from "@/engine/splitScreen";
 import { FieldInput } from "./FieldInput";
 import { PfKeyStrip } from "./PfKeyStrip";
 import { StatusLine } from "./StatusLine";
@@ -163,7 +164,9 @@ export function Terminal({ highlightField, compact }: TerminalProps) {
   }, [screen.rows, cursor]);
 
   const footerLines = state.settings.pfKeysShown ? pfFooter(screen.pfKeys) : [""];
-  const dataRows = ROWS - footerLines.length;
+  const sessions = state.loggedIn ? allSessions(state) : [];
+  const swapBar = sessions.length > 1 ? sessions.map((sess, i) => `${i === state.activeScreen ? "*" : " "}${i + 1} ${describeSession(sess)}`).join("  ") : null;
+  const dataRows = ROWS - footerLines.length - (swapBar ? 1 : 0);
   const visibleRows = screen.rows.slice(0, dataRows);
   const padding = Math.max(0, dataRows - visibleRows.length);
 
@@ -197,6 +200,11 @@ export function Terminal({ highlightField, compact }: TerminalProps) {
             {" "}
           </div>
         ))}
+        {swapBar && (
+          <div className="trow trow--swapbar" title="Logical screens: PF9 swaps, PF2 splits">
+            {swapBar.slice(0, 80)}
+          </div>
+        )}
         {footerLines.map((line, i) => (
           <div className="trow trow--pf" key={`pf-${i}`}>
             {line}
@@ -208,6 +216,7 @@ export function Terminal({ highlightField, compact }: TerminalProps) {
         col={position.col}
         insertMode={insertMode}
         mode={state.editor ? state.editor.mode : screen.title}
+        screenLabel={sessions.length > 1 ? `S${state.activeScreen + 1}/${sessions.length}` : undefined}
         dirty={!!state.editor?.dirty}
         userid={state.userid}
         loggedIn={state.loggedIn}

@@ -16,7 +16,7 @@ import "@/components/terminal/terminal.css";
 import "./landing.css";
 
 const MODES = [
-  { n: "1", name: "Learn", desc: "14 guided lessons in 5 modules. Every step is checked by the simulator, not by you.", mode: "learn" },
+  { n: "1", name: "Learn", desc: "15 guided lessons in 6 modules. Every step is checked by the simulator, not by you.", mode: "learn" },
   { n: "2", name: "Practice", desc: "Same objectives, no hand-holding. Hints on request.", mode: "practice" },
   { n: "3", name: "Challenge", desc: "Only the final result counts. Mistakes and hints lower the score.", mode: "challenge" },
   { n: "4", name: "Sandbox", desc: "The whole simulated ISPF, no lesson running. Allocate, edit, copy, delete.", mode: "sandbox" },

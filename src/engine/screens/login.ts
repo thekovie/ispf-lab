@@ -57,6 +57,8 @@ export const loginScreen: ScreenHandler<{ id: "LOGIN" }> = {
       userid,
       loggedIn: true,
       catalog: state.catalog.hlq === userid ? state.catalog : buildSeed(userid),
+      screens: [],
+      activeScreen: 0,
       screen: { id: "PRIMARY_OPTION_MENU" },
       stack: [],
       message: undefined,

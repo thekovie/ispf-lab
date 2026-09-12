@@ -219,6 +219,21 @@ export const GLOSSARY: GlossaryEntry[] = [
     detail: "The message reports how many strings changed. Quote strings containing blanks.",
   },
   {
+    term: "SPLIT",
+    aliases: ["pf2", "f2", "split screen", "logical screen", "start"],
+    summary: "PF2 / SPLIT opens a second logical screen; START does the same from a command line. Up to 8 screens, each with its own panels and editor.",
+    detail: "The new screen starts on the Primary Option Menu. The SWAPBAR row lists every screen with * on the active one. PF3 or X on a screen’s Primary Option Menu ends that screen instead of logging off.",
+    analogy: "Like browser tabs - but every tab is a full ISPF session with its own history, and there are never more than eight.",
+    readMore: { resource: "ispf-users-guide", section: "Split-screen mode" },
+  },
+  {
+    term: "SWAP",
+    aliases: ["pf9", "f9", "swap list", "swapbar"],
+    summary: "PF9 / SWAP switches to the next logical screen; SWAP n, SWAP PREV and SWAP LIST target a specific one.",
+    detail: "Whatever you typed on the screen you leave is still there when you come back, and an editor session with unsaved changes stays open. The status line shows S1/2, S2/2.",
+    readMore: { resource: "ispf-users-guide", section: "Split-screen mode" },
+  },
+  {
     term: "JCL",
     aliases: ["job control language", "job"],
     summary: "Job Control Language: the statements (// JOB, // EXEC, // DD) that tell z/OS how to run a batch job.",

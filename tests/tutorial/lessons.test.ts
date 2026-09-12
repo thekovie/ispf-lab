@@ -39,9 +39,9 @@ class Coached {
 }
 
 describe("lesson catalogue", () => {
-  it("has 14 lessons with unique ids and at least one step each", () => {
-    expect(LESSONS.length).toBe(14);
-    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(14);
+  it("has 15 lessons with unique ids and at least one step each", () => {
+    expect(LESSONS.length).toBe(15);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(15);
     for (const l of LESSONS) expect(l.steps.length).toBeGreaterThan(0);
   });
   it("mentions no personal names", () => {
@@ -141,6 +141,30 @@ describe("lesson 14 - challenge mode", () => {
     expect(c.runner.status).toBe("running");
     const r = c.enter({ command: "SAVE" });
     expect(r.completed).toBe(true);
+    expect(c.runner.status).toBe("completed");
+  });
+});
+
+describe("lesson 15 - split screen", () => {
+  it("walks split, browse in screen 2, swap, end screen", () => {
+    const c = new Coached(lessonById("l15-split-screen")!);
+    c.cmd("2");
+    c.enter({ other: "USER01.JCL(HELLO)" });
+    expect(c.step).toBe(1);
+    c.pf(2);
+    expect(c.step).toBe(2);
+    c.cmd("1");
+    c.enter({ other: "USER01.JCL(COPYJOB)" });
+    expect(c.step).toBe(3);
+    c.pf(9);
+    expect(c.step).toBe(3);
+    c.pf(9);
+    expect(c.step).toBe(4);
+    c.pf(3);
+    c.pf(3);
+    c.pf(3);
+    expect(c.step).toBe(5);
+    c.pf(3);
     expect(c.runner.status).toBe("completed");
   });
 });

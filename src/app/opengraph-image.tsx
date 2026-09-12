@@ -81,7 +81,7 @@ export default async function OpenGraphImage() {
             <div style={{ display: "flex", fontSize: 40, fontWeight: 700, marginTop: 6 }}>by typing.</div>
           </div>
           <div style={{ display: "flex", color: "#b9c5d0", fontSize: 19, lineHeight: 1.45, marginTop: 20 }}>
-            A browser-based simulator of the z/OS ISPF workflow: option 3.4, member lists, the editor and its line commands — with 14 lessons that check what you actually do.
+            A browser-based simulator of the z/OS ISPF workflow: option 3.4, member lists, the editor and its line commands — with 15 lessons that check what you actually do.
           </div>
           <div style={{ display: "flex", color: "#ffb000", fontSize: 15, marginTop: 26, letterSpacing: 1 }}>FREE · RUNS IN YOUR BROWSER · NOT AFFILIATED WITH IBM</div>
         </div>
