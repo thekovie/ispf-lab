@@ -16,7 +16,7 @@ engine that verifies what you actually do.
 - **ISPF editor**: overtype records, prefix-area line commands (`I In D Dn DD R RR C CC M MM A B X XX S F L COLS TS
   LC UC …`), primary commands (`SAVE CANCEL FIND RFIND CHANGE RCHANGE EXCLUDE RESET LOCATE TOP BOTTOM UP DOWN LEFT
   RIGHT CAPS COLS CREATE REPLACE COPY …`), PF3 saves, PF12 cancels, terminal-style error messages — never web dialogs.
-- **Course**: 14 lessons in 5 modules, in Learn / Practice / Challenge modes, validated by simulator events and the
+- **Course**: 15 lessons in 6 modules, in Learn / Practice / Challenge modes, validated by simulator events and the
   resulting catalog (any legitimate ISPF route is accepted). Sandbox mode = the whole simulator, no lesson.
 - **Explain**: a glossary of z/OS terminology (`EXPLAIN PDS` on any command line).
 - **Local only**: catalog, settings and progress live in your browser (localStorage); reset, export and import from
@@ -42,8 +42,8 @@ press Enter.
 
 ## Keyboard
 
-Enter processes the panel · Tab / Shift+Tab move between fields · F1 help · F3 end/back · F5 repeat find ·
-F6 repeat change · F7 / F8 scroll · F10 / F11 scroll left / right · F12 cancel · Insert toggles overtype.
+Enter processes the panel · Tab / Shift+Tab move between fields · F1 help · F2 split screen · F3 end/back · F5 repeat find ·
+F6 repeat change · F7 / F8 scroll · F9 swap screen · F10 / F11 scroll left / right · F12 cancel · Insert toggles overtype.
 Browsers intercept some F-keys, so the clickable PF strip under the terminal performs the identical action.
 
 ## Documentation
@@ -55,7 +55,7 @@ Browsers intercept some F-keys, so the clickable PF strip under the terminal per
 | [docs/02-architecture.md](docs/02-architecture.md) | The eight layers, state/event model, data flow |
 | [docs/03-ispf-behaviour-reference.md](docs/03-ispf-behaviour-reference.md) | Every panel, command and message the simulator implements |
 | [docs/04-editor-commands.md](docs/04-editor-commands.md) | Editor line and primary command semantics |
-| [docs/05-course-design.md](docs/05-course-design.md) | The 14 lessons, validators, coaching UI, glossary |
+| [docs/05-course-design.md](docs/05-course-design.md) | The 15 lessons, validators, coaching UI, glossary |
 | [docs/06-design-direction.md](docs/06-design-direction.md) | Visual direction, tokens, typography, mobile gate |
 | [docs/07-testing.md](docs/07-testing.md) | Test strategy and what each file covers |
 | [docs/08-resources.md](docs/08-resources.md) | The reference guides the course follows |

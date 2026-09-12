@@ -1,10 +1,10 @@
 # Course design
 
-Fourteen lessons in five modules. The order follows IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
+Fifteen lessons in six modules. The order follows IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
 data sets → editor) and the Mainframestechhelp topic order (Settings → Utilities 3.1/3.2/3.3/3.4 → member lists →
 editor commands). Lesson text uses `{HLQ}`, resolved to the learner's userid at runtime.
 
-Lesson files: `src/tutorial/lessons/module1.ts` … `module5.ts`; registry in `index.ts`.
+Lesson files: `src/tutorial/lessons/module1.ts` … `module6.ts`; registry in `index.ts`.
 
 | # | Lesson | Objective | Validated by (key validators) | Modelled on |
 |---|---|---|---|---|
@@ -22,6 +22,7 @@ Lesson files: `src/tutorial/lessons/module1.ts` … `module5.ts`; registry in `i
 | 12 | Managing members | S SCRATCH → SAVE → R DRAFT → D | `editorOpen`, `memberExists`, `MEMBER_RENAMED`, `MEMBER_DELETED` | Mainframestechhelp Library |
 | 13 | Copying across data sets | 3.3 copy, member-list C, 3.2 D | `MEMBER_COPIED{to}`, `DATASET_DELETED` | Mainframestechhelp Move/Copy |
 | 14 | Final navigation challenge | add `//STEP2   EXEC PGM=IEFBR14` to COPYJOB and save | `memberSatisfies` on the catalog only | brief |
+| 15 | Working in two screens | edit HELLO in screen 1, view COPYJOB in screen 2, swap, end screen 2 | `SCREEN_SPLIT`, `editorOpen` + `activeScreen`, `SCREEN_SWAPPED`, `SCREEN_CLOSED` | ISPF User’s Guide “Split-screen mode” |
 
 ## Step anatomy
 

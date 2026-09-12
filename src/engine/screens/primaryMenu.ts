@@ -7,6 +7,7 @@ import { blank, menuRow, optionRow, padRow, t, titleRow } from "../rows";
 import { fail, openPath, push } from "../navigation";
 import type { ScreenHandler, SimEvent, StepResult, SimulatorState } from "../types";
 import { runTsoCommand } from "./tsoCommand";
+import { allSessions, closeScreen } from "../splitScreen";
 
 const MENU: [string, string, string][] = [
   ["0", "Settings", "Terminal and user parameters"],
@@ -50,7 +51,7 @@ export const primaryMenuScreen: ScreenHandler<{ id: "PRIMARY_OPTION_MENU" }> = {
         [t("      Enter X to Terminate using log/list defaults", "white")],
         blank,
         [t("  User ID . : ", "cyan"), t(state.userid.padEnd(8), "white"), t("     Time. . . : ", "cyan"), t("--:--", "white"), t("      Terminal. : 3278", "white")],
-        [t("  Release . : ", "cyan"), t("ISPF LAB", "white"), t("     Applid. . : ", "cyan"), t("ISR", "white"), t("        Screen. . : 1", "white")],
+        [t("  Release . : ", "cyan"), t("ISPF LAB", "white"), t("     Applid. . : ", "cyan"), t("ISR", "white"), t(`        Screen. . : ${state.activeScreen + 1}${allSessions(state).length > 1 ? ` of ${allSessions(state).length}` : ""}`, "white")],
         blank,
         padRow("  Educational ISPF training simulator. Not affiliated with or endorsed by IBM.", "dim"),
       ],
@@ -92,9 +93,12 @@ export const primaryMenuScreen: ScreenHandler<{ id: "PRIMARY_OPTION_MENU" }> = {
   },
 };
 
+/** X / PF3 on the Primary Option Menu: end this logical screen if others are open, otherwise log off. */
 export function logoff(state: SimulatorState): StepResult {
+  const closed = closeScreen(state);
+  if (closed) return closed;
   return {
-    state: { ...state, loggedIn: false, screen: { id: "LOGIN" }, stack: [], editor: undefined, message: undefined, fieldValues: {}, focusField: undefined },
+    state: { ...state, loggedIn: false, screens: [], activeScreen: 0, screen: { id: "LOGIN" }, stack: [], editor: undefined, message: undefined, fieldValues: {}, focusField: undefined },
     events: [{ type: "LOGGED_OFF" }, { type: "SCREEN_OPENED", screen: "LOGIN", frame: { id: "LOGIN" } }],
   };
 }

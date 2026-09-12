@@ -3,6 +3,12 @@
 All notable changes to ISPF Lab. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Split-screen mode: PF2 SPLIT, PF9 SWAP, START, SWAP n/PREV/LIST, SWAPBAR row, per-screen panel stacks and
+  editor sessions, PF3 ends a screen; lesson 15 "Working in two screens"; glossary entries SPLIT and SWAP.
+
 ## [0.1.0] — 2026-09-12 — MVP
 
 ### Added

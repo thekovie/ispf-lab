@@ -61,6 +61,13 @@
   opacity: 0.85;
 }
 
+/* ISPF SWAPBAR: one entry per logical screen, * marks the active one */
+.trow--swapbar {
+  color: var(--crt-amber);
+  background: rgba(255, 176, 0, 0.06);
+  border-top: 1px dashed rgba(255, 176, 0, 0.35);
+}
+
 .tseg {
   display: inline-block;
   flex-shrink: 0;
@@ -139,6 +146,7 @@
 }
 .status-line__item--sys { color: var(--crt-white); font-weight: 700; }
 .status-line__item--warn { color: var(--crt-amber); }
+.status-line__item--screen { color: var(--crt-amber); font-weight: 700; }
 .status-line__spacer { flex: 1; }
 
 .pf-strip {

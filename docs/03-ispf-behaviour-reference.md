@@ -85,3 +85,16 @@ MEMBER_DELETED MEMBER_COPIED MEMBER_MOVED MEMBER_SAVED EDIT_CANCELLED EDITOR_LIN
 EDITOR_LINE_REPEATED EDITOR_LINES_COPIED EDITOR_LINES_MOVED EDITOR_LINES_EXCLUDED EDITOR_TEXT_CHANGED EDITOR_FIND
 EDITOR_CHANGE EDITOR_SCROLLED TSO_COMMAND_ENTERED SETTING_CHANGED ENVIRONMENT_RESET EXPLAIN_REQUESTED MESSAGE_SHOWN`
 — see `src/engine/types.ts` for payloads.
+
+## Split screen (logical screens)
+
+- **PF2 / `SPLIT`** opens a new logical screen on the Primary Option Menu and makes it active; **`START`** does the
+  same from any command line. Maximum 8 (`MAXIMUM SCREENS ACTIVE`).
+- **PF9 / `SWAP`** activates the next screen; `SWAP PREV`, `SWAP n`, `SWAP LIST` (lists screens in the long message).
+  With one screen: `SWAP NOT ACTIVE`; out of range: `SCREEN NOT ACTIVE`.
+- Each screen keeps its own panel stack, editor session (including unsaved changes), messages and typed drafts.
+- **PF3 / X on a screen's Primary Option Menu** ends that screen (`SCREEN ENDED`) when others are open; with one
+  screen it logs off. Reset environment and logoff collapse to one screen.
+- The SWAPBAR row above the PF legend lists `n description` per screen with `*` on the active one; the Primary Option
+  Menu shows `Screen. . : n of m`; the status line shows `Sn/m`.
+- Events: `SCREEN_SPLIT{screens,active}`, `SCREEN_SWAPPED{from,to,screens}`, `SCREEN_CLOSED{screens,active}`.

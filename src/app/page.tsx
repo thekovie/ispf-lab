@@ -32,7 +32,7 @@ function jsonLd() {
       "@context": "https://schema.org",
       "@type": "Course",
       name: "ISPF Lab course: navigating and editing in IBM z/OS ISPF",
-      description: "Fourteen hands-on lessons in a simulated ISPF: the Primary Option Menu, option 3.4, data sets and members, the ISPF editor and its line commands, allocating and copying data sets.",
+      description: "Fifteen hands-on lessons in a simulated ISPF: the Primary Option Menu, option 3.4, data sets and members, the ISPF editor and its line commands, allocating and copying data sets.",
       provider: { "@type": "Organization", name: SITE_NAME, url },
       isAccessibleForFree: true,
       educationalLevel: "Beginner",
