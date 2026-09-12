@@ -23,7 +23,7 @@ const MODES = [
 ];
 
 const NAMES = ["Option34", "PanelDrill", "GreenScreen Dojo", "PF3 Academy", "DSLIST Dojo", "TSO Trainer", "Sim3270"];
-const TEASER = ["PDS", "member", "HLQ", "3.4", "PF3", "line command"];
+const TEASER = ["PDS", "member", "HLQ", "3.4", "PF3", "line command", "SPLIT"];
 
 const KEYS: [string, string][] = [
   ["Enter", "process the panel"],
@@ -32,6 +32,7 @@ const KEYS: [string, string][] = [
   ["F3", "end / back"],
   ["F5", "repeat find"],
   ["F7 / F8", "scroll up / down"],
+  ["F9", "swap screen"],
   ["F10 / F11", "scroll left / right"],
   ["F12", "cancel"],
 ];
