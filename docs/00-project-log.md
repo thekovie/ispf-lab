@@ -1,0 +1,231 @@
+# Project log — ISPF Lab
+
+The collaboration journal. One entry per build phase, appended in order. Each entry records the goal,
+what was built, decisions (linked to ADRs), deviations from the brief, how it was verified, and what is next.
+Newest entry at the bottom.
+
+Conventions: dates are `YYYY-MM-DD`; paths are relative to the repository root; "brief" means
+`docs/spec/original-brief.md` (the user's verbatim specification).
+
+---
+
+## Phase 0 — Planning  (2026-09-11)
+
+**Goal** · Turn the brief into an executable plan and settle the decisions that are the user's to make.
+
+**Decisions**
+- Project/folder name `ispf-lab`; in-app product name "ISPF Lab". Alternatives recorded for a later rebrand:
+  Option34, PanelDrill, GreenScreen Dojo, PF3 Academy, DSLIST Dojo, TSO Trainer, Sim3270.
+- Package manager pnpm; stack Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + Vitest (ADR 0001, 0006).
+- No personal names in the product: the logon userid becomes the HLQ and the seed catalog is templated on it (ADR 0004).
+- Scope widened from the brief at the user's request: users can allocate/delete/rename data sets (3.2), copy/move
+  members across data sets (3.3), use 3.1 and option 6; everything stays in browser storage.
+- Course modelled on published guides (docs/08-resources.md); 14 lessons in 5 modules (docs/05-course-design.md).
+- Landing page in a terminal aesthetic; simulator gated to desktop-class viewports (ADR 0007, 0008).
+- Documentation is written per phase so other people can collaborate (this file, CONTRIBUTING.md, ADRs).
+
+**Verified by** · Plan reviewed and approved by the user in plan mode.
+
+**Next** · Phase 1 scaffold.
+
+---
+
+## Phase 1 — Scaffold + docs skeleton  (2026-09-11)
+
+**Goal** · A running Next.js app with the test toolchain and the documentation frame.
+
+**Built**
+- `pnpm create next-app` (TypeScript, Tailwind v4, ESLint 9, App Router, `src/` dir); Vitest + jsdom + Testing Library
+  (`vitest.config.mts`, `tests/setup.ts`); scripts `test`, `test:watch`, `test:coverage`, `typecheck`, `check`.
+- `git init` (done by create-next-app). README, CONTRIBUTING, CLAUDE.md, CHANGELOG, `docs/`, ADRs, issue templates
+  (written at the end of the build so they describe what exists; see Phase 9).
+
+**Decisions** · ADR 0001 (Next.js App Router), ADR 0006 (Vitest).
+
+**Deviations from brief** · None.
+
+**Verified by** · `pnpm dev` serves `/`; `pnpm vitest run` executes.
+
+---
+
+## Phase 2 — Virtual catalog + persistence  (2026-09-11)
+
+**Goal** · The data model every screen and lesson depends on, with local persistence.
+
+**Built**
+- `src/catalog/types.ts` — `Dataset`, `Member`, `Catalog`, `AllocateRequest`, `DsnRef` (brief's model plus
+  `blksize`, space, `dirBlocks`, `createdAt`, `owner` so 3.2 / Data Set Information have real data).
+- `src/catalog/seed.ts` — `buildSeed(hlq)`: `<HLQ>.JCL(HELLO, COPYJOB, SORTJOB)`, `.COBOL(HELLO, CUSTOMER)`,
+  `.REXX(TEST01, HELLO)`, `.DATA(CUSTOMER, EMPLOYEE)`, `.NOTES.TXT` (PS), `.LOADLIB` (empty PDS),
+  read-only `SYS1.PARMLIB` and `SYS1.PROCLIB`.
+- `src/catalog/catalog.ts` — immutable operations returning `{ catalog, error? }` with ISPF-style messages:
+  `searchLevel`, `allocate`, `deleteDataset`, `renameDataset`, `saveRecords`, `deleteMember`, `renameMember`,
+  `copyMember` (copy or move, member or whole PS), `readRecords`, name validators, `parseDsnRef`.
+- `src/persistence/` — `StorageAdapter` (`LocalStorageAdapter`, `MemoryAdapter`), keys namespaced by userid,
+  `catalogStore` (load/seed/save/reset/export/import), `progressStore`, `settingsStore`.
+
+**Decisions** · ADR 0003 (localStorage behind an adapter, not IndexedDB), ADR 0004 (userid-templated seed).
+
+**Deviations from brief** · Seed uses a neutral HLQ instead of a personal one (user request).
+
+**Verified by** · `tests/catalog/catalog.test.ts` (26 tests), `tests/persistence/stores.test.ts` (4).
+
+---
+
+## Phase 3 — Command parsers  (2026-09-11)
+
+**Goal** · Every string the learner can type is parsed by one pure function with a typed result.
+
+**Built** · `src/parsers/optionCommand.ts` (`3`, `3.4`, `=3.4`, `DSLIST`, `TSO …`, `EXPLAIN …`, `X`),
+`listLineCommand.ts` (DSLIST / member-list letters), `editorLineCommand.ts` (I In D Dn DD R RR C CC M MM A B X XX
+S F L COLS TS LC UC ( ) < >), `editorPrimaryCommand.ts` (tokenizer honouring quotes; SAVE CANCEL END FIND RFIND
+CHANGE RCHANGE EXCLUDE RESET LOCATE TOP BOTTOM UP DOWN LEFT RIGHT CAPS NUM HEX COLS CREATE REPLACE COPY PROFILE
+EXPLAIN, with the documented abbreviations), `tsoCommand.ts` (LISTCAT, LISTDS, DELETE, RENAME, TIME, HELP).
+
+**Verified by** · `tests/parsers/parsers.test.ts` (12).
+
+---
+
+## Phase 4 — Screen / navigation engine  (2026-09-11)
+
+**Goal** · A deterministic reducer that owns every panel; no navigation logic in React.
+
+**Built**
+- `src/engine/types.ts` — `SimulatorState`, `ScreenFrame` (typed per screen), `SimAction`, `SimEvent`
+  (the semantic events lessons subscribe to), `RenderedScreen` (rows of text/field segments).
+- `src/engine/navigation.ts` — push/pop/replace, `frameForPath` (which options exist), `openPath` (pushes the
+  intermediate menu so `3.4` and `3`→`4` produce identical state), `NOT_AVAILABLE` message.
+- `src/engine/screens/*` — one handler per panel: login, primaryMenu, settings, utilities, editEntry (options 1/2),
+  datasetPanels (3.1, 3.2, Data Set Information), allocateDataset, moveCopy (3.3), dslistSearch, dslistResults,
+  memberList, editor (EDIT/BROWSE/VIEW), dialogs (confirm delete, rename, copy/move pop-up, message), tsoCommand,
+  help. `registry.ts` maps `ScreenId` → handler; `reducer.ts` dispatches ENTER / PF / GOTO / RESET_ENVIRONMENT etc.
+- `src/engine/open.ts` — shared "open a DSN(MEMBER)" logic: PDS → member list, member/PS → editor, missing member in
+  EDIT → new member.
+
+**Decisions** · ADR 0002 (pure reducer + event list), ADR 0005 (Enter applies text edits → line commands → primary
+command, as ISPF does).
+
+**Verified by** · `tests/engine/navigation.test.ts` (28): both routes to DSLIST reach identical state, PF3 stack,
+option-not-available message, DSLIST/member-list line commands, allocate → visible in 3.4, 3.3 copy, 3.1 delete,
+TSO LISTCAT, settings persistence.
+
+---
+
+## Phase 5 — ISPF editor engine  (2026-09-11)
+
+**Goal** · A record-oriented editor with ISPF line-command semantics, independent of the DOM.
+
+**Built** · `src/editor/types.ts` (session with stable line ids, pending commands, dirty flag, scroll window),
+`session.ts` (open, text edits, dirty tracking, CANCEL revert, SAVE commit), `lineOps.ts` (primitives),
+`lineCommands.ts` (merge pending + typed → parse → pair blocks → validate copy/move → apply; messages
+`INVALID LINE COMMAND`, `DESTINATION REQUIRED`, `BLOCK COMMAND INCOMPLETE`, `DESTINATION NOT ALLOWED`,
+`CONFLICTING LINE COMMANDS`; blank inserted lines pruned on the next Enter), `primaryCommands.ts`
+(FIND/RFIND/CHANGE/RCHANGE/EXCLUDE/RESET/LOCATE/TOP/BOTTOM/scroll/CAPS/NUM/COLS; SAVE/CANCEL/END/CREATE/COPY are
+returned as effects for the screen layer). `engine/screens/editor.ts` renders the frame and strips typed-over line
+numbers (`I50001` → `I5`).
+
+**Verified by** · `tests/editor/lineCommands.test.ts` (19), `tests/editor/primaryCommands.test.ts` (13),
+`tests/engine/editorFlow.test.ts` (15): I/In, D/Dn, DD, R/RR, C+A, C+B, M+A, MM+B, CC+An, pending C then A,
+conflicts, X/XX, SAVE persists, CANCEL discards, PF3 saves, PF12 cancels, new member on SAVE, browse/view refusals,
+read-only save failure, FIND/CHANGE.
+
+---
+
+## Phase 6 — Terminal renderer, keyboard, shell  (2026-09-11)
+
+**Goal** · Render the engine's screens as a 3270-like terminal and drive it keyboard-first.
+
+**Built**
+- `src/state/store.ts` (framework-free store: dispatch, event fan-out, debounced persistence) and
+  `SimulatorProvider.tsx` (`useSyncExternalStore`).
+- `src/components/terminal/` — `Terminal.tsx` (24×80 rows, drafts held locally until Enter/PF, Tab/Shift+Tab field
+  order, F1–F12, Insert toggle, arrow keys between records, PF legend wrapping), `FieldInput.tsx` (overtype by
+  default, upper-casing except records), `PfKeyStrip.tsx` (clicks dispatch the identical PF action), `StatusLine.tsx`
+  (4B operator area with row/col, INSERT, MODIFIED), `terminal.css`.
+- `src/app/layout.tsx` (IBM Plex Mono/Sans), `globals.css` design tokens.
+
+**Deviations from brief** · The React-compiler lint rules (no ref reads in render, no setState in effects) shaped the
+store design; it is documented in ADR 0002.
+
+**Verified by** · Chrome walkthrough: logon → 3.4 → E → E → `I2` over a line number, overtype text, MODIFIED flag;
+fixed an 80-column overflow (content-box sizing) and a lost-keystroke bug in overtype (now mutates the input
+synchronously).
+
+---
+
+## Phase 7 — Tutorial engine, lessons, coach, progress  (2026-09-11)
+
+**Goal** · Lessons that validate simulator events and state — never the DOM — in Learn / Practice / Challenge modes.
+
+**Built**
+- `src/tutorial/types.ts` (Lesson, LessonStep, Validator, RunnerState), `validators.ts` (onScreen, eventIs,
+  editorOpen, memberListOpen, dslistShowing, memberSatisfies, memberExists, datasetExists, editorHasLine, savedMember…),
+  `engine.ts` (`feedEvents`: a batch may satisfy consecutive steps; mistakes = terminal error messages; detour note for
+  valid-but-off-path actions; challenge mode checks only the final validator; score = 100 − 10·mistakes − 15·hints),
+  `explain.ts` (32-entry glossary with flagged analogies and read-more links).
+- `src/tutorial/lessons/module1-5.ts` — the 14 lessons (docs/05-course-design.md).
+- `src/state/TutorialProvider.tsx`, `components/coach/LearningPanel.tsx`, `ExplainDrawer.tsx`, `shell/TopBar.tsx`,
+  `LabShell.tsx`, `ProgressView.tsx` (+ `/lab/progress`), `/resources` page, `src/content/resources.ts`.
+
+**Verified by** · `tests/tutorial/lessons.test.ts` (10): both navigation routes, detours, mistake/hint scoring,
+lesson 8 catalog validation, lesson 9 line commands, lesson 14 challenge mode, lesson 6 allocation. Chrome
+walkthrough of lesson 2 in Learn mode.
+
+---
+
+## Phase 8 — Landing page + desktop gate  (2026-09-12)
+
+**Goal** · An educational, terminal-styled introduction usable on any device; the simulator only on keyboard-capable
+viewports.
+
+**Built** · `src/components/landing/Landing.tsx` (panel-style sections: What is ISPF, panel anatomy, modules,
+glossary teaser, reference guides; Option ===> line and 1–4 keyboard navigation; `NAMES` easter egg),
+`HeroTerminal.tsx` (self-typing demo driven by the real engine), `landing.css`;
+`components/shell/DesktopGate.tsx` (`≥1024px` and `pointer: fine`; SSR-safe via `useSyncExternalStore`).
+
+**Decisions** · ADR 0007 (desktop gate), ADR 0008 (landing as terminal).
+
+**Verified by** · Screenshots at 1440 and 390 px: landing readable on both; `/lab` at 390 px shows the
+TERMINAL TOO SMALL notice and mounts nothing from the simulator.
+
+---
+
+## Phase 9 — Documentation + polish  (2026-09-12)
+
+**Goal** · Everything a collaborator needs to continue the work.
+
+**Built** · This log, `docs/01`–`08`, ADRs 0001–0008, `docs/spec/original-brief.md`, README, CONTRIBUTING,
+CLAUDE.md, CHANGELOG, GitHub issue templates.
+
+**Verified by** · `pnpm test` (127 tests, 8 files), `pnpm lint`, `pnpm typecheck`, `pnpm build` all clean;
+a grep for the author's name over src, tests and docs returns nothing (the two test files only assert its absence).
+
+**Next (not started)** · JCL submission / SDSF, TSO emulation beyond option 6, accounts and cloud sync, achievements —
+all explicitly out of MVP scope in the brief. Fidelity reports from mainframe-experienced contributors are the
+expected next input (see `.github/ISSUE_TEMPLATE/ispf-behaviour-mismatch.md`).
+
+---
+
+## Phase 10 — SEO, metadata and icons  (2026-09-12)
+
+**Goal** · Make the site discoverable and shareable; give it an identity mark.
+
+**Built**
+- `src/content/site.ts` — name, tagline, description, keywords, `siteUrl()` from `NEXT_PUBLIC_SITE_URL` (`.env.example`).
+- `src/app/layout.tsx` — `metadataBase`, title template, description, keywords, canonical, Open Graph, Twitter card,
+  robots directives, manifest link, viewport/theme colour. Per-page metadata for `/lab`, `/resources`;
+  `/lab/progress` is `noindex`.
+- `src/app/opengraph-image.tsx` — 1200×630 card generated at build with IBM Plex Mono (fetched from Google Fonts;
+  falls back to the default font if offline): a Primary Option Menu panel beside "Learn ISPF by typing."
+- `src/app/sitemap.ts`, `robots.ts` (disallows `/lab/progress`), `manifest.ts` (installable PWA metadata).
+- JSON-LD on `/`: `WebApplication`, `Course` (14 syllabus sections, citations to the reference guides), `FAQPage`.
+- `scripts/make-icons.mjs` (`pnpm icons`) — dependency-free PNG/ICO encoder that draws the mark: a dark CRT panel
+  with cyan rows and a green block cursor. Outputs `src/app/favicon.ico` (16/32/48), `icon.png` (512),
+  `apple-icon.png` (180), `public/icons/icon-192.png`, `icon-512.png`. Starter SVGs removed from `public/`.
+
+**Decisions** · No third-party image library (ADR-worthy only if the mark grows more complex). Fonts for the OG image
+are fetched at build time rather than committed, to keep the repo free of font binaries.
+
+**Verified by** · `pnpm check` and `pnpm build` clean; `curl` of `/robots.txt`, `/sitemap.xml`,
+`/manifest.webmanifest`, `/opengraph-image`, `/favicon.ico`, `/icon.png` all 200 with the right content types;
+head tags inspected on `/`; OG card and 512 px icon inspected visually.

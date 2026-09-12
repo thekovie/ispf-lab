@@ -1,26 +1,107 @@
 @import "tailwindcss";
 
+/* Design tokens — see docs/06-design-direction.md. Dark CRT palette; the app commits to a single look. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --crt-bg: #06090d;
+  --crt-bezel: #0d1319;
+  --crt-surface: #0b1016;
+  --crt-surface-2: #111922;
+  --crt-border: #1f2b36;
+  --crt-green: #33ff66;
+  --crt-cyan: #4fd1ff;
+  --crt-amber: #ffb000;
+  --crt-white: #e6edf3;
+  --crt-blue: #5b8def;
+  --crt-red: #ff5c5c;
+  --crt-dim: #5c6c7a;
+  --crt-field-bg: rgba(51, 255, 102, 0.05);
+  --crt-field-focus: rgba(51, 255, 102, 0.12);
+  --crt-field-underline: rgba(51, 255, 102, 0.35);
+  --crt-key-bg: #101821;
+  --crt-key-hover: #182432;
+  --crt-key-on: #ffb000;
+  --crt-key-enter: #33ff66;
+  --term-font-size: 15px;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-crt-bg: var(--crt-bg);
+  --color-crt-bezel: var(--crt-bezel);
+  --color-crt-surface: var(--crt-surface);
+  --color-crt-surface-2: var(--crt-surface-2);
+  --color-crt-border: var(--crt-border);
+  --color-crt-green: var(--crt-green);
+  --color-crt-cyan: var(--crt-cyan);
+  --color-crt-amber: var(--crt-amber);
+  --color-crt-white: var(--crt-white);
+  --color-crt-blue: var(--crt-blue);
+  --color-crt-red: var(--crt-red);
+  --color-crt-dim: var(--crt-dim);
+  --font-mono: var(--font-plex-mono), ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--crt-bg);
+  color: var(--crt-white);
+  font-family: var(--font-sans);
+  min-height: 100%;
+}
+
+::selection {
+  background: rgba(79, 209, 255, 0.35);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Panel-style headings used by the shell and landing page */
+.panel-title {
+  font-family: var(--font-mono);
+  color: var(--crt-white);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.panel-rule {
+  font-family: var(--font-mono);
+  color: var(--crt-dim);
+  white-space: pre;
+  overflow: hidden;
+}
+
+.crt-button {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--crt-white);
+  background: var(--crt-key-bg);
+  border: 1px solid var(--crt-border);
+  border-bottom-width: 3px;
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease;
+}
+.crt-button:hover { background: var(--crt-key-hover); }
+.crt-button:active { transform: translateY(2px); border-bottom-width: 1px; }
+.crt-button:focus-visible { outline: 2px solid var(--crt-amber); outline-offset: 1px; }
+.crt-button--primary { background: var(--crt-green); color: var(--crt-bg); font-weight: 700; border-color: #1f8f45; }
+.crt-button--primary:hover { background: #5cff88; }
+.crt-button--amber { background: var(--crt-amber); color: var(--crt-bg); font-weight: 700; border-color: #9a6a00; }
+.crt-button--amber:hover { background: #ffc43d; }
+.crt-button--ghost { background: transparent; }
+.crt-button[aria-pressed="true"] { background: var(--crt-cyan); color: var(--crt-bg); border-color: #1f6f8f; }
+
+.crt-select {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--crt-white);
+  background: var(--crt-key-bg);
+  border: 1px solid var(--crt-border);
+  border-radius: 3px;
+  padding: 5px 8px;
 }
