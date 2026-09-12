@@ -29,6 +29,7 @@ const KEYS: [string, string][] = [
   ["Enter", "process the panel"],
   ["Tab", "next field"],
   ["F1", "help"],
+  ["F2", "split screen"],
   ["F3", "end / back"],
   ["F5", "repeat find"],
   ["F7 / F8", "scroll up / down"],
@@ -183,8 +184,9 @@ export function Landing() {
             </p>
             <p>
               ISPF Lab reproduces this interaction model faithfully enough that the muscle memory transfers: the same menus, the same 3.4, the
-              same <code>I</code>, <code>D</code>, <code>R</code>, <code>C</code>/<code>A</code> line commands, the same SAVE and CANCEL. It is a
-              deterministic simulation with a virtual catalog - not a mainframe connection, and not an IBM product.
+              same <code>I</code>, <code>D</code>, <code>R</code>, <code>C</code>/<code>A</code> line commands, the same SAVE and CANCEL, even{" "}
+              <strong>split-screen mode</strong> (PF2 opens a second logical screen, PF9 swaps between them). It is a deterministic simulation
+              with a virtual catalog - not a mainframe connection, and not an IBM product.
             </p>
           </div>
         </div>
