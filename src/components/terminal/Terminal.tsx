@@ -147,6 +147,22 @@ export function Terminal({ highlightField, compact }: TerminalProps) {
     [submitEnter, submitPf, moveFocus, cursor, screen.fields],
   );
 
+  // F-keys must work wherever focus is (after clicking a PF button, the coach panel, ...) and must beat browser
+  // bindings such as Edge’s F9 Immersive Reader, so they are caught at the window in the capture phase.
+  useEffect(() => {
+    const onWindowKey = (e: globalThis.KeyboardEvent) => {
+      const pf = F_KEYS[e.key];
+      if (!pf || e.ctrlKey || e.metaKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest && target.closest(".terminal")) return; // the terminal handler takes it
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT")) return;
+      e.preventDefault();
+      submitPf(pf);
+    };
+    window.addEventListener("keydown", onWindowKey, true);
+    return () => window.removeEventListener("keydown", onWindowKey, true);
+  }, [submitPf]);
+
   const position = useMemo(() => {
     let row = 1;
     let col = 1;
