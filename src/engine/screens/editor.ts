@@ -293,7 +293,12 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
     events.push({ type: "PROFILE_CHANGED", profile: session.profile.name });
     session = { ...session, profileDirty: false };
   }
-  const base: SimulatorState = { ...state, editor: session, editProfiles, fieldValues: {}, focusField: undefined, message };
+  // ISPF leaves the cursor on the command line after a typed primary command unless the command positioned it
+  // (FIND, CHANGE, LOCATE move the cursor); typed-over data keeps the cursor where it was.
+  const typedCommand = !pfCommand && !!(fields.command ?? "").trim();
+  const cursorMoved = session.cursor.lineId !== before.cursor.lineId || session.cursor.col !== before.cursor.col;
+  const focusField = typedCommand && !cursorMoved ? "command" : undefined;
+  const base: SimulatorState = { ...state, editor: session, editProfiles, fieldValues: {}, focusField, message };
   const withEvents = (r: StepResult): StepResult => ({ state: r.state, events: [...events, ...r.events] });
   const effect = primary.effect;
   if (!effect) return withEvents(withMessage(base, message));

@@ -23,7 +23,7 @@ const MODES = [
 ];
 
 const NAMES = ["Option34", "PanelDrill", "GreenScreen Dojo", "PF3 Academy", "DSLIST Dojo", "TSO Trainer", "Sim3270"];
-const TEASER = ["PDS", "member", "HLQ", "3.4", "PF3", "line command", "SPLIT"];
+const TEASER = ["PDS", "member", "HLQ", "3.4", "PF3", "line command", "SPLIT", "JCL", "SDSF"];
 
 const KEYS: [string, string][] = [
   ["Enter", "process the panel"],
@@ -31,11 +31,12 @@ const KEYS: [string, string][] = [
   ["F1", "help"],
   ["F2", "split screen"],
   ["F3", "end / back"],
+  ["F4", "return to the menu"],
   ["F5", "repeat find"],
   ["F7 / F8", "scroll up / down"],
   ["F9", "swap screen"],
   ["F10 / F11", "scroll left / right"],
-  ["F12", "cancel"],
+  ["F12", "cancel (Edit) / retrieve"],
 ];
 
 function Section({ title, row, children }: { title: string; row: string; children: React.ReactNode }) {
@@ -185,8 +186,10 @@ export function Landing() {
             <p>
               ISPF Lab reproduces this interaction model faithfully enough that the muscle memory transfers: the same menus, the same 3.4, the
               same <code>I</code>, <code>D</code>, <code>R</code>, <code>C</code>/<code>A</code> line commands, the same SAVE and CANCEL, even{" "}
-              <strong>split-screen mode</strong> (PF2 opens a second logical screen, PF9 swaps between them). It is a deterministic simulation
-              with a virtual catalog - not a mainframe connection, and not an IBM product.
+              <strong>split-screen mode</strong> (PF2 opens a second logical screen, PF9 swaps between them), the jump function (<code>=3.4</code>),
+              edit profiles and UNDO. You can <strong>SUBMIT</strong> JCL to a virtual JES and read the result - CC 0000, ABEND or JCL ERROR -
+              in a simulated SDSF, then fix the JCL and resubmit. It is a deterministic simulation with a virtual catalog and spool - not a
+              mainframe connection, and not an IBM product.
             </p>
           </div>
         </div>

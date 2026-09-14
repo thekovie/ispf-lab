@@ -392,3 +392,18 @@ page derive from `LESSONS`/`MODULES`; README, site description, OG image text, d
 
 **Verified by** · `tests/tutorial/lessons.test.ts`: a Coached walk per new lesson (13) plus a Challenge-mode walk of
 lesson 28 from state alone; catalogue test checks 28 lessons numbered in order; 231 tests; check/build green.
+
+## Phase 18 — Definition-of-Done walkthrough and polish  (2026-09-15, main)
+
+**Browser walkthrough (Chrome DevTools, Sandbox, 1440×900)** · logon → 2 → `{HLQ}.JCL(PAYRPT)` → PROFILE (=PROF>
+lines) → COLS (=COLS>) → SUBMIT (`JOB USER01P(JOB00001) SUBMITTED`) → `=S` → ST (`JCL ERROR`) → `?` → S on
+JESYSMSG (`IEF212I … SYSUT1 - DATA SET NOT FOUND`) → PF3 PF3 → SJ → `C PAYROLL.DATA DATA(EMPLOYEE)` → SUBMIT →
+PF3 (`MEMBER SAVED`, JOB00002 `CC 0000`) → `?` → S on SYSUT2 (the four employee records) → Progress page →
+Export Lab (bundle v2 with both jobs and the fixed member). No console errors or warnings.
+
+**Found and fixed** · after a typed primary command the editor focused the cursor line (line 1 by default), so the
+next command overtyped the JOB statement — an MVP-era defect exposed by the special lines. `processEnter` now keeps
+focus on the command line unless the command moved the cursor (FIND/CHANGE/LOCATE) or text was typed over.
+
+**Copy audit** · landing intro mentions jump, profiles, UNDO, SUBMIT/SDSF; key legend adds F4 and F12 retrieve;
+glossary teaser adds JCL and SDSF; docs/07 test map updated.
