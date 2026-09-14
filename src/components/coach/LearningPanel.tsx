@@ -4,7 +4,9 @@
  * Practice: objective + hints on request. Challenge: task + counters + final verdict.
  * Reference: docs/05-course-design.md §Coaching UI.
  */
+import { useSimulator } from "@/state/SimulatorProvider";
 import { useTutorial } from "@/state/TutorialProvider";
+import type { AppMode } from "@/tutorial/types";
 import { LESSONS } from "@/tutorial/lessons";
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
@@ -13,6 +15,24 @@ function Section({ label, children }: { label: string; children: React.ReactNode
       <h3 className="coach__label">{label}</h3>
       <div className="coach__body">{children}</div>
     </section>
+  );
+}
+
+/**
+ * Failure-based learning: the terminal shows the short ISPF message on the panel; the coach adds the long
+ * explanation. Learn and Sandbox show it in full, Practice shows the short text only (work it out, PF1 Help and
+ * EXPLAIN are available), Challenge shows nothing extra.
+ */
+function MessageNote({ mode }: { mode: AppMode }) {
+  const { state } = useSimulator();
+  const msg = state.message;
+  if (!msg || mode === "challenge") return null;
+  const showLong = (mode === "learn" || mode === "sandbox") && msg.long;
+  return (
+    <Section label={msg.severity === "error" ? "Message" : "Note"}>
+      <p className={msg.severity === "error" ? "coach__error" : "coach__body"}>{msg.short}</p>
+      {showLong ? <p className="coach__body">{msg.long}</p> : mode === "practice" && msg.severity === "error" ? <p className="coach__dim">Read the panel message, then PF1 or EXPLAIN if you need more.</p> : null}
+    </Section>
   );
 }
 
@@ -25,6 +45,7 @@ export function LearningPanel() {
       <aside className="coach" aria-label="Learning panel">
         <div className="coach__title">NO LESSON SELECTED</div>
         <p className="coach__body">Pick a lesson from the menu above, or switch to Sandbox to use the simulator freely.</p>
+        <MessageNote mode={mode} />
         <ol className="coach__lessons">
           {LESSONS.map((l) => (
             <li key={l.id}>
@@ -53,6 +74,7 @@ export function LearningPanel() {
       <div className="coach__module">{lesson.module}</div>
 
       <Section label="Objective">{t.text(mode === "challenge" && lesson.challenge ? lesson.challenge.task : lesson.objective)}</Section>
+      <MessageNote mode={mode} />
 
       {completed ? (
         <Section label="Result">

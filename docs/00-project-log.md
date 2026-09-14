@@ -378,3 +378,17 @@ because a missing module is an S806 abend on z/OS; S806 is simulated too.
 **Verified by** · `tests/jes/jes.test.ts` (11: parser, errors, column 72, IEFBR14 allocation/deletion, IEBGENER,
 SORT, IDCAMS, JCL ERROR, IEF212I, S806) and `tests/engine/sdsf.test.ts` (8: SUBMIT/J/TSO SUBMIT, option S and
 =S, ST, ?/S browse, Day-One SJ→fix→CC 0000→SYSUT2, S/P/OWNER/PREFIX, LOG, persistence + reset); 217 tests.
+
+## Phase 17 — Lessons 16–28  (2026-09-15, branch `feat/lessons-2`)
+
+**Goal** · Priority 6: teach everything Phases 12–16 built, ending in the Day-One challenge.
+
+**Built** · `tutorial/lessons/module7-8.ts` (16 jump/RETURN, 17 RETRIEVE + multi-command, 18 COLS/BOUNDS, 19 profiles,
+20 UNDO/recovery, 21 exclude/FLIP) and `module9-10.ts` (22 advanced DSLIST, 23 member statistics, 24 SUBMIT, 25 SDSF
+ST, 26 job output DDs, 27 debug JCL ERROR, 28 Day-One challenge with a state-only Challenge validator); `LessonStart.resetJobs`
+(TutorialProvider dispatches `LOAD_JES`); coach `MessageNote` — the long ISPF message was never displayed before;
+now Learn/Sandbox show it, Practice the short text only, Challenge nothing; lesson and module counts on the landing
+page derive from `LESSONS`/`MODULES`; README, site description, OG image text, docs/05.
+
+**Verified by** · `tests/tutorial/lessons.test.ts`: a Coached walk per new lesson (13) plus a Challenge-mode walk of
+lesson 28 from state alone; catalogue test checks 28 lessons numbered in order; 231 tests; check/build green.

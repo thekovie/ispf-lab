@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Lessons 16–28 in four new modules (Navigation mastery, Editor power tools, Lists in depth, Batch jobs and SDSF),
+  ending with the Day-One challenge; `resetJobs` lesson start option; coach shows the long ISPF message by mode.
 - Virtual JES and SDSF (SIMULATED): SUBMIT from Edit, `J` on member lists, `TSO SUBMIT`; JCL recogniser with the
   classic IEFC errors; IEFBR14/IEBGENER/SORT/IDCAMS; JESMSGLG/JESJCL/JESYSMSG; primary option S with ST/O/LOG,
   `?`/`S`/`P`/`SJ` actions, OWNER/PREFIX/SORT; seed member `<HLQ>.JCL(PAYRPT)` (Day-One challenge); jobs persisted
