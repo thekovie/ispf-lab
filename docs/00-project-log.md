@@ -340,3 +340,20 @@ DSLIST rows are shown as a marker row; FIND matches data-set names only.
 X/NX/EXCLUDE ALL/RESET, Z, =, SORT (field, direction, invalid), FIND/RFIND/PF5, three immediates in one Enter,
 suspend/resume across two panels, error stop with redisplay, member-list E on two members, jump discards parked
 commands, member I/G/J/=; 195 tests; check/build green.
+
+## Phase 15 — Export / Import Lab  (2026-09-14, branch `feat/export-import`)
+
+**Goal** · Priority 4: carry a whole lab (catalog, edit profiles, progress, settings) between browsers safely.
+
+**Audit** · Export/Import PARTIAL — catalog only, minimal validation.
+
+**Built** · `persistence/labBundle.ts` (`buildBundle`, `serializeBundle`, `parseBundle` with structural validation
+and v0.1 migration, `applyBundle` with an import summary); Progress page buttons *Export Lab* (download + textarea
+fallback) / *Import Lab* (file input, confirm, summary note); *Reset training environment* now also clears edit
+profiles; old catalog-only helpers removed; README, docs/02, CHANGELOG.
+
+**Decisions** · ADR 0013.
+
+**Verified by** · `tests/persistence/labBundle.test.ts` (4): round trip into a fresh adapter, v0.1 migration,
+rejection reasons (JSON, format, version, names, record types, userid, size), unknown-key stripping; 198 tests;
+check/build green.

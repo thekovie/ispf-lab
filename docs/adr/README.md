@@ -16,3 +16,4 @@ Write a new ADR the moment a non-obvious choice is made; never rewrite history â
 | [0009](0009-jump-as-system-command.md) | Jump, RETURN, split-screen and retrieve are system commands processed before the panel |
 | [0010](0010-edit-history-snapshots.md) | UNDO via per-interaction snapshots; edit profiles per data-set type, persisted separately |
 | [0011](0011-special-lines.md) | =COLS>/=BNDS>/=PROF> are session-only rows with negative ids |
+| [0013](0013-lab-bundle.md) | Export/Import Lab as one versioned, structurally validated bundle |

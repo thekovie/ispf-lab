@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MemoryAdapter } from "@/persistence/storage";
-import { exportCatalog, importCatalog, loadCatalog, resetCatalog, saveCatalog } from "@/persistence/catalogStore";
+import { loadCatalog, resetCatalog, saveCatalog } from "@/persistence/catalogStore";
 import { loadProgress, resetProgress, saveProgress, updateLesson } from "@/persistence/progressStore";
 import { deleteMember, getMember } from "@/catalog/catalog";
 
@@ -19,11 +19,6 @@ describe("catalogStore", () => {
     const c = loadCatalog(s, "USER01");
     saveCatalog(s, "USER01", deleteMember(c, "USER01.JCL", "HELLO").catalog);
     expect(getMember(resetCatalog(s, "USER01"), "USER01.JCL", "HELLO")).toBeDefined();
-  });
-  it("round-trips export/import", () => {
-    const c = loadCatalog(new MemoryAdapter(), "USER01");
-    expect(importCatalog(exportCatalog(c))).toEqual(c);
-    expect(() => importCatalog("{}")).toThrow();
   });
 });
 
