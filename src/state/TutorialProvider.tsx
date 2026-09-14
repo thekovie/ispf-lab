@@ -3,6 +3,7 @@
  * Tutorial state for the shell: mode, active lesson, runner, progress, Explain drawer.
  * Talks to the simulator only through the store's event stream and semantic actions.
  */
+import { EMPTY_JES } from "@/jes/types";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { getMember } from "@/catalog/catalog";
 import { buildSeed } from "@/catalog/seed";
@@ -103,6 +104,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
       if (l.startingState?.resetMembers?.length) {
         store.dispatch({ type: "LOAD_CATALOG", catalog: restoreMembers(s2.catalog, s2.userid, l.startingState.resetMembers) });
       }
+      if (l.startingState?.resetJobs) store.dispatch({ type: "LOAD_JES", jes: EMPTY_JES });
       if (l.startingState?.screen) {
         if (l.startingState.screen.id === "LOGIN") store.dispatch({ type: "LOGOFF" });
         else store.dispatch({ type: "GOTO", screen: l.startingState.screen, clearStack: true });

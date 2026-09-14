@@ -61,6 +61,8 @@
 .coach__section { margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--crt-border); }
 .coach__label { color: var(--crt-cyan); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 4px; font-weight: 700; }
 .coach__body { white-space: normal; }
+.coach__error { white-space: normal; color: var(--crt-red, #ff6b6b); font-weight: 600; }
+.coach__dim { white-space: normal; color: var(--crt-dim); }
 .coach__ok { color: var(--crt-green); font-weight: 700; }
 .coach__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 .coach__progress { display: flex; align-items: center; gap: 10px; }

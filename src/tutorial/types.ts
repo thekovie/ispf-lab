@@ -33,6 +33,8 @@ export interface LessonStart {
   screen?: ScreenFrame;
   /** members to restore from the seed before starting */
   resetMembers?: { dsn: string; member: string }[];
+  /** clear the virtual JES (jobs and log) before starting */
+  resetJobs?: boolean;
 }
 
 export interface Lesson {

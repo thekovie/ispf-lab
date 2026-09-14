@@ -5,7 +5,7 @@
 export const SITE_NAME = "ISPF Lab";
 export const SITE_TAGLINE = "Learn IBM z/OS ISPF by typing, not by reading about it";
 export const SITE_DESCRIPTION =
-  "ISPF Lab is a free, browser-based simulator of the IBM z/OS ISPF interface: Primary Option Menu, option 3.4 DSLIST, member lists and the record-oriented ISPF editor with line commands. 15 guided lessons check what you actually do. Runs entirely in your browser. Not affiliated with or endorsed by IBM.";
+  "ISPF Lab is a free, browser-based simulator of the IBM z/OS ISPF interface: Primary Option Menu, option 3.4 DSLIST, member lists and the record-oriented ISPF editor with line commands. Twenty-eight guided lessons - from logon to submitting jobs and reading SDSF - check what you actually do. Runs entirely in your browser. Not affiliated with or endorsed by IBM.";
 export const SITE_KEYWORDS = [
   "ISPF",
   "ISPF tutorial",
