@@ -19,8 +19,9 @@ engine that verifies what you actually do.
 - **Course**: 15 lessons in 6 modules, in Learn / Practice / Challenge modes, validated by simulator events and the
   resulting catalog (any legitimate ISPF route is accepted). Sandbox mode = the whole simulator, no lesson.
 - **Explain**: a glossary of z/OS terminology (`EXPLAIN PDS` on any command line).
-- **Local only**: catalog, settings and progress live in your browser (localStorage); reset, export and import from
-  the Progress page. No account, no server.
+- **Local only**: catalog, edit profiles, settings and progress live in your browser (localStorage). *Export Lab*
+  on the Progress page saves all of it as one JSON file; *Import Lab* restores it in another browser. No account, no
+  server.
 - **Landing page** that works on any device; the simulator itself requires a desktop-class viewport and keyboard.
 
 ## Quick start

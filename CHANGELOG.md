@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Export Lab / Import Lab on the Progress page: one validated JSON bundle (v2) with catalog, edit profiles, lesson
+  progress and settings; the earlier catalog-only export is migrated on import.
 - DSLIST: line commands S (short information), CO/MO (3.3 prefilled, whole-data-set copy/move), X/NX, Z, =;
   primary SORT/FIND/RFIND/EXCLUDE/RESET. Member list: I (Member Information panel), G (reset statistics), =, J
   placeholder. Both lists process every line command per Enter, suspending around panels and resuming on PF3.

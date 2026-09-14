@@ -20,14 +20,3 @@ export function resetCatalog(storage: StorageAdapter, userid: string): Catalog {
   storage.set(KEYS.catalog(userid), seeded);
   return seeded;
 }
-
-export function exportCatalog(catalog: Catalog): string {
-  return JSON.stringify({ app: "ispf-lab", exportedAt: new Date().toISOString(), catalog }, null, 2);
-}
-
-export function importCatalog(json: string): Catalog {
-  const parsed = JSON.parse(json) as { catalog?: Catalog };
-  const c = parsed.catalog;
-  if (!c || c.version !== 1 || typeof c.datasets !== "object") throw new Error("Not an ISPF Lab catalog export");
-  return c;
-}
