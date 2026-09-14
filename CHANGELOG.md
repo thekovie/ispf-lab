@@ -6,6 +6,10 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Editor: UNDO (SETUNDO/RECOVERY), persistent edit profiles per data-set type, `=COLS>`/`=BNDS>`/`=PROF>`
+  special lines, BOUNDS honoured by FIND/CHANGE/EXCLUDE, NUMBER/UNNUM, STATS ON|OFF, AUTOSAVE ON|OFF PROMPT|NOPROMPT
+  with the *Edit - Save or Cancel Changes* panel, FLIP, RESET EXCLUDED|SPECIAL|COMMAND|LABEL; RETRIEVE / F12 command
+  retrieval on non-editor panels; eleven new glossary terms.
 - Jump function `=option` from any panel (system command layer), `RETURN` / PF4, F4 in every legend; F12 documented
   as Cancel in Edit / Retrieve elsewhere; keylist glossary entry; lspf listed as a reference.
 

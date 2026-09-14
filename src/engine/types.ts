@@ -5,6 +5,7 @@
 import type { Catalog, DsnRef } from "@/catalog/types";
 import type { EditorMode, EditorSession } from "@/editor/types";
 import type { Settings } from "@/persistence/settingsStore";
+import type { EditProfiles } from "@/editor/profile";
 
 export type ListMode = "E" | "B" | "V" | "M";
 
@@ -25,6 +26,7 @@ export type ScreenFrame =
   | { id: "EDIT" }
   | { id: "BROWSE" }
   | { id: "VIEW" }
+  | { id: "AUTOSAVE_PROMPT" }
   | { id: "CONFIRM_DELETE"; target: DsnRef }
   | { id: "RENAME"; target: DsnRef }
   | { id: "COPY_MOVE"; from: DsnRef; move: boolean }
@@ -57,6 +59,12 @@ export interface SimulatorState {
   /** all logical screens (snapshots); the entry at activeScreen may be stale — the live fields below win */
   screens: ScreenSession[];
   activeScreen: number;
+  /** per-data-set-type edit profiles (PROFILE command), persisted per userid */
+  editProfiles: EditProfiles;
+  /** ISPF command retrieval stack (RETRIEVE / F12), newest first; shared by all logical screens */
+  retrieveStack: string[];
+  /** position in retrieveStack for consecutive RETRIEVEs */
+  retrieveIndex: number;
   loggedIn: boolean;
   today: string;
   settings: Settings;
@@ -82,6 +90,7 @@ export type SimAction =
   | { type: "SET_CLOCK"; today: string }
   | { type: "LOAD_CATALOG"; catalog: Catalog }
   | { type: "LOAD_SETTINGS"; settings: Settings }
+  | { type: "LOAD_PROFILES"; profiles: EditProfiles }
   | { type: "RESET_ENVIRONMENT" }
   | { type: "GOTO"; screen: ScreenFrame; clearStack?: boolean }
   | { type: "LOGOFF" }
@@ -125,6 +134,13 @@ export type SimEvent =
   | { type: "SCREEN_SWAPPED"; from: number; to: number; screens: number }
   | { type: "SCREEN_CLOSED"; screens: number; active: number }
   | { type: "JUMP_EXECUTED"; path: string; from: ScreenId }
+  | { type: "UNDO_EXECUTED" }
+  | { type: "PROFILE_CHANGED"; profile: string }
+  | { type: "COLS_DISPLAYED" }
+  | { type: "BOUNDS_CHANGED" }
+  | { type: "LINES_REDISPLAYED"; count: number }
+  | { type: "AUTOSAVE_PROMPTED"; dsn: string; member?: string }
+  | { type: "COMMAND_RETRIEVED"; command: string }
   | { type: "RETURN_EXECUTED"; from: ScreenId }
   | { type: "EXPLAIN_REQUESTED"; term: string }
   | { type: "MESSAGE_SHOWN"; text: string; severity: "info" | "error" };

@@ -8,6 +8,7 @@
  */
 import { parseEditorLineCommand, type EditorLineCommand } from "@/parsers/editorLineCommand";
 import * as ops from "./lineOps";
+import { addSpecial, pruneSpecial, removeSpecial } from "./special";
 import type { EditorEvent, EditorMessage, EditorResult, EditorSession, PendingCommand } from "./types";
 
 export const LINE_MSG = {
@@ -42,11 +43,24 @@ const BLOCK_TO_SINGLE: Record<string, string> = {
   ">>": ">",
 };
 
-export function applyLineCommands(s: EditorSession, typed: Record<number, string>): EditorResult {
+export function applyLineCommands(sIn: EditorSession, typedIn: Record<number, string>): EditorResult {
+  let s = sIn;
+  let typed = typedIn;
   if (s.mode === "BROWSE") {
     const any = Object.values(typed).some((v) => v.trim() !== "");
     return { session: s, events: [], message: any ? { text: LINE_MSG.BROWSE, severity: "error" } : undefined };
   }
+  // Prefix commands typed on special lines (negative ids): only D (delete the special line) is meaningful.
+  let s2 = s;
+  const dataTyped: Record<number, string> = {};
+  for (const [k, v] of Object.entries(typed)) {
+    const id = Number(k);
+    if (id >= 0) dataTyped[id] = v;
+    else if (/^D+$/i.test(v.trim())) s2 = removeSpecial(s2, id);
+    else if (v.trim()) return { session: s, events: [], message: { text: LINE_MSG.INVALID, severity: "error" } };
+  }
+  typed = dataTyped;
+  s = s2;
   const merged = mergePending(s, typed);
   const parsed = parseEntries(s, merged);
   if ("error" in parsed) {
@@ -96,7 +110,7 @@ export function applyLineCommands(s: EditorSession, typed: Record<number, string
   const pending: PendingCommand[] = keepPending
     .filter((e) => stillPresent.has(e.lineId))
     .map((e) => ({ lineId: e.lineId, raw: e.raw }));
-  return { session: { ...session, pending }, events, message };
+  return { session: pruneSpecial({ ...session, pending }), events, message };
 }
 
 /** Typed blank cancels a pending command on that line; typed text replaces it. */
@@ -208,7 +222,8 @@ function applySingles(start: EditorSession, singles: SingleEntry[], events: Edit
         session = ops.showEdgeOfExcludedBlock(session, id, count, false);
         break;
       case "COLS":
-        session = { ...session, colsAfter: id };
+        session = addSpecial(session, "COLS", id);
+        events.push({ type: "EDITOR_COLS" });
         break;
       case "TS":
         session = ops.textSplit(session, id, session.cursor.lineId === id ? session.cursor.col : session.lrecl);

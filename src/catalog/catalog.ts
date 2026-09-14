@@ -154,6 +154,8 @@ export function renameDataset(catalog: Catalog, dsn: string, newName: string): C
 export interface WriteOpts {
   today: string;
   userid: string;
+  /** STATS OFF in the edit profile: keep the member statistics unchanged */
+  stats?: boolean;
 }
 
 /** Save records to a member (creating it if needed) or to a sequential data set. */
@@ -176,9 +178,12 @@ export function saveRecords(
   if (!isValidMemberName(mname)) return { catalog, error: MSG.INVALID_MEMBER };
   const existing = ds.members?.[mname];
   const userid = opts.userid.toUpperCase();
-  const member: Member = existing
-    ? { ...existing, records: padded, modifiedAt: opts.today, modifiedBy: userid, mod: (existing.mod ?? 0) + 1 }
-    : { name: mname, records: padded, createdAt: opts.today, modifiedAt: opts.today, modifiedBy: userid, version: 1, mod: 0 };
+  const keepStats = opts.stats === false && existing;
+  const member: Member = keepStats
+    ? { ...existing, records: padded }
+    : existing
+      ? { ...existing, records: padded, modifiedAt: opts.today, modifiedBy: userid, mod: (existing.mod ?? 0) + 1 }
+      : { name: mname, records: padded, createdAt: opts.today, modifiedAt: opts.today, modifiedBy: userid, version: 1, mod: 0 };
   return {
     catalog: withDataset(catalog, { ...ds, members: { ...(ds.members ?? {}), [mname]: member } }),
     created: !existing,

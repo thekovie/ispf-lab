@@ -5,6 +5,7 @@
 import { MSG, getDataset, readRecords } from "@/catalog/catalog";
 import type { DsnRef } from "@/catalog/types";
 import { openSession } from "@/editor/session";
+import { profileFor } from "@/editor/profile";
 import type { EditorMode } from "@/editor/types";
 import { fail, push } from "./navigation";
 import type { ListMode, ScreenFrame, SimEvent, SimulatorState, StepResult } from "./types";
@@ -48,6 +49,7 @@ export function openRef(state: SimulatorState, ref: DsnRef, mode: ListMode): Ste
     records: records ?? [],
     isNew,
     scrollAmount: state.settings.scrollDefault,
+    profile: profileFor(state.editProfiles, ds.name),
   });
   const events: SimEvent[] = [{ type: "MEMBER_OPENED", dsn: ds.name, member: session.member, mode: editorMode }];
   const r = push({ ...state, activeDataset: ds.name, activeMember: session.member, editor: session }, SCREEN_FOR[editorMode], events);

@@ -25,6 +25,7 @@ export const confirmDeleteScreen: ScreenHandler<{ id: "CONFIRM_DELETE"; target: 
       pfKeys: [
         { key: 1, label: "Help" },
         { key: 3, label: "Cancel" },
+        { key: 12, label: "Cancel" },
       ],
       fields: ["confirm"],
       focus: "confirm",
@@ -78,6 +79,7 @@ export const renameScreen: ScreenHandler<{ id: "RENAME"; target: DsnRef }> = {
       pfKeys: [
         { key: 1, label: "Help" },
         { key: 3, label: "Cancel" },
+        { key: 12, label: "Cancel" },
       ],
       fields: ["newname"],
       focus: "newname",
@@ -133,6 +135,7 @@ export const copyMovePopupScreen: ScreenHandler<{ id: "COPY_MOVE"; from: DsnRef;
       pfKeys: [
         { key: 1, label: "Help" },
         { key: 3, label: "Cancel" },
+        { key: 12, label: "Cancel" },
       ],
       fields: ["to"],
       focus: "to",

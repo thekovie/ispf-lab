@@ -19,6 +19,26 @@ export type SystemCommand =
   | { kind: "retrieve" };
 
 export const INVALID_JUMP = "INVALID JUMP DESTINATION";
+export const RETRIEVE_MAX = 25;
+
+/** Record a command for RETRIEVE (newest first, no consecutive duplicates, system commands excluded). */
+export function pushRetrieve(state: SimulatorState, raw: string): SimulatorState {
+  const cmd = raw.trim();
+  if (!cmd || /^RETRIEVE$/i.test(cmd)) return { ...state, retrieveIndex: 0 };
+  const stack = state.retrieveStack[0] === cmd ? state.retrieveStack : [cmd, ...state.retrieveStack].slice(0, RETRIEVE_MAX);
+  return { ...state, retrieveStack: stack, retrieveIndex: 0 };
+}
+
+/** RETRIEVE / F12: put the previous command back on the command line; repeated calls walk further back. */
+export function retrieveCommand(state: SimulatorState, fieldId: string): StepResult {
+  if (state.retrieveStack.length === 0) return withMessage(state, { short: "NO COMMAND TO RETRIEVE", severity: "info" });
+  const idx = state.retrieveIndex % state.retrieveStack.length;
+  const command = state.retrieveStack[idx];
+  return {
+    state: { ...state, retrieveIndex: idx + 1, fieldValues: { ...state.fieldValues, [fieldId]: command }, focusField: fieldId, message: undefined },
+    events: [{ type: "COMMAND_RETRIEVED", command }],
+  };
+}
 
 export function parseSystemCommand(raw: string | undefined): SystemCommand | null {
   const trimmed = (raw ?? "").trim().toUpperCase();
