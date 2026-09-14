@@ -2,17 +2,18 @@
  * Member list for a partitioned data set (reached from DSLIST E/B/V/M, option 1/2, or 3.1).
  * Reference: docs/03-ispf-behaviour-reference.md §Member list line commands.
  */
-import { getDataset, isValidMemberName, listMembers } from "@/catalog/catalog";
+import { getDataset, isValidMemberName, listMembers, resetMemberStats } from "@/catalog/catalog";
 import type { Member } from "@/catalog/types";
 import { tokenize } from "@/parsers/editorPrimaryCommand";
 import { parseMemberLineCommand } from "@/parsers/listLineCommand";
 import { blank, dim, f, label, t, titleRow } from "../rows";
+import { collectListCommands, resumeListCommands, runListCommands } from "../listCommands";
 import { fail, pop, push, replace } from "../navigation";
 import { openRef } from "../open";
-import type { Fields, ListMode, Row, ScreenHandler, SimEvent, SimulatorState, StepResult } from "../types";
+import type { ListMode, Row, ScreenFrame, ScreenHandler, SimEvent, SimulatorState, StepResult } from "../types";
 
 const PAGE = 15;
-type Frame = { id: "MEMBER_LIST"; dsn: string; mode: ListMode; top: number };
+type Frame = Extract<ScreenFrame, { id: "MEMBER_LIST" }>;
 const TITLE: Record<ListMode, string> = { E: "EDIT", B: "BROWSE", V: "VIEW", M: "LIBRARY" };
 
 function rowFor(m: Member, value: string): Row {
@@ -35,9 +36,12 @@ function rowFor(m: Member, value: string): Row {
 export const memberListScreen: ScreenHandler<Frame> = {
   help: [
     "A member list shows the members of one partitioned data set (PDS).",
-    "Line commands: E Edit  B Browse  V View  D Delete  R Rename  C Copy  M Move  S Select.",
-    "Primary commands: S name (select; in an EDIT list a new name creates a member),",
-    "LOCATE name, END. Size is the record count; Changed/ID are ISPF statistics.",
+    "Line commands: E Edit  B Browse  V View  D Delete  R Rename  C Copy  M Move",
+    "S Select  I Information  G Reset statistics  J Submit  = Repeat last command.",
+    "Several line commands are processed top to bottom; a panel-opening command",
+    "suspends the rest until you press PF3. Primary commands: S name (select; in an",
+    "EDIT list a new name creates a member), LOCATE name, END. Size is the record",
+    "count; Created/Changed/ID are ISPF statistics.",
   ],
   render(state, frame) {
     const ds = getDataset(state.catalog, frame.dsn);
@@ -68,10 +72,13 @@ export const memberListScreen: ScreenHandler<Frame> = {
     };
   },
   onEnter(state, frame, fields) {
-    for (const [k, v] of Object.entries(fields)) {
-      if (k.startsWith("cmd:") && v.trim()) return runLineCommand(state, frame, k.slice(4), v, fields);
-    }
+    const ds = getDataset(state.catalog, frame.dsn);
+    const cmds = collectListCommands(fields, ds ? listMembers(ds).map((m) => m.name) : []);
+    if (cmds.length) return runListCommands(state, cmds, runLineCommand, "MEMBER_LIST");
     return runPrimary(state, frame, (fields.command ?? "").trim());
+  },
+  onResume(state, frame) {
+    return resumeListCommands(state, frame, runLineCommand);
   },
   onPf(state, frame, key) {
     if (key === 3) return pop(state);
@@ -93,21 +100,28 @@ function defaultMode(frame: Frame): Exclude<ListMode, "M"> {
   return frame.mode === "M" ? "E" : frame.mode;
 }
 
-function runLineCommand(state: SimulatorState, frame: Frame, member: string, raw: string, fields: Fields): StepResult {
+function runLineCommand(state: SimulatorState, member: string, raw: string): StepResult {
+  const frame = state.screen as Frame;
   const parsed = parseMemberLineCommand(raw);
   const entered: SimEvent = { type: "COMMAND_ENTERED", screen: "MEMBER_LIST", command: `${raw.trim().toUpperCase()} ${frame.dsn}(${member})` };
   if (!parsed || !parsed.ok) {
-    const r = fail({ ...state, fieldValues: fields, focusField: `cmd:${member}` }, "INVALID LINE COMMAND", `"${raw.trim()}" is not a member-list line command. Use E, B, V, D, R, C, M or S.`);
+    const r = fail({ ...state, focusField: `cmd:${member}` }, "INVALID LINE COMMAND", `"${raw.trim()}" is not a member-list line command. Use E, B, V, D, R, C, M, S, I, G, J or =.`);
     return { state: r.state, events: [entered, ...r.events] };
   }
+  let cmd: string = parsed.cmd;
+  if (cmd === "=") {
+    if (!frame.lastCmd) return fail({ ...state, focusField: `cmd:${member}` }, "NO PREVIOUS LINE COMMAND", "= repeats the last line command entered on this list; none has been entered yet.");
+    cmd = frame.lastCmd;
+  }
+  state = { ...state, screen: { ...frame, lastCmd: cmd } };
   const ds = getDataset(state.catalog, frame.dsn);
   const ref = { dsn: frame.dsn, member };
   let r: StepResult;
-  switch (parsed.cmd) {
+  switch (cmd) {
     case "E":
     case "B":
     case "V":
-      r = openRef(state, ref, parsed.cmd);
+      r = openRef(state, ref, cmd as ListMode);
       break;
     case "S":
       r = openRef(state, ref, defaultMode(frame));
@@ -123,6 +137,21 @@ function runLineCommand(state: SimulatorState, frame: Frame, member: string, raw
       break;
     case "M":
       r = ds?.readOnly ? fail(state, "DATA SET IS READ ONLY") : push(state, { id: "COPY_MOVE", from: ref, move: true });
+      break;
+    case "I":
+      r = ds?.members?.[member]
+        ? push(state, { id: "MEMBER_INFO", dsn: frame.dsn, member }, [{ type: "MEMBER_INFO_VIEWED", dsn: frame.dsn, member }])
+        : fail(state, "MEMBER NOT FOUND");
+      break;
+    case "G": {
+      const rr = resetMemberStats(state.catalog, frame.dsn, member, { today: state.today, userid: state.userid });
+      r = rr.error
+        ? fail(state, rr.error)
+        : { state: { ...state, catalog: rr.catalog, message: { short: "STATISTICS RESET", long: `${frame.dsn}(${member}) now shows version 01.00, created and changed today by ${state.userid}.`, severity: "info" } }, events: [{ type: "MEMBER_STATS_RESET", dsn: frame.dsn, member }] };
+      break;
+    }
+    case "J":
+      r = fail(state, "SUBMIT NOT AVAILABLE IN THIS TRAINING MODULE", "J submits the member as a batch job. Job submission arrives with the virtual JES module.");
       break;
     default:
       r = fail(state, "INVALID LINE COMMAND");

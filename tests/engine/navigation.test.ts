@@ -118,7 +118,7 @@ describe("DSLIST", () => {
   });
   it("rejects bad line commands and read-only deletes", () => {
     const s = Sim.loggedOn().cmd("3.4").enter({ level: "SYS1" });
-    s.enter({ "cmd:SYS1.PARMLIB": "Z" });
+    s.enter({ "cmd:SYS1.PARMLIB": "Q" });
     expect(s.message).toBe("INVALID LINE COMMAND");
     s.enter({ "cmd:SYS1.PARMLIB": "D" });
     expect(s.message).toBe("DATA SET IS READ ONLY");

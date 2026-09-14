@@ -312,3 +312,31 @@ without display change; labels/macros not simulated; AUTOSAVE default ON (instal
 persistence across sessions, CAPS, PROFILE lines never saved, STATS OFF, NUMBER/UNNUM, three AUTOSAVE modes incl.
 jump, COLS line/primary + orphan pruning, BOUNDS window + `=BNDS>` overtype, FLIP/RESET EXCLUDED, RETRIEVE cycling,
 F12 policy; `tests/persistence/stores.test.ts` profile round-trip through `SimulatorStore`; 179 tests; check/build green.
+
+## Phase 14 — DSLIST and member-list depth, multi-command processing  (2026-09-14, branch `feat/dslist-depth`)
+
+**Goal** · Priority 3 of the expansion spec: make 3.4 and member lists behave like the real panels an operator
+lives in — richer line commands, list-level SORT/FIND/EXCLUDE, and several line commands per Enter.
+
+**Audit** · DSLIST line commands PARTIAL (E B V M D R I, `S` wrongly = E); DSLIST primary PARTIAL (LOCATE/REFRESH
+only); multi-command VERIFIED in the editor but only the first command ran on lists; member list I/G/=/J MISSING.
+
+**Built**
+- `parsers/listLineCommand.ts` — DSLIST `S CO MO X NX Z =`, member `I G J =` (1–2 character commands).
+- `engine/listCommands.ts` — `collectListCommands` (display order), `runListCommands` (sequential; a panel-opening
+  command parks the remainder in `frame.pending`; an error redisplays the rest), `resumeListCommands`. Reducer
+  `resumeParked` calls the list's `onResume` whenever END pops back onto it. New `ScreenHandler.onResume`.
+- `screens/dslistResults.ts` — sort/exclude/find state on the frame; marker rows for excluded runs; PF5 RFIND; `S`
+  → short `DATASET_INFO`; `CO`/`MO` → `MOVE_COPY` with `prefill`; `Z` simulated compress; `=` repeats `lastCmd`.
+- `catalog.copyDataset` (PDS deep copy / PS copy, target created when absent; move deletes the source) and
+  `catalog.resetMemberStats`; `performCopy` routes whole-data-set requests to it.
+- `screens/memberInfo.ts` — Member Information panel; member list `G`, `J` placeholder, `=`.
+- docs/03 (panels table, DSLIST/member line commands, new *Multiple line commands* section, events), CHANGELOG.
+
+**Deviations (documented)** · `Z` changes no data (there is no free-space model); `J` waits for Phase 16; excluded
+DSLIST rows are shown as a marker row; FIND matches data-set names only.
+
+**Verified by** · `tests/engine/listDepth.test.ts` (16): S/I, CO whole-PDS copy, MO move + read-only refusal,
+X/NX/EXCLUDE ALL/RESET, Z, =, SORT (field, direction, invalid), FIND/RFIND/PF5, three immediates in one Enter,
+suspend/resume across two panels, error stop with redisplay, member-list E on two members, jump discards parked
+commands, member I/G/J/=; 195 tests; check/build green.

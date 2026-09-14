@@ -264,3 +264,44 @@ export function readRecords(catalog: Catalog, ref: DsnRef): { records?: string[]
   if (!m) return { error: MSG.MEMBER_NOT_FOUND, lrecl: ds.lrecl };
   return { records: m.records, lrecl: ds.lrecl };
 }
+
+/**
+ * Copy (or move) a whole data set, DSLIST CO / MO style. A PDS is deep-copied member by member; a PS copies its
+ * records. The target must not exist unless it is a compatible existing data set (same organisation), in which case
+ * members are added (existing names replaced) — ISPF 3.3 "copy all members" semantics.
+ */
+export function copyDataset(catalog: Catalog, fromDsn: string, toDsn: string, opts: WriteOpts & { move?: boolean }): CatalogResult {
+  const src = getDataset(catalog, fromDsn);
+  if (!src) return { catalog, error: MSG.NOT_CATALOGED };
+  const to = toDsn.trim().toUpperCase();
+  if (!isValidDsname(to)) return { catalog, error: MSG.INVALID_DSNAME };
+  if (to === src.name) return { catalog, error: MSG.ALREADY_EXISTS };
+  if (opts.move && src.readOnly) return { catalog, error: MSG.READ_ONLY };
+  const existing = getDataset(catalog, to);
+  let next: Catalog;
+  if (!existing) {
+    const copy: Dataset = { ...src, id: to, name: to, readOnly: false, volume: "USR001", owner: opts.userid.toUpperCase(), createdAt: opts.today };
+    next = withDataset(catalog, copy);
+  } else {
+    if (existing.readOnly) return { catalog, error: MSG.READ_ONLY };
+    if (existing.datasetType !== src.datasetType) return { catalog, error: MSG.NOT_PARTITIONED };
+    next =
+      src.datasetType === "PDS"
+        ? withDataset(catalog, { ...existing, members: { ...(existing.members ?? {}), ...(src.members ?? {}) } })
+        : withDataset(catalog, { ...existing, records: padRecords(src.records ?? [], existing.lrecl) });
+  }
+  return opts.move ? deleteDataset(next, src.name) : { catalog: next };
+}
+
+/** Member list `G`: reset ISPF statistics to version 1.0, created/changed today by this user. */
+export function resetMemberStats(catalog: Catalog, dsn: string, member: string, opts: WriteOpts): CatalogResult {
+  const ds = getDataset(catalog, dsn);
+  if (!ds) return { catalog, error: MSG.NOT_CATALOGED };
+  if (ds.readOnly) return { catalog, error: MSG.READ_ONLY };
+  if (ds.datasetType !== "PDS") return { catalog, error: MSG.NOT_PARTITIONED };
+  const mname = member.toUpperCase();
+  const m = ds.members?.[mname];
+  if (!m) return { catalog, error: MSG.MEMBER_NOT_FOUND };
+  const reset: Member = { ...m, version: 1, mod: 0, createdAt: opts.today, modifiedAt: opts.today, modifiedBy: opts.userid.toUpperCase() };
+  return { catalog: withDataset(catalog, { ...ds, members: { ...ds.members, [mname]: reset } }) };
+}

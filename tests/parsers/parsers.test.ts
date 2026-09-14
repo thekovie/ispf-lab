@@ -28,9 +28,11 @@ describe("list line commands", () => {
   it("accepts valid and rejects invalid", () => {
     expect(parseDslistLineCommand("e")).toEqual({ ok: true, cmd: "E" });
     expect(parseDslistLineCommand("")).toBeNull();
-    expect(parseDslistLineCommand("Z")).toEqual({ ok: false, error: "INVALID LINE COMMAND" });
+    expect(parseDslistLineCommand("Q")).toEqual({ ok: false, error: "INVALID LINE COMMAND" });
+    expect(parseDslistLineCommand("co")).toEqual({ ok: true, cmd: "CO" });
     expect(parseMemberLineCommand("c")).toEqual({ ok: true, cmd: "C" });
-    expect(parseMemberLineCommand("I")).toEqual({ ok: false, error: "INVALID LINE COMMAND" });
+    expect(parseMemberLineCommand("Q")).toEqual({ ok: false, error: "INVALID LINE COMMAND" });
+    expect(parseMemberLineCommand("g")).toEqual({ ok: true, cmd: "G" });
   });
 });
 

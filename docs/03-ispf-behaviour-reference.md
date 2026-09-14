@@ -37,11 +37,12 @@ manual reference; corrections go here first, then into code and tests.
 | LIBRARY_UTILITY (3.1) | Option (blank/E/B/V/D/R), library fields, Member, New name | blank → member list; D/R → confirm/rename panels | 1, 3 |
 | DATASET_UTILITY (3.2) | Option (A/R/D/blank/S), data set name | A → Allocate panel (`DATA SET ALREADY EXISTS` if present); D → confirm; R → rename; blank → information; C/U/V not available | 1, 3 |
 | ALLOCATE_DATASET | Volume, Space units (TRKS/CYLS/BLKS), Primary, Secondary, Directory blocks, RECFM (FB VB F V U), LRECL, BLKSIZE, Data set name type | `dirBlocks > 0` or type PDS/LIBRARY → PDS; else PS. Errors: `INVALID SPACE UNITS`, `NUMERIC VALUE REQUIRED`, `INVALID RECORD FORMAT`, `INVALID RECORD LENGTH`, `INVALID SPACE QUANTITY`. Success: `DATA SET ALLOCATED`, returns to 3.2 | 1, 3 |
-| MOVE_COPY (3.3) | Option (C/M/CP/MP), From DSN(MEMBER), To DSN[(MEMBER)] | copies/moves; `MEMBER ALREADY EXISTS`, `DATA SET NOT CATALOGED`, `DATA SET IS READ ONLY`, `MEMBER NAME REQUIRED` | 1, 3 |
+| MOVE_COPY (3.3) | Option (C/M/CP/MP), From DSN[(MEMBER)], To DSN[(MEMBER)] | copies/moves a member, or a whole data set when From has no member (PDS deep copy; target created when absent); `MEMBER ALREADY EXISTS`, `DATA SET NOT CATALOGED`, `DATA SET IS READ ONLY`; DSLIST CO/MO open it prefilled | 1, 3 |
 | DSLIST_SEARCH (3.4) | Option, Dsname Level, Volume | lists matches; `ENTER DSNAME LEVEL`; `NO DATA SETS MATCH LEVEL` | 1, 3 |
-| DSLIST_RESULTS | Command, one command column per row | line commands below; primary `LOCATE name`, `REFRESH`, `END`, `HELP`, `EXPLAIN` | 1, 3, 7, 8 |
+| DSLIST_RESULTS | Command, one command column per row | line commands below; primary `SORT field [A|D]`, `FIND text`, `RFIND`, `EXCLUDE text [ALL]`, `RESET`, `LOCATE name`, `REFRESH`, `END`, `HELP`, `EXPLAIN` | 1, 3, 5, 7, 8 |
 | MEMBER_LIST | Command, one command column per row | line commands below; primary `S/E/B/V name` (S/E create in edit lists), `LOCATE`, `END` | 1, 3, 7, 8 |
-| DATASET_INFO | — | Enter/PF3 return | 1, 3 |
+| DATASET_INFO | — | Enter/PF3 return; `short` frames (DSLIST `S`) show general data only | 1, 3 |
+| MEMBER_INFO | — | member statistics (VV.MM, created, changed, size, ID); Enter/PF3 return | 1, 3 |
 | CONFIRM_DELETE | Confirm (Y/N, default Y) | Y deletes (`MEMBER DELETED` / `DATA SET DELETED`), N cancels | 1, 3/12 cancel |
 | RENAME | New name | `MEMBER RENAMED` / `DATA SET RENAMED`; `INVALID MEMBER NAME`, `MEMBER ALREADY EXISTS`, `DATA SET ALREADY EXISTS` | 1, 3/12 cancel |
 | COPY_MOVE (member-list pop-up) | To data set | as 3.3 | 1, 3/12 cancel |
@@ -60,16 +61,36 @@ manual reference; corrections go here first, then into code and tests.
 |---|---|---|---|
 | E / B / V | member list in that mode | editor in that mode | B/V allowed; E opens but SAVE fails |
 | M | member list | `DATA SET IS NOT PARTITIONED` | allowed |
-| S | as E | as E | as E |
+| S | short Data Set Information | same | same |
 | I | Data Set Information | same | same |
 | D | Confirm Delete | same | `DATA SET IS READ ONLY` |
 | R | Rename panel | same | `DATA SET IS READ ONLY` |
+| CO / MO | 3.3 panel prefilled (C/M, From) — whole data set | same | MO: `DATA SET IS READ ONLY` |
+| X / NX | exclude from / restore to the list (marker row `n Data Set(s) Not Displayed`) | same | same |
+| Z | `COMPRESS COMPLETED` (simulated, no data change) | `DATA SET IS NOT PARTITIONED` | `DATA SET IS READ ONLY` |
+| = | repeat the last line command entered on this list; `NO PREVIOUS LINE COMMAND` | | |
 | other | `INVALID LINE COMMAND` (text kept for correction) | | |
+
+**DSLIST primary commands**: `SORT NAME|DSORG|RECFM|LRECL|VOLUME [A|D]` (`SORTED BY x`, `INVALID SORT FIELD`);
+`FIND text` / `RFIND` (PF5) search names from the row after the top, wrapping (`CHARS 'x' FOUND`, `NO CHARS 'x' FOUND`,
+`NO PREVIOUS FIND`); `EXCLUDE text [ALL]` (`n DATA SET(S) EXCLUDED`); `RESET` redisplays excluded rows (sort is kept).
+The catalog is never changed by these; they live in the DSLIST frame.
+
+## Multiple line commands
+
+Both lists process **every** non-blank command column in one Enter, top to bottom (IBM behaviour). Immediate
+commands (X, NX, Z, G, =) run in sequence; a command that opens a panel (E B V M I S D R CO MO C) pushes it and parks
+the remaining commands on the list frame (`pending`); when the child panel ends with PF3 the reducer calls the
+list's `onResume` and the sequence continues (so `E` on three members edits them one after the other). An error
+stops the sequence and redisplays the failing and following commands with the cursor on the failure. Message
+`n COMMANDS PROCESSED` when more than one immediate command ran. Jumping out of a suspended sequence discards it.
 
 ## Member-list line commands
 
 E Edit · B Browse · V View · S select with the list's mode (M lists select E) · D Confirm Member Delete ·
-R Rename Member · C Copy pop-up · M Move pop-up. Read-only libraries refuse D, R, M.
+R Rename Member · C Copy pop-up · M Move pop-up · I Member Information (statistics) · G reset statistics to
+01.00 / today / userid (`STATISTICS RESET`) · J submit (not available until the JES module) · = repeat the last line
+command. Read-only libraries refuse D, R, M, G.
 
 ## Option 6 TSO subset
 
@@ -95,7 +116,9 @@ R Rename Member · C Copy pop-up · M Move pop-up. Read-only libraries refuse D,
 DATASET_INFO_VIEWED DATASET_ALLOCATED DATASET_DELETED DATASET_RENAMED MEMBER_OPENED MEMBER_CREATED MEMBER_RENAMED
 MEMBER_DELETED MEMBER_COPIED MEMBER_MOVED MEMBER_SAVED EDIT_CANCELLED EDITOR_LINE_INSERTED EDITOR_LINE_DELETED
 EDITOR_LINE_REPEATED EDITOR_LINES_COPIED EDITOR_LINES_MOVED EDITOR_LINES_EXCLUDED EDITOR_TEXT_CHANGED EDITOR_FIND
-EDITOR_CHANGE EDITOR_SCROLLED TSO_COMMAND_ENTERED SETTING_CHANGED ENVIRONMENT_RESET EXPLAIN_REQUESTED MESSAGE_SHOWN`
+EDITOR_CHANGE EDITOR_SCROLLED TSO_COMMAND_ENTERED SETTING_CHANGED ENVIRONMENT_RESET EXPLAIN_REQUESTED MESSAGE_SHOWN
+DATASET_COPIED DATASET_MOVED DATASET_COMPRESSED MEMBER_INFO_VIEWED MEMBER_STATS_RESET LIST_SORTED LIST_FIND
+LIST_LINES_EXCLUDED LIST_RESET LIST_COMMANDS_PROCESSED`
 — see `src/engine/types.ts` for payloads.
 
 ## Split screen (logical screens)
