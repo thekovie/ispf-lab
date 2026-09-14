@@ -13,6 +13,7 @@ export type TsoCommand =
   | { kind: "time" }
   | { kind: "help" }
   | { kind: "ispf" }
+  | { kind: "submit"; dsn: string }
   | { kind: "invalid"; raw: string; error: string };
 
 export function parseTsoCommand(raw: string): TsoCommand {
@@ -52,6 +53,10 @@ export function parseTsoCommand(raw: string): TsoCommand {
     case "ISPF":
     case "PDF":
       return { kind: "ispf" };
+    case "SUBMIT":
+    case "SUB":
+      if (!args[0]) return { kind: "invalid", raw: s, error: "DATA SET NAME REQUIRED" };
+      return { kind: "submit", dsn: strip(args[0]) };
     default:
       return { kind: "invalid", raw: s, error: `COMMAND ${verb} NOT FOUND` };
   }

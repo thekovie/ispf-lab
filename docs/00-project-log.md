@@ -357,3 +357,24 @@ profiles; old catalog-only helpers removed; README, docs/02, CHANGELOG.
 **Verified by** · `tests/persistence/labBundle.test.ts` (4): round trip into a fresh adapter, v0.1 migration,
 rejection reasons (JSON, format, version, names, record types, userid, size), unknown-key stripping; 198 tests;
 check/build green.
+
+## Phase 16 — Virtual JES and SDSF  (2026-09-15, branch `feat/jes-sdsf`)
+
+**Goal** · Priority 5: the submit / SDSF / debug loop.
+
+**Audit** · JES, SUBMIT, SDSF all MISSING (editor SUBMIT and member-list J were placeholders).
+
+**Built**
+- `src/jes/{types,jcl,programs,submit}.ts` — see `docs/10-jes-sdsf.md`.
+- `engine/jesActions.ts` (`submitRecords`, `browseJobOutput`, `purge`), `screens/sdsf.ts` (menu, ST/O with the shared
+  multi-command runner, job data sets, purge confirm), primary option `S` (+ `SD`, `SDSF`, `M.5`, `=S`), editor
+  `SUBMIT`, member-list `J`, `TSO SUBMIT`; `state.jes` + `LOAD_JES`; `persistence/jesStore.ts`
+  (`ispf-lab:jes:v1:<USERID>`, sanitised); lab bundle `jobs` field; seed `PAYRPT`.
+- Glossary: JES, SDSF, job, JCL, JCL ERROR, condition code, JESMSGLG, SUBMIT. docs/02/03/04/10, ADR 0012, CHANGELOG.
+
+**Decisions** · ADR 0012. PAYRPT uses a genuine JCL error (uncataloged SYSUT1) instead of the spec's IEFBR15,
+because a missing module is an S806 abend on z/OS; S806 is simulated too.
+
+**Verified by** · `tests/jes/jes.test.ts` (11: parser, errors, column 72, IEFBR14 allocation/deletion, IEBGENER,
+SORT, IDCAMS, JCL ERROR, IEF212I, S806) and `tests/engine/sdsf.test.ts` (8: SUBMIT/J/TSO SUBMIT, option S and
+=S, ST, ?/S browse, Day-One SJ→fix→CC 0000→SYSUT2, S/P/OWNER/PREFIX, LOG, persistence + reset); 217 tests.

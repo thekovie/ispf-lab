@@ -344,6 +344,62 @@ export const GLOSSARY: GlossaryEntry[] = [
     detail: "ISPF keeps a stack of the commands you entered (25 in this simulator). RETRIEVE or PF12 on most panels refills the command line with the most recent one, then the one before, and so on. In Edit PF12 is Cancel, so type RETRIEVE there.",
     readMore: { resource: "ispf-users-guide", section: "RETRIEVE command" },
   },
+  {
+    term: "JES",
+    aliases: ["jes2", "jes3", "job entry subsystem", "spool"],
+    summary: "Job Entry Subsystem - the z/OS component that receives submitted jobs, queues them, runs them through initiators and keeps their output on the spool.",
+    detail: "JES2 (most sites) or JES3 reads the JCL, converts it, schedules the job on an initiator by class, and collects everything the job prints - JESMSGLG, JESJCL, JESYSMSG and SYSOUT data sets - on the spool until it is printed or purged. SDSF is the window onto JES. In this simulator the job runs to completion the instant you submit it; on a real system it waits in the input queue for an initiator.",
+    readMore: { resource: "redbook", section: "Chapter 6 Using JCL, JES and SDSF" },
+  },
+  {
+    term: "SDSF",
+    aliases: ["system display and search facility", "spool display", "option s", "sdsf st"],
+    summary: "System Display and Search Facility - the ISPF application for looking at jobs, their status, their output and the system log.",
+    detail: "ST shows the status of your jobs (JOBNAME, JobID, Owner, Max-RC), O the output queue, DA active users, LOG the system log. On a job line type S to browse all its output, ? to list its spool data sets, P to purge it, SJ to edit the JCL that was submitted. OWNER and PREFIX filter the list. The option letter that opens SDSF varies by site: S, SD or M.5 are common. Everything here is labelled (SIMULATED).",
+    readMore: { resource: "redbook", section: "Chapter 6.3 SDSF" },
+  },
+  {
+    term: "job",
+    aliases: ["batch job", "job id", "jobid", "job00001", "jobname"],
+    summary: "A unit of batch work described by JCL: a JOB statement, one or more EXEC steps, and DD statements for their data sets. JES gives it a job id like JOB00001.",
+    detail: "The job name comes from the JOB statement (site rules often want your userid plus a letter). Each EXEC step runs one program and ends with a condition code; the highest is the job's Max-RC. A job that never ran because its JCL was wrong shows JCL ERROR; one that failed while running shows an ABEND code.",
+    readMore: { resource: "redbook", section: "Chapter 6.1 Batch processing and JCL" },
+  },
+  {
+    term: "JCL",
+    aliases: ["job control language", "jcl statement", "exec", "dd statement"],
+    summary: "Job Control Language - the statements (JOB, EXEC, DD) that tell z/OS which programs to run and which data sets they use.",
+    detail: "Every statement starts with // in columns 1-2; //* is a comment; a null // ends the job. Operands end at the first blank; a trailing comma continues on the next line, which must start with // and a blank. Columns 73-80 are ignored - a statement that runs past column 71 is a classic JCL ERROR. EXEC PGM=name runs a program; DD ties a ddname the program expects (SYSUT1, SYSPRINT ...) to a data set, SYSOUT=* (the spool) or in-stream data (DD * ... /*).",
+    readMore: { resource: "redbook", section: "Chapter 6.2 JCL" },
+  },
+  {
+    term: "JCL ERROR",
+    aliases: ["jcl error", "iefc452i", "job not run", "iefc605i", "ief212i"],
+    summary: "The job did not run (or a step was skipped) because JES or the allocation routines rejected the JCL: a misspelled statement, a missing continuation, an unknown keyword or a data set that does not exist.",
+    detail: "Converter errors (IEFC605I UNIDENTIFIED OPERATION FIELD, IEFC621I EXPECTED CONTINUATION NOT RECEIVED, IEFC630I UNIDENTIFIED KEYWORD) stop the job before any step runs: JESMSGLG says IEFC452I JOB NOT RUN - JCL ERROR and JESYSMSG lists the statement numbers. Allocation errors (IEF212I DATA SET NOT FOUND) happen when a step starts: that step and the following ones show STEP WAS NOT EXECUTED. Read JESYSMSG first - it names the statement.",
+    readMore: { resource: "redbook", section: "Chapter 6.4 Reading job output" },
+  },
+  {
+    term: "condition code",
+    aliases: ["cond code", "cc 0000", "max-rc", "return code", "rc=0000", "abend"],
+    summary: "The number a program returns when a step ends (0 = fine, 4 = warning, 8+ = error by convention); SDSF shows the highest one as Max-RC, e.g. CC 0000.",
+    detail: "IEF142I STEP WAS EXECUTED - COND CODE 0004 in JESYSMSG is the per-step value. An ABEND (abnormal end) is different: the step was cut short by the system with a code like S806 (module not found) or S0C7 (data exception); SDSF shows ABEND S806 instead of a CC.",
+    readMore: { resource: "redbook", section: "Chapter 6.4 Reading job output" },
+  },
+  {
+    term: "JESMSGLG",
+    aliases: ["jesjcl", "jesysmsg", "job log", "spool data set", "sysout"],
+    summary: "The three data sets JES keeps for every job: JESMSGLG (job log with $HASP and IEF messages and step return codes), JESJCL (the JCL as read, numbered) and JESYSMSG (allocation, JCL error and abend messages). SYSOUT DDs add the program output.",
+    detail: "In SDSF type ? next to a job to list them and S to browse one. When something went wrong, JESYSMSG has the reason and the statement number; JESMSGLG has the summary line ($HASP395 ... ENDED - RC=0000 or JCL ERROR).",
+    readMore: { resource: "redbook", section: "Chapter 6.4 Reading job output" },
+  },
+  {
+    term: "SUBMIT",
+    aliases: ["sub", "submit command", "line command j"],
+    summary: "Sends JCL to JES: SUBMIT in the editor, J next to a member in a member list, or TSO SUBMIT dsn(member).",
+    detail: "ISPF answers IKJ56250I JOB name(JOB00001) SUBMITTED. Real ISPF submits the data set on disk, so an unsaved change is not submitted; this simulator submits the editor buffer so you can experiment, and says so in the docs. Then go to SDSF (option S) to see how the job ended.",
+    readMore: { resource: "redbook", section: "Chapter 6.2 JCL" },
+  },
 ];
 
 export function explainTerm(query: string): GlossaryEntry | undefined {

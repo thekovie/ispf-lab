@@ -1,9 +1,10 @@
 /**
  * Option 6: TSO command shell (subset). Reference: docs/03-ispf-behaviour-reference.md §Option 6.
  */
-import { deleteDataset, getDataset, listMembers, renameDataset, searchLevel } from "@/catalog/catalog";
+import { deleteDataset, getDataset, listMembers, parseDsnRef, readRecords, renameDataset, searchLevel } from "@/catalog/catalog";
 import { parseTsoCommand } from "@/parsers/tsoCommand";
 import { blank, commandRow, padRow, t, titleRow } from "../rows";
+import { submitRecords } from "../jesActions";
 import { pop, push } from "../navigation";
 import type { ScreenHandler, SimEvent, SimulatorState, StepResult } from "../types";
 
@@ -123,6 +124,19 @@ export function runTsoCommand(state: SimulatorState, raw: string, fromMenu: bool
     case "ispf":
       lines = ["ISPF IS ALREADY ACTIVE", "***"];
       break;
+    case "submit": {
+      const ref = parseDsnRef(qualify(cmd.dsn));
+      const read: { records?: string[]; error?: string } = ref ? readRecords(state.catalog, ref) : { error: "INVALID DATA SET NAME" };
+      if (!ref || read.error) {
+        lines = [`IKJ56228I DATA SET ${qualify(cmd.dsn)} NOT IN CATALOG OR CATALOG CAN NOT BE ACCESSED`, "***"];
+        break;
+      }
+      const sub = submitRecords(state, read.records ?? [], ref, "TSO_COMMAND");
+      next = { ...sub.state, message: undefined };
+      events.push(...sub.events);
+      lines = [sub.state.message?.long?.split(".")[0] ?? "SUBMITTED", "***"];
+      break;
+    }
   }
   const output = [...previous, `> ${raw}`, ...lines];
   const frame = { id: "TSO_COMMAND" as const, output };

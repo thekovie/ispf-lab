@@ -78,6 +78,11 @@ export function frameForPath(path: string[]): { frame: ScreenFrame; via: ScreenF
       return { frame: { id: "DSLIST_SEARCH" }, via: [util] };
     case "6":
       return { frame: { id: "TSO_COMMAND", output: [] }, via: [] };
+    case "S":
+    case "SD":
+    case "SDSF":
+    case "M.5":
+      return { frame: { id: "SDSF_MENU" }, via: [] };
     case "4":
     case "5":
     case "7":

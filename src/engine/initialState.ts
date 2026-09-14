@@ -1,4 +1,5 @@
 import { buildSeed } from "@/catalog/seed";
+import { EMPTY_JES } from "@/jes/types";
 import { DEFAULT_SETTINGS } from "@/persistence/settingsStore";
 import type { SimulatorState } from "./types";
 
@@ -17,6 +18,7 @@ export function createInitialState(userid = DEFAULT_USERID, today = "2026/01/01"
     screens: [],
     activeScreen: 0,
     editProfiles: {},
+    jes: EMPTY_JES,
     retrieveStack: [],
     retrieveIndex: 0,
     loggedIn: false,

@@ -43,6 +43,10 @@ manual reference; corrections go here first, then into code and tests.
 | MEMBER_LIST | Command, one command column per row | line commands below; primary `S/E/B/V name` (S/E create in edit lists), `LOCATE`, `END` | 1, 3, 7, 8 |
 | DATASET_INFO | — | Enter/PF3 return; `short` frames (DSLIST `S`) show general data only | 1, 3 |
 | MEMBER_INFO | — | member statistics (VV.MM, created, changed, size, ID); Enter/PF3 return | 1, 3 |
+| SDSF_MENU (S / SD / SDSF / M.5) | Option | `ST`, `O` (also `I`→ST, `H`→O with a note), `LOG`, `END`; `DA`/`PR`/`INIT` not available | 1, 3 |
+| SDSF_STATUS (ST / O) | Command, NP column per job | actions `S` `?` `P` `SJ` `=`; primary `OWNER`, `PREFIX`, `SORT JOBNAME|JOBID|STATUS`, `FIND`, `ST`, `O`, `LOG`, `END`; multi-command like DSLIST | 1, 3, 7, 8 |
+| SDSF_JOB_DS (`?`) | NP column per spool data set | `S` browses JESMSGLG / JESJCL / JESYSMSG / SYSOUT DDs | 1, 3 |
+| CONFIRM_PURGE (`P`) | Confirm Y/N | purges the job; PF3/12 cancel | 3, 12 |
 | CONFIRM_DELETE | Confirm (Y/N, default Y) | Y deletes (`MEMBER DELETED` / `DATA SET DELETED`), N cancels | 1, 3/12 cancel |
 | RENAME | New name | `MEMBER RENAMED` / `DATA SET RENAMED`; `INVALID MEMBER NAME`, `MEMBER ALREADY EXISTS`, `DATA SET ALREADY EXISTS` | 1, 3/12 cancel |
 | COPY_MOVE (member-list pop-up) | To data set | as 3.3 | 1, 3/12 cancel |
@@ -95,7 +99,15 @@ command. Read-only libraries refuse D, R, M, G.
 ## Option 6 TSO subset
 
 `LISTCAT LEVEL(x)` (catalog entries, emits `DATASET_SEARCHED`), `LISTDS 'dsn' [MEMBERS]`, `DELETE 'dsn'`,
-`RENAME 'old' 'new'`, `TIME`, `HELP`, `ISPF`. Unquoted names get the userid prefixed. Unknown → `COMMAND xxx NOT FOUND`.
+`RENAME 'old' 'new'`, `SUBMIT 'dsn(member)'` (IKJ56250I / IKJ56228I), `TIME`, `HELP`, `ISPF`. Unquoted names get the userid prefixed. Unknown → `COMMAND xxx NOT FOUND`.
+
+## Virtual JES and SDSF (SIMULATED)
+
+See `docs/10-jes-sdsf.md`. Entry points: editor `SUBMIT` (submits the buffer — deviation), member-list `J`, `TSO SUBMIT`.
+The job runs to completion inside the reducer; message `JOB name(JOBnnnnn) SUBMITTED`; events `JOB_SUBMITTED`,
+`JOB_COMPLETED{status,maxRc,abend}`, `JCL_ERROR_GENERATED`, `JOB_STATUS_OPENED`, `JOB_OUTPUT_OPENED{jobId,ddname}`,
+`JOB_PURGED`. Primary option `S` (also `SD`, `SDSF`, `M.5`, `=S`) opens the SDSF menu; every SDSF title carries
+`(SIMULATED)`. Jobs persist per userid (`ispf-lab:jes:v1:<USERID>`) and are cleared by *Reset training environment*.
 
 ## Catalog rules
 
@@ -106,7 +118,7 @@ command. Read-only libraries refuse D, R, M, G.
 
 ## Seed catalog (per HLQ)
 
-`<HLQ>.JCL(HELLO COPYJOB SORTJOB)` · `<HLQ>.COBOL(HELLO CUSTOMER)` · `<HLQ>.REXX(TEST01 HELLO)` ·
+`<HLQ>.JCL(HELLO COPYJOB PAYRPT SORTJOB)` — PAYRPT is the Day-One challenge (references an uncataloged data set) · `<HLQ>.COBOL(HELLO CUSTOMER)` · `<HLQ>.REXX(TEST01 HELLO)` ·
 `<HLQ>.DATA(CUSTOMER EMPLOYEE)` · `<HLQ>.NOTES.TXT` (PS) · `<HLQ>.LOADLIB` (empty PDS, RECFM U) ·
 `SYS1.PARMLIB(IEASYS00 COMMND00 PROG00)` and `SYS1.PROCLIB(COBUCL SORTD)` read-only on SYSRES.
 
@@ -118,7 +130,8 @@ MEMBER_DELETED MEMBER_COPIED MEMBER_MOVED MEMBER_SAVED EDIT_CANCELLED EDITOR_LIN
 EDITOR_LINE_REPEATED EDITOR_LINES_COPIED EDITOR_LINES_MOVED EDITOR_LINES_EXCLUDED EDITOR_TEXT_CHANGED EDITOR_FIND
 EDITOR_CHANGE EDITOR_SCROLLED TSO_COMMAND_ENTERED SETTING_CHANGED ENVIRONMENT_RESET EXPLAIN_REQUESTED MESSAGE_SHOWN
 DATASET_COPIED DATASET_MOVED DATASET_COMPRESSED MEMBER_INFO_VIEWED MEMBER_STATS_RESET LIST_SORTED LIST_FIND
-LIST_LINES_EXCLUDED LIST_RESET LIST_COMMANDS_PROCESSED`
+LIST_LINES_EXCLUDED LIST_RESET LIST_COMMANDS_PROCESSED JOB_SUBMITTED JOB_COMPLETED JCL_ERROR_GENERATED
+JOB_STATUS_OPENED JOB_OUTPUT_OPENED JOB_PURGED`
 — see `src/engine/types.ts` for payloads.
 
 ## Split screen (logical screens)

@@ -17,3 +17,4 @@ Write a new ADR the moment a non-obvious choice is made; never rewrite history â
 | [0010](0010-edit-history-snapshots.md) | UNDO via per-interaction snapshots; edit profiles per data-set type, persisted separately |
 | [0011](0011-special-lines.md) | =COLS>/=BNDS>/=PROF> are session-only rows with negative ids |
 | [0013](0013-lab-bundle.md) | Export/Import Lab as one versioned, structurally validated bundle |
+| [0012](0012-virtual-jes.md) | Jobs run to completion inside the reducer; SDSF is a simulated, labelled read model |

@@ -164,9 +164,10 @@ describe("member list I, G, J, =", () => {
     expect(m).toMatchObject({ version: 1, mod: 0, modifiedBy: "USER01", createdAt: s.state.today });
     expect(s.has("MEMBER_STATS_RESET")).toBe(true);
   });
-  it("J is not available yet; = repeats", () => {
+  it("J submits the member; = repeats", () => {
     const s = list().enter({ "cmd:HELLO": "J" });
-    expect(s.message).toBe("SUBMIT NOT AVAILABLE IN THIS TRAINING MODULE");
+    expect(s.message).toBe("JOB USER01H(JOB00001) SUBMITTED");
+    expect(s.has("JOB_SUBMITTED")).toBe(true);
     s.enter({ "cmd:HELLO": "G" }).enter({ "cmd:COPYJOB": "=" });
     expect(getMember(s.state.catalog, "USER01.JCL", "COPYJOB")!.mod).toBe(0);
     expect(s.message).toBe("STATISTICS RESET");
