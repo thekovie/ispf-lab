@@ -11,6 +11,23 @@ import { jumpTo, parseSystemCommand, pushRetrieve, retrieveCommand, returnToPrim
 import type { RenderedScreen, SimAction, SimEvent, SimulatorState, StepResult } from "./types";
 
 export function reduce(state: SimulatorState, action: SimAction): StepResult {
+  const r = reduceAction(state, action);
+  return action.type === "ENTER" || action.type === "PF" ? resumeParked(state, r) : r;
+}
+
+/**
+ * When END on a child panel lands back on a list panel that parked line commands (multi-command processing),
+ * let that panel continue them. Only a pop (shorter stack, different screen) qualifies.
+ */
+function resumeParked(prev: SimulatorState, r: StepResult): StepResult {
+  const next = r.state;
+  if (!next.loggedIn || next.stack.length >= prev.stack.length || next.activeScreen !== prev.activeScreen) return r;
+  const handler = handlerFor(next.screen);
+  const resumed = handler.onResume?.(next, next.screen) ?? null;
+  return resumed ? { state: resumed.state, events: [...r.events, ...resumed.events] } : r;
+}
+
+function reduceAction(state: SimulatorState, action: SimAction): StepResult {
   switch (action.type) {
     case "ENTER": {
       if (state.loggedIn) {

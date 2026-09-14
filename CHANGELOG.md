@@ -6,6 +6,9 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- DSLIST: line commands S (short information), CO/MO (3.3 prefilled, whole-data-set copy/move), X/NX, Z, =;
+  primary SORT/FIND/RFIND/EXCLUDE/RESET. Member list: I (Member Information panel), G (reset statistics), =, J
+  placeholder. Both lists process every line command per Enter, suspending around panels and resuming on PF3.
 - Editor: UNDO (SETUNDO/RECOVERY), persistent edit profiles per data-set type, `=COLS>`/`=BNDS>`/`=PROF>`
   special lines, BOUNDS honoured by FIND/CHANGE/EXCLUDE, NUMBER/UNNUM, STATS ON|OFF, AUTOSAVE ON|OFF PROMPT|NOPROMPT
   with the *Edit - Save or Cancel Changes* panel, FLIP, RESET EXCLUDED|SPECIAL|COMMAND|LABEL; RETRIEVE / F12 command

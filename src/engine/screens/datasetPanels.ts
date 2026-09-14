@@ -3,10 +3,11 @@
  * Reference: docs/03-ispf-behaviour-reference.md §3.1, §3.2, §Data set information.
  */
 import { getDataset, listMembers, parseDsnRef } from "@/catalog/catalog";
+import type { Dataset } from "@/catalog/types";
 import { blank, f, label, padRow, t, titleRow } from "../rows";
 import { fail, pop, push } from "../navigation";
 import { openRef } from "../open";
-import type { Fields, ScreenHandler, SimulatorState, StepResult } from "../types";
+import type { Fields, RenderedScreen, ScreenHandler, SimulatorState, StepResult } from "../types";
 
 function dsnFromFields(state: SimulatorState, fields: Fields): { raw: string } | { error: StepResult } {
   const other = (fields.other ?? "").trim();
@@ -155,7 +156,36 @@ export const datasetUtilityScreen: ScreenHandler<{ id: "DATASET_UTILITY" }> = {
   },
 };
 
-export const datasetInfoScreen: ScreenHandler<{ id: "DATASET_INFO"; dsn: string }> = {
+/** DSLIST `S`: the short form of Data Set Information (general data only, no space figures). */
+function shortInfo(ds: Dataset, members: number, msg: SimulatorState["message"]): RenderedScreen {
+  return {
+    title: "Data Set Information",
+    pfKeys: [{ key: 1, label: "Help" }, { key: 3, label: "Exit" }],
+    fields: [],
+    message: msg,
+    rows: [
+      titleRow("Data Set Information", msg?.short, msg?.severity === "error" ? "red" : "yellow"),
+      [label("Command ===> "), t("_".repeat(60), "dim")],
+      blank,
+      [label("Data Set Name  . . . . : "), t(ds.name, "white")],
+      blank,
+      [t("General Data", "white", true)],
+      [label("  Volume serial . . . : "), t(ds.volume, "green")],
+      [label("  Device type . . . . : "), t("3390", "green")],
+      [label("  Organization  . . . : "), t(ds.dsorg, "green")],
+      [label("  Record format . . . : "), t(ds.recfm, "green")],
+      [label("  Record length . . . : "), t(String(ds.lrecl), "green")],
+      [label("  Block size  . . . . : "), t(String(ds.blksize), "green")],
+      [label("  Data set name type  : "), t(ds.datasetType === "PDS" ? "PDS" : "", "green")],
+      [label("  Creation date . . . : "), t(ds.createdAt, "green")],
+      ...(ds.datasetType === "PDS" ? [[label("  Number of members . : "), t(String(members), "green")]] : []),
+      blank,
+      padRow("  Short information omits the space and utilisation figures shown by I.", "dim"),
+    ],
+  };
+}
+
+export const datasetInfoScreen: ScreenHandler<{ id: "DATASET_INFO"; dsn: string; short?: boolean }> = {
   help: [
     "Data Set Information shows the attributes the system keeps for a data set:",
     "organization (PO = partitioned, PS = sequential), record format, record",
@@ -166,6 +196,7 @@ export const datasetInfoScreen: ScreenHandler<{ id: "DATASET_INFO"; dsn: string 
     const msg = state.message;
     if (!ds) return { title: "Data Set Information", pfKeys: [{ key: 3, label: "Exit" }], fields: [], message: msg, rows: [titleRow("Data Set Information", "DATA SET NOT CATALOGED", "red")] };
     const members = ds.datasetType === "PDS" ? listMembers(ds).length : 0;
+    if (frame.short) return shortInfo(ds, members, msg);
     return {
       title: "Data Set Information",
       pfKeys: [{ key: 1, label: "Help" }, { key: 3, label: "Exit" }],

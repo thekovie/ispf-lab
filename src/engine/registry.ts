@@ -14,6 +14,7 @@ import { moveCopyScreen } from "./screens/moveCopy";
 import { dslistSearchScreen } from "./screens/dslistSearch";
 import { dslistResultsScreen } from "./screens/dslistResults";
 import { memberListScreen } from "./screens/memberList";
+import { memberInfoScreen } from "./screens/memberInfo";
 import { editorScreen } from "./screens/editor";
 import { autosavePromptScreen } from "./screens/autosavePrompt";
 import { confirmDeleteScreen, copyMovePopupScreen, messageScreen, renameScreen } from "./screens/dialogs";
@@ -37,6 +38,7 @@ const HANDLERS: Record<ScreenId, AnyHandler> = {
   DSLIST_RESULTS: dslistResultsScreen,
   DATASET_INFO: datasetInfoScreen,
   MEMBER_LIST: memberListScreen,
+  MEMBER_INFO: memberInfoScreen,
   EDIT: editorScreen,
   BROWSE: editorScreen,
   VIEW: editorScreen,

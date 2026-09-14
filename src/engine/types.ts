@@ -9,6 +9,17 @@ import type { EditProfiles } from "@/editor/profile";
 
 export type ListMode = "E" | "B" | "V" | "M";
 
+/** A line command parked on a list panel while a command that opened a panel is being processed. */
+export interface PendingListCommand {
+  key: string;
+  raw: string;
+}
+export type DslistSortField = "NAME" | "DSORG" | "RECFM" | "LRECL" | "VOLUME";
+export interface DslistSort {
+  field: DslistSortField;
+  descending: boolean;
+}
+
 export type ScreenFrame =
   | { id: "LOGIN" }
   | { id: "PRIMARY_OPTION_MENU" }
@@ -18,11 +29,12 @@ export type ScreenFrame =
   | { id: "LIBRARY_UTILITY" }
   | { id: "DATASET_UTILITY" }
   | { id: "ALLOCATE_DATASET"; dsn: string }
-  | { id: "MOVE_COPY" }
+  | { id: "MOVE_COPY"; prefill?: { option: "C" | "M"; from: string } }
   | { id: "DSLIST_SEARCH" }
-  | { id: "DSLIST_RESULTS"; level: string; top: number }
-  | { id: "DATASET_INFO"; dsn: string }
-  | { id: "MEMBER_LIST"; dsn: string; mode: ListMode; top: number }
+  | { id: "DSLIST_RESULTS"; level: string; top: number; sort?: DslistSort; excluded?: string[]; find?: string; lastCmd?: string; pending?: PendingListCommand[] }
+  | { id: "DATASET_INFO"; dsn: string; short?: boolean }
+  | { id: "MEMBER_LIST"; dsn: string; mode: ListMode; top: number; lastCmd?: string; pending?: PendingListCommand[] }
+  | { id: "MEMBER_INFO"; dsn: string; member: string }
   | { id: "EDIT" }
   | { id: "BROWSE" }
   | { id: "VIEW" }
@@ -105,7 +117,17 @@ export type SimEvent =
   | { type: "PF_KEY_PRESSED"; key: number; screen: ScreenId }
   | { type: "DATASET_SEARCHED"; level: string; results: number }
   | { type: "DATASET_OPENED"; dsn: string; mode: ListMode }
-  | { type: "DATASET_INFO_VIEWED"; dsn: string }
+  | { type: "DATASET_INFO_VIEWED"; dsn: string; short?: boolean }
+  | { type: "DATASET_COPIED"; from: string; to: string }
+  | { type: "DATASET_MOVED"; from: string; to: string }
+  | { type: "DATASET_COMPRESSED"; dsn: string }
+  | { type: "MEMBER_INFO_VIEWED"; dsn: string; member: string }
+  | { type: "MEMBER_STATS_RESET"; dsn: string; member: string }
+  | { type: "LIST_SORTED"; screen: ScreenId; field: string }
+  | { type: "LIST_FIND"; screen: ScreenId; text: string; found: boolean }
+  | { type: "LIST_LINES_EXCLUDED"; screen: ScreenId; count: number }
+  | { type: "LIST_RESET"; screen: ScreenId }
+  | { type: "LIST_COMMANDS_PROCESSED"; screen: ScreenId; count: number }
   | { type: "DATASET_ALLOCATED"; dsn: string; datasetType: "PDS" | "PS" }
   | { type: "DATASET_DELETED"; dsn: string }
   | { type: "DATASET_RENAMED"; from: string; to: string }
@@ -176,5 +198,7 @@ export interface ScreenHandler<F extends ScreenFrame = ScreenFrame> {
   render(state: SimulatorState, frame: F): RenderedScreen;
   onEnter(state: SimulatorState, frame: F, fields: Fields): StepResult;
   onPf?(state: SimulatorState, frame: F, key: number, fields: Fields): StepResult | null;
+  /** Called when PF3/END on a child panel lands back on this frame (used to resume parked line commands). */
+  onResume?(state: SimulatorState, frame: F): StepResult | null;
   help: string[];
 }
