@@ -8,6 +8,14 @@ manual reference; corrections go here first, then into code and tests.
 - Panels stack. Opening a panel pushes the current one; **PF3 / END** pops one.
 - Option paths: `3` then `4`, `3.4`, and `=3.4` all end in the same state (intermediate menus are pushed so PF3
   unwinds identically). `DSLIST` is an alias for `3.4`.
+- **Jump function** `=path` on any command line (system command, processed before the panel): typed fields are
+  transmitted first, an open editor is ended (saved when AUTOSAVE is ON; a failed save blocks the jump), the active
+  logical screen unwinds to the Primary Option Menu and the option is selected. `INVALID JUMP DESTINATION` for
+  unknown paths; unimplemented options give the not-available message. Event `JUMP_EXECUTED{path,from}`.
+- **RETURN / PF4** unwinds the active logical screen to the Primary Option Menu (same END processing);
+  `ALREADY AT PRIMARY MENU` when there. Event `RETURN_EXECUTED{from}`.
+- **Keylist**: every logged-on panel offers F1 Help, F2 Split, F4 Return, F9 Swap; the rest is panel-specific
+  (F12 = Cancel in the editor). The legend on the panel is authoritative.
 - `TSO <command>` on the Option line runs the command and opens the Command Shell with its output.
 - `EXPLAIN <term>` on any command line opens the glossary (simulator-only command).
 - Unimplemented options: `OPTION NOT AVAILABLE IN THIS TRAINING MODULE`. Unknown input: `INVALID OPTION`.

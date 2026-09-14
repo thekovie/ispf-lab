@@ -73,9 +73,7 @@ export const utilitiesScreen: ScreenHandler<{ id: "UTILITY_SELECTION" }> = {
         r = { state: { ...state, message: undefined }, events: [] };
         break;
       case "path":
-        r = cmd.jump
-          ? openPath({ ...state, stack: [], screen: { id: "PRIMARY_OPTION_MENU" } }, cmd.path, "UTILITY_SELECTION")
-          : openPath(state, ["3", ...cmd.path], "UTILITY_SELECTION");
+        r = openPath(state, ["3", ...cmd.path], "UTILITY_SELECTION");
         break;
       case "exit":
         r = pop(state);

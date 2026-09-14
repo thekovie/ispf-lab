@@ -124,6 +124,8 @@ export type SimEvent =
   | { type: "SCREEN_SPLIT"; screens: number; active: number }
   | { type: "SCREEN_SWAPPED"; from: number; to: number; screens: number }
   | { type: "SCREEN_CLOSED"; screens: number; active: number }
+  | { type: "JUMP_EXECUTED"; path: string; from: ScreenId }
+  | { type: "RETURN_EXECUTED"; from: ScreenId }
   | { type: "EXPLAIN_REQUESTED"; term: string }
   | { type: "MESSAGE_SHOWN"; text: string; severity: "info" | "error" };
 

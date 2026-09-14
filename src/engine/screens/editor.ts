@@ -43,7 +43,7 @@ export const editorScreen: ScreenHandler<Frame> = {
     "R repeat, C copy, M move, A/B after/before, X exclude, DD/CC/MM/XX blocks.",
     "The Command ===> line takes PRIMARY commands: SAVE, CANCEL, FIND str,",
     "CHANGE old new [ALL], RESET, LOCATE n, TOP, BOTTOM, UP/DOWN/LEFT/RIGHT.",
-    "Nothing happens until you press Enter. PF3 saves (if changed) and exits;",
+    "Nothing happens until you press Enter. PF3 ends and, with AUTOSAVE ON, saves;",
     "PF7/PF8 scroll; PF5 repeats FIND; PF6 repeats CHANGE; PF12 cancels.",
     "Browse is read-only; View is editable but cannot SAVE.",
   ],
@@ -274,6 +274,22 @@ function saveSession(state: SimulatorState, thenExit: boolean): StepResult {
     return { state: p.state, events: [...events, ...p.events] };
   }
   return { state: { ...saved, message: { short: "MEMBER SAVED", long: label, severity: "info" } }, events };
+}
+
+/**
+ * END processing without popping the panel — used by the jump function and RETURN, which end the
+ * current dialog before navigating. Returns `blocked` when the save fails (e.g. read-only library),
+ * so the caller can leave the user in the editor with the message.
+ */
+export function closeEditorForNavigation(state: SimulatorState): { state: SimulatorState; events: SimEvent[]; blocked?: StepResult } {
+  const s = state.editor;
+  if (!s) return { state, events: [] };
+  if (s.mode === "EDIT" && (s.dirty || s.isNew)) {
+    const saved = saveSession(state, false);
+    if (saved.state.message?.severity === "error") return { state, events: [], blocked: saved };
+    return { state: { ...saved.state, editor: undefined, activeMember: undefined }, events: saved.events };
+  }
+  return { state: { ...state, editor: undefined, activeMember: undefined }, events: [] };
 }
 
 function endSession(state: SimulatorState): StepResult {

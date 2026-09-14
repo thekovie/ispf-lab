@@ -13,3 +13,9 @@ Also rendered at `/resources` from `src/content/resources.ts` (keep both in sync
 | `mainframestechhelp` | [ISPF Tutorial](https://www.mainframestechhelp.com/tutorials/ispf/) | Mainframestechhelp | Topic order Settings → 3.1/3.2/3.3/3.4 → member lists → editor | Modules 2–4 |
 
 Also consulted during planning: [Mainframe Master – Allocating data sets](https://www.mainframemaster.com/tutorials/tso-ispf/ispf-allocate-datasets).
+
+## Acknowledgement
+
+[lspf](https://github.com/daniel64/lspf) (daniel64, GPL) — an independent open-source ISPF-like dialogue manager for
+Linux — was used as a reference and source of inspiration for interaction ideas. No lspf code is incorporated; see
+`docs/09-lspf-comparison.md`. lspf is not affiliated with ISPF Lab or IBM.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Sim } from "./harness";
-import { MAX_SCREENS, allSessions, describeSession, parseSystemCommand } from "@/engine/splitScreen";
+import { MAX_SCREENS, allSessions, describeSession } from "@/engine/splitScreen";
+import { parseSystemCommand } from "@/engine/systemCommands";
 
 describe("system command parsing", () => {
   it("recognises SPLIT, START and SWAP variants", () => {

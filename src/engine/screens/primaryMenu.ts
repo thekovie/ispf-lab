@@ -28,7 +28,8 @@ export const primaryMenuScreen: ScreenHandler<{ id: "PRIMARY_OPTION_MENU" }> = {
     "The Primary Option Menu is the home panel of ISPF.",
     "Type an option number on the Option ===> line and press Enter.",
     "You can chain options: 3.4 opens Utilities (3) then Data Set List (4).",
-    "=3.4 jumps there from any panel. PF3 (End) returns to the previous panel.",
+    "=3.4 jumps there from any panel; RETURN (PF4) comes straight back here.",
+    "PF3 (End) returns to the previous panel one step at a time.",
     "X or PF3 here logs you off.",
   ],
   render(state) {

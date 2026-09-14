@@ -115,9 +115,30 @@ export const GLOSSARY: GlossaryEntry[] = [
   {
     term: "PF3",
     aliases: ["f3", "end", "pf keys", "pf key", "function keys"],
-    summary: "Program Function key 3 = End: close the current panel and return to the previous one; in Edit it saves first.",
-    detail: "Other common keys: PF1 Help, PF5 repeat find, PF6 repeat change, PF7/PF8 scroll up/down, PF10/PF11 scroll left/right, PF12 Cancel. The legend at the bottom of each panel lists the active keys.",
+    summary: "Program Function key 3 = End: close the current panel and return to the previous one. In Edit, END saves first when the profile has AUTOSAVE ON (the usual default).",
+    detail: "Other default keys: PF1 Help, PF2 Split, PF4 Return, PF5 repeat find, PF6 repeat change, PF7/PF8 scroll up/down, PF9 Swap, PF10/PF11 scroll left/right, PF12 Cancel (Edit) or Retrieve (elsewhere). PF-key assignments can vary by panel and keylist: check the function-key legend shown on the active panel.",
     readMore: { resource: "redbook", section: "Chapter 4.4.4 Using PF keys" },
+  },
+  {
+    term: "keylist",
+    aliases: ["key list", "pf key assignments", "function keys vary"],
+    summary: "The table that says what each PF key does on a panel. PF-key assignments can vary by panel and keylist: check the function-key legend shown on the active panel.",
+    detail: "ISPF ships default keylists (F1 Help, F2 Split, F3 End, F4 Return, F5 Rfind, F6 Rchange, F7 Up, F8 Down, F9 Swap, F10 Left, F11 Right, F12 Cancel/Retrieve) but applications and installations override them - the editor, for example, uses F12 for Cancel while most other panels use it for Retrieve. KEYLIST on a real system lets you view and change them.",
+    readMore: { resource: "ispf-users-guide", section: "Working with function keys and keylists" },
+  },
+  {
+    term: "jump",
+    aliases: ["jump function", "=3.4", "=", "equals sign"],
+    summary: "=option on any command line ends the current dialog and selects that option from the Primary Option Menu, e.g. =3.4 or =2.",
+    detail: "The jump function is RETURN followed by the option: an open editor session is ended first (saved when AUTOSAVE is ON), the panel chain is unwound, and the new option is selected. Only the active logical screen is affected.",
+    readMore: { resource: "ispf-users-guide", section: "Using the jump function" },
+  },
+  {
+    term: "RETURN",
+    aliases: ["pf4", "f4", "return command"],
+    summary: "RETURN (PF4) ends every panel of the current chain and takes you back to the Primary Option Menu in one step.",
+    detail: "Compare: PF3 (END) backs out one panel at a time; RETURN goes all the way home; =option is RETURN plus a new selection. On a real system RETURN may stop at the panel where a nested dialog started.",
+    readMore: { resource: "ispf-users-guide", section: "Using the RETURN command" },
   },
   {
     term: "Enter",
@@ -198,7 +219,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     term: "SAVE",
     aliases: ["save command"],
     summary: "Write the editor buffer to the member and stay in the editor.",
-    detail: "Updates the member statistics. PF3 also saves if anything changed, then ends. SAVE is refused in Browse and View.",
+    detail: "Updates the member statistics. PF3 (END) also saves changed data when AUTOSAVE is ON in the edit profile, then ends. SAVE is refused in Browse and View.",
   },
   {
     term: "CANCEL",

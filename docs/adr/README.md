@@ -13,3 +13,4 @@ Write a new ADR the moment a non-obvious choice is made; never rewrite history â
 | [0006](0006-vitest.md) | Vitest with jsdom; engine-level tests over DOM tests |
 | [0007](0007-desktop-gate.md) | Simulator gated to â‰¥1024 px + fine pointer; landing usable everywhere |
 | [0008](0008-landing-as-terminal.md) | Landing page in ISPF grammar with a live engine-driven hero |
+| [0009](0009-jump-as-system-command.md) | Jump, RETURN, split-screen and retrieve are system commands processed before the panel |

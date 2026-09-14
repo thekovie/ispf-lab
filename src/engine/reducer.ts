@@ -6,20 +6,21 @@
 import { buildSeed } from "@/catalog/seed";
 import { push } from "./navigation";
 import { handlerFor } from "./registry";
-import { parseSystemCommand, splitScreen, swapScreen } from "./splitScreen";
+import { splitScreen, swapScreen } from "./splitScreen";
+import { jumpTo, parseSystemCommand, returnToPrimary } from "./systemCommands";
 import type { RenderedScreen, SimAction, SimEvent, SimulatorState, StepResult } from "./types";
 
 export function reduce(state: SimulatorState, action: SimAction): StepResult {
   switch (action.type) {
     case "ENTER": {
       if (state.loggedIn) {
-        // ISPF system commands (SPLIT, SWAP, START) are processed before the panel sees them.
+        // ISPF system commands (=jump, RETURN, SPLIT, SWAP, START) are processed before the panel sees them.
         const raw = action.fields.option ?? action.fields.command;
         const sys = parseSystemCommand(raw);
         if (sys) {
           const drafts = { ...action.fields, option: "", command: "" };
-          const r = sys.kind === "swap" ? swapScreen(state, sys.target, drafts) : splitScreen(state, drafts);
-          return { state: r.state, events: [{ type: "COMMAND_ENTERED", screen: state.screen.id, command: (raw ?? "").trim().toUpperCase() }, ...r.events] };
+          const r = runSystemCommand(state, sys, drafts);
+          if (r) return { state: r.state, events: [{ type: "COMMAND_ENTERED", screen: state.screen.id, command: (raw ?? "").trim().toUpperCase() }, ...r.events] };
         }
       }
       const handler = handlerFor(state.screen);
@@ -28,8 +29,8 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
     case "PF": {
       const handler = handlerFor(state.screen);
       const pressed: SimEvent = { type: "PF_KEY_PRESSED", key: action.key, screen: state.screen.id };
-      if (state.loggedIn && (action.key === 2 || action.key === 9)) {
-        const r = action.key === 2 ? splitScreen(state, action.fields) : swapScreen(state, "NEXT", action.fields);
+      if (state.loggedIn && (action.key === 2 || action.key === 4 || action.key === 9)) {
+        const r = action.key === 2 ? splitScreen(state, action.fields) : action.key === 4 ? runSystemCommand(state, { kind: "return" }, { ...action.fields, command: "", option: "" })! : swapScreen(state, "NEXT", action.fields);
         return { state: r.state, events: [pressed, ...r.events] };
       }
       if (action.key === 1) {
@@ -91,10 +92,32 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
   }
 }
 
+/** Returns null for system commands handled elsewhere (RETRIEVE arrives in Priority 2). */
+function runSystemCommand(state: SimulatorState, sys: NonNullable<ReturnType<typeof parseSystemCommand>>, drafts: Record<string, string>): StepResult | null {
+  switch (sys.kind) {
+    case "jump":
+    case "return": {
+      // The screen is transmitted first: typed-over records and prefix commands on an editor panel are applied
+      // before the dialog is ended, exactly as they would be by an Enter with the same command.
+      const applied = state.editor ? handlerFor(state.screen).onEnter(state, state.screen, drafts) : { state, events: [] };
+      const r = sys.kind === "jump" ? jumpTo(applied.state, sys.path) : returnToPrimary(applied.state);
+      return { state: r.state, events: [...applied.events, ...r.events] };
+    }
+    case "swap":
+      return swapScreen(state, sys.target, drafts);
+    case "split":
+    case "start":
+      return splitScreen(state, drafts);
+    default:
+      return null;
+  }
+}
+
 export function render(state: SimulatorState): RenderedScreen {
   const screen = handlerFor(state.screen).render(state, state.screen);
   if (!state.loggedIn) return screen;
   // Split-screen keys are available on every panel once logged on (ISPF default key table).
-  const pfKeys = [...screen.pfKeys, { key: 2, label: "Split" }, { key: 9, label: "Swap" }].sort((a, b) => a.key - b.key);
+  // ISPF default keylist: F2 Split, F4 Return, F9 Swap are available on every panel; the rest is panel-specific.
+  const pfKeys = [...screen.pfKeys, { key: 2, label: "Split" }, { key: 4, label: "Return" }, { key: 9, label: "Swap" }].sort((a, b) => a.key - b.key);
   return { ...screen, pfKeys };
 }

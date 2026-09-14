@@ -11,9 +11,10 @@ const GENERAL = [
   "Keyboard summary:",
   "  Enter      process what you typed on this panel",
   "  Tab        move to the next input field (Shift+Tab: previous)",
-  "  PF1        help for the current panel        PF3   end / return",
-  "  PF7 / PF8  scroll backward / forward          PF10 / PF11  scroll left / right",
-  "  PF12       cancel (where offered)",
+  "  PF1  help    PF2  split    PF3  end (back one panel)    PF4  return to primary",
+  "  PF7 / PF8  scroll backward / forward   PF9  swap   PF10 / PF11  scroll left / right",
+  "  PF12 cancel in Edit, retrieve elsewhere.  =option jumps, RETURN goes home.",
+  "  PF-key assignments can vary by panel and keylist: check the legend on the panel.",
   "",
   "Type EXPLAIN <term> on any command line (e.g. EXPLAIN PDS) for a glossary entry.",
 ];
