@@ -6,6 +6,12 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Jump function `=option` from any panel (system command layer), `RETURN` / PF4, F4 in every legend; F12 documented
+  as Cancel in Edit / Retrieve elsewhere; keylist glossary entry; lspf listed as a reference.
+
+### Changed
+- PF3 is no longer described as unconditionally saving: it ends, and saves when AUTOSAVE is ON.
+- Line endings normalised to LF via `.gitattributes`.
 - Split-screen mode: PF2 SPLIT, PF9 SWAP, START, SWAP n/PREV/LIST, SWAPBAR row, per-screen panel stacks and
   editor sessions, PF3 ends a screen; lesson 15 "Working in two screens"; glossary entries SPLIT and SWAP.
 

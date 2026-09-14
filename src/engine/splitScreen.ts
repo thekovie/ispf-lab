@@ -10,25 +10,6 @@ import { withMessage } from "./navigation";
 
 export const MAX_SCREENS = 8;
 
-export type SystemCommand = { kind: "split" } | { kind: "start" } | { kind: "swap"; target: "NEXT" | "PREV" | "LIST" | number };
-
-/** Commands ISPF processes itself, before the panel sees them. */
-export function parseSystemCommand(raw: string | undefined): SystemCommand | null {
-  const tokens = (raw ?? "").trim().toUpperCase().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return null;
-  const [verb, arg] = tokens;
-  if (verb === "SPLIT") return { kind: "split" };
-  if (verb === "START") return { kind: "start" };
-  if (verb === "SWAP") {
-    if (!arg || arg === "NEXT") return { kind: "swap", target: "NEXT" };
-    if (arg === "PREV") return { kind: "swap", target: "PREV" };
-    if (arg === "LIST") return { kind: "swap", target: "LIST" };
-    if (/^\d+$/.test(arg)) return { kind: "swap", target: parseInt(arg, 10) };
-    return { kind: "swap", target: "NEXT" };
-  }
-  return null;
-}
-
 const SESSION_KEYS = ["screen", "stack", "editor", "activeDataset", "activeMember", "message", "fieldValues", "focusField"] as const;
 
 export function snapshot(state: SimulatorState): ScreenSession {

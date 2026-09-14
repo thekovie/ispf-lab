@@ -42,8 +42,11 @@ press Enter.
 
 ## Keyboard
 
-Enter processes the panel · Tab / Shift+Tab move between fields · F1 help · F2 split screen · F3 end/back · F5 repeat find ·
-F6 repeat change · F7 / F8 scroll · F9 swap screen · F10 / F11 scroll left / right · F12 cancel · Insert toggles overtype.
+Default keylist: Enter processes the panel · Tab / Shift+Tab move between fields · F1 help · F2 split screen · F3 end
+(back one panel; in Edit it saves first when AUTOSAVE is ON) · F4 return to the Primary Option Menu · F5 repeat find ·
+F6 repeat change · F7 / F8 scroll · F9 swap screen · F10 / F11 scroll left / right · F12 cancel (Edit) · Insert toggles
+overtype. `=3.4` on any command line jumps; `RETURN` goes home. PF-key assignments can vary by panel and keylist —
+the legend on each panel is authoritative.
 Browsers intercept some F-keys, so the clickable PF strip under the terminal performs the identical action.
 
 ## Documentation
@@ -59,6 +62,7 @@ Browsers intercept some F-keys, so the clickable PF strip under the terminal per
 | [docs/06-design-direction.md](docs/06-design-direction.md) | Visual direction, tokens, typography, mobile gate |
 | [docs/07-testing.md](docs/07-testing.md) | Test strategy and what each file covers |
 | [docs/08-resources.md](docs/08-resources.md) | The reference guides the course follows |
+| [docs/09-lspf-comparison.md](docs/09-lspf-comparison.md) | Comparative audit against the open-source lspf project (reference only) |
 | [docs/adr/](docs/adr/README.md) | Architecture Decision Records |
 | [docs/spec/original-brief.md](docs/spec/original-brief.md) | The original specification, verbatim |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to run, test, add a lesson or a panel, report a fidelity gap |
@@ -89,6 +93,12 @@ GreenScreen Dojo, PF3 Academy, DSLIST Dojo, TSO Trainer, Sim3270 (type `NAMES` o
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Vitest · pnpm. See [docs/adr](docs/adr/README.md).
+
+## Acknowledgements
+
+The course follows the IBM guides listed in `docs/08-resources.md`. [lspf](https://github.com/daniel64/lspf), an
+independent open-source ISPF-like dialogue manager for Linux, served as a reference and source of inspiration; no lspf
+code is incorporated and the projects are not affiliated.
 
 ## License
 

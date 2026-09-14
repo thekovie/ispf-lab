@@ -253,3 +253,27 @@ editor changes survive swapping. SWAP LIST is rendered as a long message rather 
 
 **Verified by** · `tests/engine/splitScreen.test.ts` (12) + lesson 15 walk in `tests/tutorial/lessons.test.ts`;
 140 tests green; browser check of PF2 → SWAPBAR → PF9.
+
+---
+
+## Phase 12 — Navigation accuracy: jump function, RETURN, keylist wording  (2026-09-14, branch `feat/nav-accuracy`)
+
+**Goal** · Priority 1 of the expansion spec (audit in the plan file / this log): make `=option` work from every
+panel, add RETURN, and stop describing PF keys as fixed.
+
+**Audit** · `=3.4` was PARTIAL (only Primary Option Menu and Utilities honoured it); RETURN MISSING; PF-key
+mechanism VERIFIED (per-panel legends) but wording PARTIAL ("PF3 saves and ends").
+
+**Built**
+- `src/engine/systemCommands.ts` — `parseSystemCommand` (=path, RETURN, RETRIEVE, SPLIT, START, SWAP), `jumpTo`,
+  `returnToPrimary`; the reducer runs it before the panel and transmits typed fields first on editor panels.
+- `screens/editor.ts#closeEditorForNavigation` — END processing without popping (save when dirty; failed save blocks).
+- F4 = Return in every logged-on legend; jump special cases removed from `utilities.ts`.
+- Wording: lesson 8, glossary PF3/SAVE, new glossary terms `keylist`, `jump`, `RETURN`; help panel; README.
+- lspf acknowledged in `content/resources.ts`; `.gitattributes` normalises line endings to LF.
+
+**Decisions** · ADR 0009.
+
+**Verified by** · `tests/engine/jump.test.ts` (15): =3.4 from menu/utilities/DSLIST/member list/EDIT (saves)/
+BROWSE/split screen; invalid & unavailable targets; read-only save blocks the jump; RETURN, PF4 with typed text,
+no-op on the menu; 155 tests total; lint/typecheck/build green.

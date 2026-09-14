@@ -56,7 +56,7 @@ export const lesson08: Lesson = {
   title: "Editing your first member",
   description: "Overtype a record, watch the MODIFIED flag, and SAVE.",
   objective: "Change the STEP1 line of {HLQ}.JCL(HELLO) to run IEBGENER instead of IEFBR14, then SAVE it.",
-  teaches: ["Overtype editing", "Dirty (modified) state", "SAVE keeps you in the editor", "PF3 saves and ends; CANCEL discards"],
+  teaches: ["Overtype editing", "Dirty (modified) state", "SAVE keeps you in the editor", "PF3 ends and, with AUTOSAVE ON (the default), saves; CANCEL discards"],
   startingState: { screen: { id: "DSLIST_SEARCH" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {
@@ -83,7 +83,7 @@ export const lesson08: Lesson = {
     {
       id: "pf3",
       instruction: "Press PF3 to end the edit session. Because nothing changed since SAVE, ISPF just returns to the member list.",
-      explanation: "PF3 in Edit means end and save if needed. If you ever want to throw changes away, type CANCEL (or press PF12) instead.",
+      explanation: "PF3 means END. In Edit, with the profile setting AUTOSAVE ON (the default on most systems), END saves your changes first; with AUTOSAVE OFF it would ask. If you ever want to throw changes away, type CANCEL (or press PF12) instead.",
       hint: "F3.",
       validator: allOf(editorClosed, memberSatisfies(HELLO, "HELLO", (r) => r.some((t) => /IEBGENER/.test(t)))),
     },

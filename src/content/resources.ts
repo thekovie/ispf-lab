@@ -68,4 +68,12 @@ export const RESOURCES: Resource[] = [
     why: "Topic sequence Settings → Utilities 3.1/3.2/3.3/3.4 → member lists → editor commands, which this course mirrors.",
     usedFor: "Module order for modules 2-4.",
   },
+  {
+    id: "lspf",
+    title: "lspf — an ISPF-like dialogue manager for Linux (open source)",
+    publisher: "daniel64/lspf on GitHub (GPL)",
+    url: "https://github.com/daniel64/lspf",
+    why: "An independent open-source project that re-creates ISPF concepts (panels, editor, split screens, keylists, command retrieval) on Linux. ISPF Lab used it only as a reference and source of inspiration for interaction ideas; no lspf code is incorporated, and lspf is not affiliated with ISPF Lab or IBM.",
+    usedFor: "Comparative feature audit (docs/09-lspf-comparison.md).",
+  },
 ];
