@@ -7,6 +7,7 @@ import { createInitialState, DEFAULT_USERID, todayString } from "@/engine/initia
 import { reduce } from "@/engine/reducer";
 import type { SimAction, SimEvent, SimulatorState } from "@/engine/types";
 import { loadCatalog, resetCatalog, saveCatalog } from "@/persistence/catalogStore";
+import { loadProfiles, resetProfiles, saveProfiles } from "@/persistence/profileStore";
 import { KEYS } from "@/persistence/keys";
 import { loadSettings, saveSettings } from "@/persistence/settingsStore";
 import type { StorageAdapter } from "@/persistence/storage";
@@ -57,6 +58,7 @@ export class SimulatorStore {
       if (e.type === "LOGGED_ON") {
         const catalog = loadCatalog(this.storage, e.userid);
         this.state = reduce(this.state, { type: "LOAD_CATALOG", catalog }).state;
+        this.state = reduce(this.state, { type: "LOAD_PROFILES", profiles: loadProfiles(this.storage, e.userid) }).state;
         this.storage.set(KEYS.lastUserid, e.userid);
       }
     }
@@ -72,6 +74,7 @@ export class SimulatorStore {
 
   resetEnvironment = (): void => {
     resetCatalog(this.storage, this.state.userid);
+    resetProfiles(this.storage, this.state.userid);
     this.dispatch({ type: "RESET_ENVIRONMENT" });
   };
 
@@ -87,6 +90,7 @@ export class SimulatorStore {
   private persist(prev: SimulatorState): void {
     const s = this.state;
     if (s.settings !== prev.settings) saveSettings(this.storage, s.settings);
+    if (s.loggedIn && s.editProfiles !== prev.editProfiles) saveProfiles(this.storage, s.userid, s.editProfiles);
     if (s.loggedIn && s.catalog !== prev.catalog) {
       if (this.saveTimer) clearTimeout(this.saveTimer);
       this.saveTimer = setTimeout(() => {

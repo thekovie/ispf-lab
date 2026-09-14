@@ -3,6 +3,7 @@
  * Reference: docs/04-editor-commands.md §Session.
  */
 import { DEFAULT_PAGE_COLS, DEFAULT_PAGE_SIZE, type EditorEvent, type EditorLine, type EditorMode, type EditorResult, type EditorSession } from "./types";
+import { defaultProfile, profileNameFor, type EditProfile } from "./profile";
 
 export interface OpenOptions {
   mode: EditorMode;
@@ -14,6 +15,7 @@ export interface OpenOptions {
   isNew?: boolean;
   scrollAmount?: string;
   pageSize?: number;
+  profile?: EditProfile;
 }
 
 export function openSession(o: OpenOptions): EditorSession {
@@ -36,10 +38,10 @@ export function openSession(o: OpenOptions): EditorSession {
     leftCol: 0,
     pageSize: o.pageSize ?? DEFAULT_PAGE_SIZE,
     pageCols: DEFAULT_PAGE_COLS,
-    caps: false,
-    nums: false,
-    hex: false,
-    colsAfter: null,
+    profile: o.profile ?? defaultProfile(profileNameFor(o.dsn)),
+    profileDirty: false,
+    special: [],
+    history: [],
     cursor: { lineId: lines[0]?.id ?? null, col: 0 },
     scrollAmount: o.scrollAmount ?? "PAGE",
   };
@@ -56,7 +58,7 @@ export function isDirty(s: EditorSession): boolean {
 }
 
 export function normalizeText(s: EditorSession, text: string): string {
-  const t = s.caps ? text.toUpperCase() : text;
+  const t = s.profile.caps ? text.toUpperCase() : text;
   return t.padEnd(s.lrecl).slice(0, s.lrecl);
 }
 
@@ -98,9 +100,28 @@ export function revertToOriginal(s: EditorSession): EditorSession {
     nextId: s.original.length + 1,
     pending: [],
     dirty: false,
+    history: [],
   };
 }
 
+/** SAVE boundary: the buffer becomes the original and earlier interactions are no longer undoable. */
 export function commitSaved(s: EditorSession): EditorSession {
-  return { ...s, original: bufferRecords(s), dirty: false, isNew: false };
+  return { ...s, original: bufferRecords(s), dirty: false, isNew: false, history: [] };
+}
+
+/**
+ * NUMBER ON (educational subset): for 80-byte fixed records, columns 73-80 carry an 8-digit sequence
+ * number (00000100, 00000200, ...). Real ISPF also supports COBOL numbers in 1-6 and STD numbering
+ * for other record formats; those are out of scope and documented in docs/04.
+ */
+export function renumber(s: EditorSession): EditorSession {
+  if (s.lrecl !== 80) return s;
+  const lines = s.lines.map((l, i) => ({ ...l, text: l.text.slice(0, 72).padEnd(72) + String((i + 1) * 100).padStart(8, "0") }));
+  return { ...s, lines };
+}
+
+export function unnumber(s: EditorSession): EditorSession {
+  if (s.lrecl !== 80) return s;
+  const lines = s.lines.map((l) => ({ ...l, text: l.text.slice(0, 72).padEnd(80) }));
+  return { ...s, lines };
 }

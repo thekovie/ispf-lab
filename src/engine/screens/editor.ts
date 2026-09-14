@@ -8,6 +8,9 @@ import { applyLineCommands } from "@/editor/lineCommands";
 import { makeLines } from "@/editor/lineOps";
 import { applyPrimaryCommand } from "@/editor/primaryCommands";
 import { applyTextEdits, bufferRecords, commitSaved } from "@/editor/session";
+import { recordInteraction } from "@/editor/history";
+import { withProfile } from "@/editor/profile";
+import { parseBoundsLine, specialRows } from "@/editor/special";
 import type { EditorEvent, EditorMessage, EditorResult, EditorSession } from "@/editor/types";
 import { parseEditorPrimaryCommand } from "@/parsers/editorPrimaryCommand";
 import { dim, f, label, t } from "../rows";
@@ -19,16 +22,6 @@ type Frame = { id: "EDIT" } | { id: "BROWSE" } | { id: "VIEW" };
 const NUM = (n: number) => String(n).padStart(6, "0");
 const TOP_MARK = "****** " + "*".repeat(30) + " Top of Data " + "*".repeat(30);
 const BOTTOM_MARK = "****** " + "*".repeat(28) + " Bottom of Data " + "*".repeat(29);
-
-function colsRuler(leftCol: number, width: number): string {
-  let s = "";
-  for (let c = leftCol + 1; c <= leftCol + width; c++) {
-    if (c % 10 === 0) s += String((c / 10) % 10);
-    else if (c % 5 === 0) s += "+";
-    else s += "-";
-  }
-  return "=COLS> " + s;
-}
 
 function shortMessage(state: SimulatorState, s: EditorSession): [string, "yellow" | "red" | "white"] {
   if (state.message) return [state.message.short, state.message.severity === "error" ? "red" : "yellow"];
@@ -42,7 +35,8 @@ export const editorScreen: ScreenHandler<Frame> = {
     "the left takes LINE commands (type over the number): I insert, D delete,",
     "R repeat, C copy, M move, A/B after/before, X exclude, DD/CC/MM/XX blocks.",
     "The Command ===> line takes PRIMARY commands: SAVE, CANCEL, FIND str,",
-    "CHANGE old new [ALL], RESET, LOCATE n, TOP, BOTTOM, UP/DOWN/LEFT/RIGHT.",
+    "CHANGE old new [ALL], RESET [EXCLUDED|SPECIAL], LOCATE n, TOP, BOTTOM, UNDO,",
+    "FLIP, PROFILE, CAPS/NUMBER/STATS/RECOVERY/SETUNDO/AUTOSAVE ON|OFF, BOUNDS l r.",
     "Nothing happens until you press Enter. PF3 ends and, with AUTOSAVE ON, saves;",
     "PF7/PF8 scroll; PF5 repeats FIND; PF6 repeats CHANGE; PF12 cancels.",
     "Browse is read-only; View is editable but cannot SAVE.",
@@ -59,9 +53,27 @@ export const editorScreen: ScreenHandler<Frame> = {
       [label("Command ===> "), f("command", 47, state.fieldValues.command ?? ""), label("  Scroll ===> "), f("scroll", 4, state.fieldValues.scroll ?? s.scrollAmount)],
     ];
     const fields: string[] = ["command"];
-    if (s.top === 0) rows.push([dim(TOP_MARK)]);
-    const pendingById = new Map(s.pending.map((p) => [p.lineId, p.raw]));
     let shown = 0;
+    const specialAfter = (afterId: number | null) => {
+      for (const sp of s.special.filter((x) => x.afterLineId === afterId)) {
+        for (const row of specialRows(sp, s)) {
+          const prefixId = `prefix:${sp.id}`;
+          if (sp.kind === "BNDS" && editable) {
+            rows.push([f(prefixId, 6, row.tag, { editorLine: true, color: "yellow" }), t(" "), f(`bnds:${sp.id}`, s.pageCols, row.text, { editorLine: true, color: "yellow" })]);
+            fields.push(prefixId, `bnds:${sp.id}`);
+          } else if (editable) {
+            rows.push([f(prefixId, 6, row.tag, { editorLine: true, color: "yellow" }), t(" "), t(row.text, "yellow")]);
+            fields.push(prefixId);
+          } else rows.push([t(row.tag, "yellow"), t(" "), t(row.text, "yellow")]);
+          shown++;
+        }
+      }
+    };
+    if (s.top === 0) {
+      rows.push([dim(TOP_MARK)]);
+      specialAfter(null);
+    }
+    const pendingById = new Map(s.pending.map((p) => [p.lineId, p.raw]));
     let i = s.top;
     while (i < s.lines.length && shown < s.pageSize) {
       const line = s.lines[i];
@@ -85,14 +97,14 @@ export const editorScreen: ScreenHandler<Frame> = {
       const prefixValue = pendingById.get(line.id) ?? NUM(i + 1);
       const visibleText = line.text.slice(s.leftCol, s.leftCol + s.pageCols);
       if (editable) {
-        rows.push([f(prefixId, 6, prefixValue, { editorLine: true, color: pendingById.has(line.id) ? "yellow" : "cyan" }), t(" "), f(lineId, s.pageCols, visibleText, { editorLine: true, noUpper: !s.caps })]);
+        rows.push([f(prefixId, 6, prefixValue, { editorLine: true, color: pendingById.has(line.id) ? "yellow" : "cyan" }), t(" "), f(lineId, s.pageCols, visibleText, { editorLine: true, noUpper: !s.profile.caps })]);
         fields.push(prefixId, lineId);
       } else {
         rows.push([t(NUM(i + 1), "cyan"), t(" "), t(visibleText, "green")]);
       }
-      if (s.colsAfter === line.id) rows.push([dim(colsRuler(s.leftCol, s.pageCols))]);
       i++;
       shown++;
+      specialAfter(line.id);
     }
     if (i >= s.lines.length) rows.push([dim(BOTTOM_MARK)]);
     const pfKeys = [
@@ -171,6 +183,14 @@ function toSimEvents(events: EditorEvent[]): SimEvent[] {
         return { type: "EDITOR_FIND", text: e.detail ?? "" };
       case "EDITOR_CHANGE":
         return { type: "EDITOR_CHANGE", detail: e.detail ?? "" };
+      case "EDITOR_UNDO":
+        return { type: "UNDO_EXECUTED" };
+      case "EDITOR_COLS":
+        return { type: "COLS_DISPLAYED" };
+      case "EDITOR_BOUNDS":
+        return { type: "BOUNDS_CHANGED" };
+      case "EDITOR_LINES_REDISPLAYED":
+        return { type: "LINES_REDISPLAYED", count: e.count ?? 0 };
       default:
         return { type: "EDITOR_SCROLLED" };
     }
@@ -204,6 +224,13 @@ function collectPrefixCommands(s: EditorSession, fields: Fields): Record<number,
   for (const [k, v] of Object.entries(fields)) {
     if (!k.startsWith("prefix:")) continue;
     const id = Number(k.slice(7));
+    if (id < 0) {
+      // special line: the prefix field shows =COLS> / =BNDS> / =PROF>; anything else typed there is a command
+      const sp = s.special.find((x) => x.id === id);
+      const tag = sp ? `=${sp.kind}>` : "";
+      if (v !== tag && v.trim()) typed[id] = typedPrefix(v, tag);
+      continue;
+    }
     const i = index.get(id);
     if (i === undefined) continue;
     const original = pending.get(id) ?? (s.lines[i].excluded ? "- - - " : NUM(i + 1));
@@ -216,8 +243,26 @@ function collectPrefixCommands(s: EditorSession, fields: Fields): Record<number,
   return typed;
 }
 
+/** A typed-over =BNDS> line sets the profile bounds. */
+function applyBoundsEdits(s: EditorSession, fields: Fields): EditorResult {
+  for (const [k, v] of Object.entries(fields)) {
+    if (!k.startsWith("bnds:")) continue;
+    const id = Number(k.slice(5));
+    const sp = s.special.find((x) => x.id === id);
+    if (!sp) continue;
+    const current = specialRows(sp, s)[0]?.text ?? "";
+    if (v === current) continue;
+    const b = parseBoundsLine(v, s.leftCol, s.lrecl);
+    if (!b) return { session: s, events: [], message: { text: "INVALID BOUNDS", severity: "error" } };
+    const profile = { ...s.profile, bounds: b };
+    return { session: { ...s, profile, profileDirty: true }, events: [{ type: "EDITOR_BOUNDS" }], message: { text: `BOUNDS ${b.left} ${b.right || s.lrecl}`, severity: "info" } };
+  }
+  return { session: s, events: [] };
+}
+
 function processEnter(state: SimulatorState, fields: Fields, pfCommand: string | undefined): StepResult {
   let session = state.editor!;
+  const before = session;
   const events: SimEvent[] = [];
   let message: Message | undefined;
   const absorb = (r: EditorResult) => {
@@ -226,8 +271,9 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
     if (r.message && (!message || r.message.severity === "error" || message.severity !== "error")) message = toMessage(r.message);
     return r;
   };
-  // 1. typed-over record text
+  // 1. typed-over record text (and a typed-over =BNDS> line)
   absorb(applyTextEdits(session, collectTextEdits(session, fields)));
+  absorb(applyBoundsEdits(session, fields));
   // 2. prefix-area line commands
   absorb(applyLineCommands(session, collectPrefixCommands(session, fields)));
   // 3. scroll amount field
@@ -236,8 +282,17 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
   // 4. primary command (typed, or the PF key equivalent)
   const raw = pfCommand ?? (fields.command ?? "").trim();
   if (raw) events.push({ type: "COMMAND_ENTERED", screen: state.screen.id, command: raw });
-  const primary = absorb(applyPrimaryCommand(session, parseEditorPrimaryCommand(raw)));
-  const base: SimulatorState = { ...state, editor: session, fieldValues: {}, focusField: undefined, message };
+  const parsedPrimary = parseEditorPrimaryCommand(raw);
+  const primary = absorb(applyPrimaryCommand(session, parsedPrimary));
+  // 5. one UNDO step per interaction that changed data (UNDO itself is not recorded)
+  if (parsedPrimary.kind !== "undo") session = recordInteraction(before, session);
+  // 6. profile changes are written back to the per-type edit profiles
+  const editProfiles = session.profileDirty ? withProfile(state.editProfiles, session.profile) : state.editProfiles;
+  if (session.profileDirty) {
+    events.push({ type: "PROFILE_CHANGED", profile: session.profile.name });
+    session = { ...session, profileDirty: false };
+  }
+  const base: SimulatorState = { ...state, editor: session, editProfiles, fieldValues: {}, focusField: undefined, message };
   const withEvents = (r: StepResult): StepResult => ({ state: r.state, events: [...events, ...r.events] });
   const effect = primary.effect;
   if (!effect) return withEvents(withMessage(base, message));
@@ -254,6 +309,8 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
       return withEvents(createMember(base, effect.member, effect.replace));
     case "copy":
       return withEvents(copyIntoBuffer(base, effect.member));
+    case "submit":
+      return withEvents(withMessage(base, { short: "SUBMIT NOT AVAILABLE IN THIS TRAINING MODULE", long: "JCL submission arrives with the simulated JES.", severity: "error" }));
     default:
       return withEvents({ state: base, events: [] });
   }
@@ -262,7 +319,7 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
 function saveSession(state: SimulatorState, thenExit: boolean): StepResult {
   const s = state.editor!;
   const ref = { dsn: s.dsn, member: s.member };
-  const r = saveRecords(state.catalog, ref, bufferRecords(s), { today: state.today, userid: state.userid });
+  const r = saveRecords(state.catalog, ref, bufferRecords(s), { today: state.today, userid: state.userid, stats: s.profile.stats });
   if (r.error) return withMessage(state, { short: r.error, severity: "error", long: r.error === MSG.READ_ONLY ? "Use CANCEL (PF12) to leave without saving." : undefined });
   const events: SimEvent[] = [];
   if (r.created) events.push({ type: "MEMBER_CREATED", dsn: s.dsn, member: s.member! });
@@ -285,6 +342,8 @@ export function closeEditorForNavigation(state: SimulatorState): { state: Simula
   const s = state.editor;
   if (!s) return { state, events: [] };
   if (s.mode === "EDIT" && (s.dirty || s.isNew)) {
+    if (s.profile.autosave === "OFF PROMPT") return { state, events: [], blocked: promptAutosave(state) };
+    if (s.profile.autosave === "OFF NOPROMPT") return { state: { ...state, editor: undefined, activeMember: undefined }, events: [{ type: "EDIT_CANCELLED", dsn: s.dsn, member: s.member }] };
     const saved = saveSession(state, false);
     if (saved.state.message?.severity === "error") return { state, events: [], blocked: saved };
     return { state: { ...saved.state, editor: undefined, activeMember: undefined }, events: saved.events };
@@ -292,10 +351,29 @@ export function closeEditorForNavigation(state: SimulatorState): { state: Simula
   return { state: { ...state, editor: undefined, activeMember: undefined }, events: [] };
 }
 
+/** AUTOSAVE OFF PROMPT: END on modified data asks whether to SAVE or CANCEL (ISPF panel ISREDCP). */
+function promptAutosave(state: SimulatorState): StepResult {
+  const s = state.editor!;
+  return {
+    state: { ...state, stack: [...state.stack, state.screen], screen: { id: "AUTOSAVE_PROMPT" }, fieldValues: {}, focusField: undefined, message: undefined },
+    events: [{ type: "AUTOSAVE_PROMPTED", dsn: s.dsn, member: s.member }, { type: "SCREEN_OPENED", screen: "AUTOSAVE_PROMPT", frame: { id: "AUTOSAVE_PROMPT" } }],
+  };
+}
+
+/** END / PF3: AUTOSAVE ON saves; OFF PROMPT asks; OFF NOPROMPT discards (ISPF "AUTOSAVE — Save Data Automatically"). */
 function endSession(state: SimulatorState): StepResult {
   const s = state.editor!;
-  if (s.mode === "EDIT" && (s.dirty || s.isNew)) return saveSession(state, true);
+  if (s.mode === "EDIT" && (s.dirty || s.isNew)) {
+    if (s.profile.autosave === "ON") return saveSession(state, true);
+    if (s.profile.autosave === "OFF PROMPT") return promptAutosave(state);
+    return cancelEdit(state);
+  }
   return pop({ ...state, editor: undefined, activeMember: undefined });
+}
+
+/** Called by the AUTOSAVE prompt panel with the user's choice. */
+export function finishEdit(state: SimulatorState, choice: "save" | "cancel"): StepResult {
+  return choice === "save" ? saveSession(state, true) : cancelEdit(state);
 }
 
 function cancelEdit(state: SimulatorState): StepResult {

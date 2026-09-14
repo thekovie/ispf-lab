@@ -15,6 +15,7 @@ import { dslistSearchScreen } from "./screens/dslistSearch";
 import { dslistResultsScreen } from "./screens/dslistResults";
 import { memberListScreen } from "./screens/memberList";
 import { editorScreen } from "./screens/editor";
+import { autosavePromptScreen } from "./screens/autosavePrompt";
 import { confirmDeleteScreen, copyMovePopupScreen, messageScreen, renameScreen } from "./screens/dialogs";
 import { tsoCommandScreen } from "./screens/tsoCommand";
 import { helpScreen } from "./screens/help";
@@ -39,6 +40,7 @@ const HANDLERS: Record<ScreenId, AnyHandler> = {
   EDIT: editorScreen,
   BROWSE: editorScreen,
   VIEW: editorScreen,
+  AUTOSAVE_PROMPT: autosavePromptScreen,
   CONFIRM_DELETE: confirmDeleteScreen,
   RENAME: renameScreen,
   COPY_MOVE: copyMovePopupScreen,

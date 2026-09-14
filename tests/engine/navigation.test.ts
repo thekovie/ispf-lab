@@ -3,9 +3,12 @@ import { Sim } from "./harness";
 import { getDataset, getMember } from "@/catalog/catalog";
 import { NOT_AVAILABLE } from "@/engine/navigation";
 
+// The two routes differ only in what was typed (command history / retrieve stack).
 const strip = (s: Sim) => {
-  const { commandHistory, ...rest } = s.state;
+  const { commandHistory, retrieveStack, retrieveIndex, ...rest } = s.state;
   void commandHistory;
+  void retrieveStack;
+  void retrieveIndex;
   return rest;
 };
 

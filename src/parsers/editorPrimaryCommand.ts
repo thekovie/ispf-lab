@@ -16,14 +16,23 @@ export type EditorPrimaryCommand =
   | { kind: "change"; from: string; to: string; all: boolean; direction: FindDirection }
   | { kind: "rchange" }
   | { kind: "exclude"; text: string; all: boolean }
-  | { kind: "reset" }
+  | { kind: "reset"; what: "ALL" | "EXCLUDED" | "SPECIAL" | "COMMAND" | "LABEL" }
   | { kind: "locate"; line: number }
   | { kind: "top" }
   | { kind: "bottom" }
   | { kind: "scroll"; direction: "UP" | "DOWN" | "LEFT" | "RIGHT"; amount?: ScrollAmount }
   | { kind: "caps"; on: boolean }
   | { kind: "num"; on: boolean }
+  | { kind: "unnum" }
   | { kind: "hex"; on: boolean }
+  | { kind: "stats"; on: boolean }
+  | { kind: "recovery"; on: boolean }
+  | { kind: "setundo"; on: boolean }
+  | { kind: "autosave"; mode: "ON" | "OFF PROMPT" | "OFF NOPROMPT" }
+  | { kind: "bounds"; left?: number; right?: number; show?: boolean }
+  | { kind: "undo" }
+  | { kind: "flip" }
+  | { kind: "submit" }
   | { kind: "cols" }
   | { kind: "create"; member: string; replace: boolean }
   | { kind: "copy"; member: string }
@@ -117,8 +126,43 @@ export function parseEditorPrimaryCommand(raw: string): EditorPrimaryCommand {
     case "RCHANGE":
       return { kind: "rchange" };
     case "RESET":
-    case "RES":
-      return { kind: "reset" };
+    case "RES": {
+      const what = (args[0] ?? "ALL").toUpperCase();
+      const map: Record<string, "ALL" | "EXCLUDED" | "SPECIAL" | "COMMAND" | "LABEL"> = { ALL: "ALL", EXCLUDED: "EXCLUDED", EXC: "EXCLUDED", X: "EXCLUDED", SPECIAL: "SPECIAL", SPE: "SPECIAL", COMMAND: "COMMAND", CMD: "COMMAND", LABEL: "LABEL", LAB: "LABEL" };
+      if (!map[what]) return invalid("INVALID RESET OPERAND");
+      return { kind: "reset", what: map[what] };
+    }
+    case "UNDO":
+      return { kind: "undo" };
+    case "FLIP":
+      return { kind: "flip" };
+    case "SUBMIT":
+    case "SUB":
+      return { kind: "submit" };
+    case "UNNUM":
+    case "UNNUMBER":
+      return { kind: "unnum" };
+    case "BOUNDS":
+    case "BOUND":
+    case "BNDS":
+    case "BND": {
+      if (args.length === 0) return { kind: "bounds", show: true };
+      const l = args[0].toUpperCase() === "*" ? undefined : parseInt(args[0], 10);
+      const r = args[1] === undefined || args[1].toUpperCase() === "*" ? undefined : parseInt(args[1], 10);
+      if ((l !== undefined && Number.isNaN(l)) || (r !== undefined && Number.isNaN(r))) return invalid("INVALID BOUNDS");
+      return { kind: "bounds", left: l, right: r };
+    }
+    case "AUTOSAVE":
+    case "AUTOSAV": {
+      const a = (args[0] ?? "ON").toUpperCase();
+      if (a === "ON") return { kind: "autosave", mode: "ON" };
+      if (a === "OFF") {
+        const b = (args[1] ?? "PROMPT").toUpperCase();
+        if (b === "PROMPT") return { kind: "autosave", mode: "OFF PROMPT" };
+        if (b === "NOPROMPT") return { kind: "autosave", mode: "OFF NOPROMPT" };
+      }
+      return invalid("INVALID KEYWORD");
+    }
     case "TOP":
       return { kind: "top" };
     case "BOTTOM":
@@ -167,11 +211,16 @@ export function parseEditorPrimaryCommand(raw: string): EditorPrimaryCommand {
     }
     case "CAPS":
     case "NUM":
-    case "HEX": {
+    case "NUMBER":
+    case "HEX":
+    case "STATS":
+    case "RECOVERY":
+    case "RECOVRY":
+    case "SETUNDO": {
       const on = (args[0] ?? "ON").toUpperCase();
       if (on !== "ON" && on !== "OFF") return invalid("INVALID KEYWORD");
-      const kind = verb.toLowerCase() as "caps" | "num" | "hex";
-      return { kind, on: on === "ON" };
+      const kinds: Record<string, "caps" | "num" | "hex" | "stats" | "recovery" | "setundo"> = { CAPS: "caps", NUM: "num", NUMBER: "num", HEX: "hex", STATS: "stats", RECOVERY: "recovery", RECOVRY: "recovery", SETUNDO: "setundo" };
+      return { kind: kinds[verb], on: on === "ON" };
     }
     case "CREATE":
     case "CRE":

@@ -5,9 +5,12 @@ import { INVALID_JUMP, parseSystemCommand } from "@/engine/systemCommands";
 import { NOT_AVAILABLE } from "@/engine/navigation";
 import { allSessions } from "@/engine/splitScreen";
 
+// The two routes differ only in what was typed (command history / retrieve stack).
 const strip = (s: Sim) => {
-  const { commandHistory, ...rest } = s.state;
+  const { commandHistory, retrieveStack, retrieveIndex, ...rest } = s.state;
   void commandHistory;
+  void retrieveStack;
+  void retrieveIndex;
   return rest;
 };
 

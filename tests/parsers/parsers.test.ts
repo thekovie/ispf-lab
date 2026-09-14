@@ -64,7 +64,16 @@ describe("editor primary commands", () => {
     expect(parseEditorPrimaryCommand("save")).toEqual({ kind: "save" });
     expect(parseEditorPrimaryCommand("CANCEL")).toEqual({ kind: "cancel" });
     expect(parseEditorPrimaryCommand("CAN")).toEqual({ kind: "cancel" });
-    expect(parseEditorPrimaryCommand("reset")).toEqual({ kind: "reset" });
+    expect(parseEditorPrimaryCommand("reset")).toEqual({ kind: "reset", what: "ALL" });
+    expect(parseEditorPrimaryCommand("RESET SPECIAL")).toEqual({ kind: "reset", what: "SPECIAL" });
+    expect(parseEditorPrimaryCommand("RES X")).toEqual({ kind: "reset", what: "EXCLUDED" });
+    expect(parseEditorPrimaryCommand("AUTOSAVE OFF")).toEqual({ kind: "autosave", mode: "OFF PROMPT" });
+    expect(parseEditorPrimaryCommand("AUTOSAVE OFF NOPROMPT")).toEqual({ kind: "autosave", mode: "OFF NOPROMPT" });
+    expect(parseEditorPrimaryCommand("BOUNDS 1 72")).toEqual({ kind: "bounds", left: 1, right: 72 });
+    expect(parseEditorPrimaryCommand("BNDS")).toEqual({ kind: "bounds", show: true });
+    expect(parseEditorPrimaryCommand("undo")).toEqual({ kind: "undo" });
+    expect(parseEditorPrimaryCommand("SETUNDO OFF")).toEqual({ kind: "setundo", on: false });
+    expect(parseEditorPrimaryCommand("NUMBER ON")).toEqual({ kind: "num", on: true });
     expect(parseEditorPrimaryCommand("end")).toEqual({ kind: "end" });
   });
   it("parses FIND / CHANGE with directions and ALL", () => {

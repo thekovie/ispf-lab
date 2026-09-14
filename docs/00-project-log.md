@@ -277,3 +277,38 @@ mechanism VERIFIED (per-panel legends) but wording PARTIAL ("PF3 saves and ends"
 **Verified by** · `tests/engine/jump.test.ts` (15): =3.4 from menu/utilities/DSLIST/member list/EDIT (saves)/
 BROWSE/split screen; invalid & unavailable targets; read-only save blocks the jump; RETURN, PF4 with typed text,
 no-op on the menu; 155 tests total; lint/typecheck/build green.
+
+## Phase 13 — Advanced editor: profiles, UNDO, special lines, AUTOSAVE, RETRIEVE  (2026-09-14, branch `feat/editor-advanced`)
+
+**Goal** · Priority 2 of the expansion spec: the editor features an operator meets in the first weeks —
+UNDO/SETUNDO/RECOVERY, edit profiles that persist, COLS/BOUNDS/PROFILE special lines, NUMBER/STATS/AUTOSAVE,
+FLIP and the RESET variants, plus ISPF command retrieval.
+
+**Audit** · CAPS/NUMBER/COLS/PROFILE/RESET PARTIAL (flags with no effect, single ruler, one-line PROFILE message);
+UNDO/SETUNDO/RECOVERY/BOUNDS/AUTOSAVE/FLIP/RETRIEVE MISSING; X/EXCLUDE VERIFIED and untouched.
+
+**Built**
+- `src/editor/profile.ts` — `EditProfile` per data-set type (last qualifier), defaults, `boundsWindow`.
+- `src/editor/special.ts` — `=COLS>` / `=BNDS>` / `=PROF>` model with negative ids, `pruneSpecial`; `screens/editor.ts`
+  renders them and accepts `<`/`>` overtyped on `=BNDS>`.
+- `src/editor/history.ts` — per-interaction snapshots; `UNDO`; SAVE/CANCEL boundary; gated by SETUNDO/RECOVERY.
+- Parser + `primaryCommands.ts`: NUMBER/UNNUM (STD 73-80), STATS, RECOVERY, SETUNDO, AUTOSAVE, BOUNDS/BNDS, COLS,
+  PROFILE, FLIP, UNDO, `RESET ALL|EXCLUDED|X|SPECIAL|COMMAND|LABEL`, SUBMIT placeholder. FIND/CHANGE/EXCLUDE honour
+  bounds. `catalog.saveRecords({stats:false})` leaves statistics alone.
+- `screens/autosavePrompt.ts` — *Edit - Save or Cancel Changes* panel for AUTOSAVE OFF PROMPT; `closeEditorForNavigation`
+  and `endSession` honour the three AUTOSAVE modes (jump/RETURN included).
+- `systemCommands.ts` — `retrieveStack` (25, newest first), `RETRIEVE` / F12 on non-editor panels; dialogs keep F12 Cancel.
+- `persistence/profileStore.ts` — `ispf-lab:editprofile:v1:<USERID>`, sanitised on load; store loads on LOGGED_ON,
+  saves on change, clears on reset. New `LOAD_PROFILES` action.
+- Glossary: UNDO, SETUNDO, RECOVERY, BOUNDS, COLS, PROFILE, AUTOSAVE, NUMBER, STATS, FLIP, RETRIEVE. docs/04 rewritten
+  command table + profile/UNDO/retrieval sections.
+
+**Decisions** · ADR 0010 (history snapshots, profiles outside the catalog), ADR 0011 (special lines).
+
+**Deviations (documented)** · RECOVERY only enables UNDO; NUMBER covers LRECL 80 STD numbers only; HEX accepted
+without display change; labels/macros not simulated; AUTOSAVE default ON (installation dependent).
+
+**Verified by** · `tests/editor/advanced.test.ts` (23) — UNDO granularity/boundary/gating, profile naming and
+persistence across sessions, CAPS, PROFILE lines never saved, STATS OFF, NUMBER/UNNUM, three AUTOSAVE modes incl.
+jump, COLS line/primary + orphan pruning, BOUNDS window + `=BNDS>` overtype, FLIP/RESET EXCLUDED, RETRIEVE cycling,
+F12 policy; `tests/persistence/stores.test.ts` profile round-trip through `SimulatorStore`; 179 tests; check/build green.

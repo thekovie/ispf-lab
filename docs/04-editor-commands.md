@@ -17,7 +17,9 @@ Command ===> ______________________________________________  Scroll ===> PAGE
 - 18 data rows per page; `Scroll ===>` accepts PAGE, HALF, CSR, DATA or a number.
 - Prefix area shows six-digit numbers; a pending command (e.g. `C`) is shown in yellow in place of the number.
 - Excluded lines collapse to `- - - … n Line(s) not Displayed`; the prefix field of that marker accepts S / F / L.
-- `COLS` shows a `=COLS>` ruler.
+- Special lines (`=COLS>`, `=BNDS>`, `=PROF>`) are displayed with a negative internal id, are never written to the
+  data set, and disappear on `RESET` / `RESET SPECIAL` or `D` in their prefix area. `=BNDS>` is editable: `<` and
+  `>` typed on it set the bounds.
 - Browse: prefix area and records are protected text. View: editable, SAVE refused.
 
 ## Processing order on Enter (or any PF key)
@@ -37,7 +39,7 @@ Command ===> ______________________________________________  Scroll ===> PAGE
 | `C`, `Cn`, `CC…CC` + `A`/`An`/`B`/`Bn` | copy after/before the destination n times |
 | `M`, `Mn`, `MM…MM` + `A`/`B` | move (source removed) |
 | `X`, `Xn`, `XX…XX` | exclude; `S`, `F`n, `L`n show all / first n / last n of a block |
-| `COLS` | ruler after this line |
+| `COLS` | `=COLS>` ruler after this line (movable special line) |
 | `TS` | text split at the cursor column (or a blank line after, if the cursor is elsewhere) |
 | `LC`/`UC`, `LCC…LCC`/`UCC…UCC` | lower/upper case |
 | `(` `)` `<` `>` and block forms | shift 2 columns (or n) |
@@ -61,23 +63,56 @@ itself), `LINE COMMANDS NOT ALLOWED IN BROWSE`. Blanking a pending command cance
 | `CHANGE old new [ALL]` | `C`, `CHG` | `CHARS 'a' CHANGED TO 'b'`, `n CHARS 'a' CHANGED TO 'b'` |
 | `RCHANGE` (PF6) | | repeat last CHANGE |
 | `EXCLUDE str [ALL]` | `X`, `EXC` | `n LINE(S) EXCLUDED` |
-| `RESET` | `RES` | show excluded, clear pending commands and COLS |
+| `RESET [ALL|EXCLUDED|X|SPECIAL|COMMAND|LABEL]` | `RES` | ALL (default): show excluded lines, clear pending line commands and special lines; `EXCLUDED`/`X`: redisplay only; `SPECIAL`: remove =COLS>/=BNDS>/=PROF>; `COMMAND`: clear pending line commands; `LABEL`: accepted (labels are not simulated) |
+| `FLIP` | | reverse the excluded status of every line |
+| `UNDO` | | take back the last interaction; `UNDO COMPLETE`, `NO MORE TO UNDO`, `UNDO NOT AVAILABLE, SETUNDO OFF`; SAVE is a boundary |
 | `LOCATE n` | `L`, `LOC` | scroll so line n is at the top |
 | `TOP`, `BOTTOM` | `BOT` | |
 | `UP/DOWN/LEFT/RIGHT [n PAGE HALF MAX CSR DATA]` | | PF7/8/10/11; `*** TOP OF DATA ***`, `*** BOTTOM OF DATA ***`, `*** LEFT EDGE ***`, `*** RIGHT EDGE ***` |
-| `CAPS ON|OFF`, `NUM ON|OFF`, `HEX ON|OFF` | | CAPS upper-cases typed text; NUM/HEX are accepted, display unchanged |
-| `COLS` | | toggle ruler at the top line |
+| `CAPS ON|OFF` | | upper-case typed text; stored in the profile |
+| `NUMBER ON|OFF` | `NUM` | ON writes 8-digit sequence numbers in columns 73-80 (80-byte records only; other LRECLs answer `NUMBER SUPPORTED FOR LRECL 80 ONLY`); OFF blanks them |
+| `UNNUM` | | remove sequence numbers and set NUMBER OFF |
+| `STATS ON|OFF` | | OFF leaves the member statistics unchanged on save |
+| `RECOVERY ON|OFF` | `RECOVRY` | enables UNDO (no recovery data set is simulated) |
+| `SETUNDO ON|OFF|STORAGE` | | enables/disables UNDO |
+| `AUTOSAVE ON|OFF [PROMPT|NOPROMPT]` | | END with unsaved changes: ON saves, OFF PROMPT shows *Edit - Save or Cancel Changes*, OFF NOPROMPT discards |
+| `BOUNDS [left right]` | `BNDS`, `BND` | no operands: show `=BNDS>` line; with operands: set the search window used by FIND/CHANGE/EXCLUDE; `INVALID BOUNDS` |
+| `COLS` | | `=COLS>` ruler above the first line |
+| `HEX ON|OFF` | | accepted, display unchanged |
+| `SUBMIT` | `SUB` | not available yet (Priority 5 adds the virtual JES) |
 | `CREATE member` / `REPLACE member` | `CRE`, `REP` | write the buffer to another member of the same library |
 | `COPY member` | | insert another member's records after `A` / before `B` (or into an empty member) |
-| `PROFILE` | `PROF` | show CAPS/NUM/LRECL |
+| `PROFILE` | `PROF` | show two `=PROF>` lines: name, LRECL, CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE, HEX, BOUNDS |
 | `EXPLAIN term` | | simulator-only: open the glossary |
 | anything else | | `COMMAND NOT RECOGNIZED` |
 
-*Deviation:* `NUM`/`HEX` do not change the display; `CREATE`/`REPLACE`/`COPY` work within the current library only.
+*Deviation:* `HEX` does not change the display; `NUMBER` covers STD numbers in 73-80 only (no COBOL 1-6); `CREATE`/`REPLACE`/`COPY`
+work within the current library only; labels and edit macros are not simulated.
+
+## Edit profile
+
+One profile per data set *type* (last qualifier: `JCL`, `COBOL`, `DATA` …), persisted per userid under
+`ispf-lab:editprofile:v1:<USERID>` (see ADR 0010). Defaults: CAPS OFF, NUMBER OFF, STATS ON, RECOVERY OFF,
+SETUNDO ON, AUTOSAVE ON, HEX OFF, BOUNDS 1 LRECL. Real defaults vary by installation (ISPF ships RECOVERY/SETUNDO
+OFF; many sites turn them on) — the lessons say so.
+
+## UNDO model
+
+`processEnter` takes a snapshot `{lines, pending, special}` after every interaction that changed the lines (max
+200). `UNDO` restores the newest snapshot; `SAVE`, `CANCEL` and reopening clear the history. Several line commands
+in one Enter are one interaction, as in ISPF.
+
+## Command retrieval
+
+Every non-blank command entered on a panel command line (not the editor) goes on `state.retrieveStack` (25 entries,
+newest first, no consecutive duplicates). `RETRIEVE` or F12 on non-editor panels refills the field and walks older
+entries on repeated use; `NO COMMAND TO RETRIEVE` when empty.
 
 ## Events emitted
 
 `EDITOR_TEXT_CHANGED{count}`, `EDITOR_LINE_INSERTED{count}`, `EDITOR_LINE_DELETED{count}`,
 `EDITOR_LINE_REPEATED{count}`, `EDITOR_LINES_COPIED{count,dest}`, `EDITOR_LINES_MOVED{count,dest}`,
 `EDITOR_LINES_EXCLUDED{count}`, `EDITOR_FIND{text}`, `EDITOR_CHANGE{detail}`, `EDITOR_SCROLLED`,
-`MEMBER_SAVED{dsn,member}`, `MEMBER_CREATED{dsn,member}`, `EDIT_CANCELLED{dsn,member}`, `COMMAND_ENTERED`.
+`MEMBER_SAVED{dsn,member}`, `MEMBER_CREATED{dsn,member}`, `EDIT_CANCELLED{dsn,member}`, `COMMAND_ENTERED`,
+`UNDO_EXECUTED`, `PROFILE_CHANGED{profile}`, `COLS_DISPLAYED`, `BOUNDS_CHANGED`, `LINES_REDISPLAYED{count}`,
+`AUTOSAVE_PROMPTED{dsn,member}`, `COMMAND_RETRIEVED{command}`.

@@ -7,7 +7,7 @@ import { buildSeed } from "@/catalog/seed";
 import { push } from "./navigation";
 import { handlerFor } from "./registry";
 import { splitScreen, swapScreen } from "./splitScreen";
-import { jumpTo, parseSystemCommand, returnToPrimary } from "./systemCommands";
+import { jumpTo, parseSystemCommand, pushRetrieve, retrieveCommand, returnToPrimary } from "./systemCommands";
 import type { RenderedScreen, SimAction, SimEvent, SimulatorState, StepResult } from "./types";
 
 export function reduce(state: SimulatorState, action: SimAction): StepResult {
@@ -24,13 +24,20 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
         }
       }
       const handler = handlerFor(state.screen);
-      return handler.onEnter(state, state.screen, action.fields);
+      const typed = (action.fields.option ?? action.fields.command ?? "").trim();
+      const r = handler.onEnter(state, state.screen, action.fields);
+      return typed && state.loggedIn ? { ...r, state: pushRetrieve(r.state, typed) } : r;
     }
     case "PF": {
       const handler = handlerFor(state.screen);
       const pressed: SimEvent = { type: "PF_KEY_PRESSED", key: action.key, screen: state.screen.id };
       if (state.loggedIn && (action.key === 2 || action.key === 4 || action.key === 9)) {
         const r = action.key === 2 ? splitScreen(state, action.fields) : action.key === 4 ? runSystemCommand(state, { kind: "return" }, { ...action.fields, command: "", option: "" })! : swapScreen(state, "NEXT", action.fields);
+        return { state: r.state, events: [pressed, ...r.events] };
+      }
+      if (state.loggedIn && action.key === 12 && !state.editor && !handlerFor(state.screen).render(state, state.screen).pfKeys.some((k) => k.key === 12)) {
+        // F12 = Retrieve outside the editor (ISPF default keylist); the editor and dialogs keep Cancel.
+        const r = retrieveCommand({ ...state, fieldValues: action.fields }, commandFieldFor(state));
         return { state: r.state, events: [pressed, ...r.events] };
       }
       if (action.key === 1) {
@@ -51,12 +58,17 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
       return { state: { ...state, today: action.today }, events: [] };
     case "LOAD_CATALOG":
       return { state: { ...state, catalog: action.catalog }, events: [] };
+    case "LOAD_PROFILES":
+      return { state: { ...state, editProfiles: action.profiles }, events: [] };
     case "LOAD_SETTINGS":
       return { state: { ...state, settings: action.settings }, events: [] };
     case "RESET_ENVIRONMENT": {
       const home: SimulatorState = {
         ...state,
         catalog: buildSeed(state.userid),
+        editProfiles: {},
+        retrieveStack: [],
+        retrieveIndex: 0,
         screens: [],
         activeScreen: 0,
         screen: state.loggedIn ? { id: "PRIMARY_OPTION_MENU" } : { id: "LOGIN" },
@@ -92,7 +104,13 @@ export function reduce(state: SimulatorState, action: SimAction): StepResult {
   }
 }
 
-/** Returns null for system commands handled elsewhere (RETRIEVE arrives in Priority 2). */
+/** The panel field RETRIEVE writes into: Option ===> on menus, Command ===> elsewhere. */
+function commandFieldFor(state: SimulatorState): string {
+  const fields = handlerFor(state.screen).render(state, state.screen).fields;
+  return fields.includes("option") ? "option" : "command";
+}
+
+/** Runs an ISPF system command; returns null when the panel should handle the input itself. */
 function runSystemCommand(state: SimulatorState, sys: NonNullable<ReturnType<typeof parseSystemCommand>>, drafts: Record<string, string>): StepResult | null {
   switch (sys.kind) {
     case "jump":
@@ -105,6 +123,8 @@ function runSystemCommand(state: SimulatorState, sys: NonNullable<ReturnType<typ
     }
     case "swap":
       return swapScreen(state, sys.target, drafts);
+    case "retrieve":
+      return retrieveCommand({ ...state, fieldValues: drafts }, commandFieldFor(state));
     case "split":
     case "start":
       return splitScreen(state, drafts);
@@ -118,6 +138,7 @@ export function render(state: SimulatorState): RenderedScreen {
   if (!state.loggedIn) return screen;
   // Split-screen keys are available on every panel once logged on (ISPF default key table).
   // ISPF default keylist: F2 Split, F4 Return, F9 Swap are available on every panel; the rest is panel-specific.
-  const pfKeys = [...screen.pfKeys, { key: 2, label: "Split" }, { key: 4, label: "Return" }, { key: 9, label: "Swap" }].sort((a, b) => a.key - b.key);
+  const retrieve = state.editor || screen.pfKeys.some((k) => k.key === 12) ? [] : [{ key: 12, label: "Retrieve" }];
+  const pfKeys = [...screen.pfKeys, { key: 2, label: "Split" }, { key: 4, label: "Return" }, { key: 9, label: "Swap" }, ...retrieve].sort((a, b) => a.key - b.key);
   return { ...screen, pfKeys };
 }

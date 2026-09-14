@@ -3,6 +3,7 @@
  * Reference: docs/04-editor-commands.md; z/OS ISPF Edit and Edit Macros.
  */
 import type { FindDirection } from "@/parsers/editorPrimaryCommand";
+import type { EditProfile } from "./profile";
 
 export type EditorMode = "EDIT" | "BROWSE" | "VIEW";
 
@@ -19,6 +20,22 @@ export interface EditorLine {
 export interface PendingCommand {
   lineId: number;
   raw: string;
+}
+
+/** Display-only line (=COLS>, =BNDS>, =PROF>); negative id; never saved. */
+export interface SpecialLine {
+  id: number;
+  kind: "COLS" | "BNDS" | "PROF";
+  /** data line it follows; null = before the first line */
+  afterLineId: number | null;
+}
+
+/** One UNDO step: the data as it was before an interaction. */
+export interface HistorySnapshot {
+  lines: EditorLine[];
+  pending: PendingCommand[];
+  special: SpecialLine[];
+  nextId: number;
 }
 
 export interface EditorCursor {
@@ -48,11 +65,12 @@ export interface EditorSession {
   pageSize: number;
   /** data columns visible per page */
   pageCols: number;
-  caps: boolean;
-  nums: boolean;
-  hex: boolean;
-  /** show the COLS ruler after this line id (null = hidden) */
-  colsAfter: number | null;
+  /** edit profile in effect (CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE, HEX, BOUNDS) */
+  profile: EditProfile;
+  /** true when the profile changed during this session and must be written back */
+  profileDirty: boolean;
+  special: SpecialLine[];
+  history: HistorySnapshot[];
   cursor: EditorCursor;
   lastFind?: { text: string; direction: FindDirection };
   lastChange?: { from: string; to: string };
@@ -70,7 +88,12 @@ export interface EditorEvent {
     | "EDITOR_TEXT_CHANGED"
     | "EDITOR_FIND"
     | "EDITOR_CHANGE"
-    | "EDITOR_SCROLLED";
+    | "EDITOR_SCROLLED"
+    | "EDITOR_UNDO"
+    | "EDITOR_PROFILE_CHANGED"
+    | "EDITOR_COLS"
+    | "EDITOR_BOUNDS"
+    | "EDITOR_LINES_REDISPLAYED";
   count?: number;
   detail?: string;
 }
@@ -85,7 +108,14 @@ export interface EditorResult {
   events: EditorEvent[];
   message?: EditorMessage;
   /** side effects the screen engine must perform */
-  effect?: { kind: "save" } | { kind: "cancel" } | { kind: "end" } | { kind: "explain"; term: string } | { kind: "create"; member: string; replace: boolean } | { kind: "copy"; member: string };
+  effect?:
+    | { kind: "save" }
+    | { kind: "cancel" }
+    | { kind: "end" }
+    | { kind: "explain"; term: string }
+    | { kind: "create"; member: string; replace: boolean }
+    | { kind: "copy"; member: string }
+    | { kind: "submit" };
 }
 
 export const DEFAULT_PAGE_SIZE = 18;
