@@ -18,6 +18,10 @@ const ALIASES: Record<string, string[]> = {
   SETTINGS: ["0"],
   UTIL: ["3"],
   UTILITIES: ["3"],
+  S: ["S"],
+  SD: ["S"],
+  SDSF: ["S"],
+  "M.5": ["S"],
 };
 
 export function parseOptionCommand(raw: string): OptionCommand {
@@ -29,6 +33,7 @@ export function parseOptionCommand(raw: string): OptionCommand {
   if (upper.startsWith("TSO ")) return { kind: "tso", command: s.slice(4).trim() };
   if (upper.startsWith("EXPLAIN ")) return { kind: "explain", term: s.slice(8).trim() };
   if (ALIASES[upper]) return { kind: "path", path: ALIASES[upper], jump: false };
+  if (upper.startsWith("=") && ALIASES[upper.slice(1)]) return { kind: "path", path: ALIASES[upper.slice(1)], jump: true };
   const jump = upper.startsWith("=");
   const body = jump ? upper.slice(1) : upper;
   if (/^[0-9]+(\.[0-9]+)*$/.test(body)) return { kind: "path", path: body.split("."), jump };

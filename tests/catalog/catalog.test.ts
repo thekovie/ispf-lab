@@ -27,7 +27,7 @@ describe("seed", () => {
     expect(Object.keys(c.datasets)).toEqual(
       expect.arrayContaining([`${HLQ}.JCL`, `${HLQ}.COBOL`, `${HLQ}.REXX`, `${HLQ}.DATA`, "SYS1.PARMLIB"]),
     );
-    expect(Object.keys(getDataset(c, `${HLQ}.JCL`)!.members!)).toEqual(["HELLO", "COPYJOB", "SORTJOB"]);
+    expect(Object.keys(getDataset(c, `${HLQ}.JCL`)!.members!)).toEqual(["HELLO", "COPYJOB", "PAYRPT", "SORTJOB"]);
     expect(getDataset(c, "SYS1.PARMLIB")!.readOnly).toBe(true);
   });
   it("contains no personal names", () => {

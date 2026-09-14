@@ -28,7 +28,7 @@ describe("labBundle", () => {
     const dst = new MemoryAdapter();
     const { bundle, migratedFrom } = parseBundle(json);
     const summary = applyBundle(dst, bundle, migratedFrom);
-    expect(summary).toMatchObject({ userid: "USER01", profiles: 1, lessons: 1, migratedFrom: undefined });
+    expect(summary).toMatchObject({ userid: "USER01", profiles: 1, lessons: 1, jobs: 0, migratedFrom: undefined });
     expect(summary.datasets).toBeGreaterThan(5);
     expect(getMember(loadCatalog(dst, "USER01"), "USER01.JCL", "HELLO")).toBeUndefined();
     expect(getMember(loadCatalog(dst, "USER01"), "USER01.JCL", "COPYJOB")).toBeDefined();
@@ -45,6 +45,7 @@ describe("labBundle", () => {
     expect(bundle.catalog).toEqual(c);
     expect(bundle.editProfiles).toEqual({});
     expect(bundle.progress.lessons).toEqual({});
+    expect(bundle.jobs.jobs).toEqual([]);
   });
   it("rejects foreign, malformed and oversized files with readable reasons", () => {
     expect(() => parseBundle("not json")).toThrow(BundleError);

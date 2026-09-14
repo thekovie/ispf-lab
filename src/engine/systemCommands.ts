@@ -46,6 +46,7 @@ export function parseSystemCommand(raw: string | undefined): SystemCommand | nul
   if (trimmed.startsWith("=")) {
     const body = trimmed.slice(1);
     if (/^\d+(\.\d+)*$/.test(body)) return { kind: "jump", path: body.split(".") };
+    if (body === "S" || body === "SD" || body === "SDSF" || body === "M.5") return { kind: "jump", path: ["S"] };
     return { kind: "jump", path: [] }; // invalid destination; reported by jumpTo
   }
   const [verb, arg] = trimmed.split(/\s+/);

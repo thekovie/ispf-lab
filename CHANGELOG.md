@@ -6,6 +6,10 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Virtual JES and SDSF (SIMULATED): SUBMIT from Edit, `J` on member lists, `TSO SUBMIT`; JCL recogniser with the
+  classic IEFC errors; IEFBR14/IEBGENER/SORT/IDCAMS; JESMSGLG/JESJCL/JESYSMSG; primary option S with ST/O/LOG,
+  `?`/`S`/`P`/`SJ` actions, OWNER/PREFIX/SORT; seed member `<HLQ>.JCL(PAYRPT)` (Day-One challenge); jobs persisted
+  per userid and included in Export Lab; eight glossary terms.
 - Export Lab / Import Lab on the Progress page: one validated JSON bundle (v2) with catalog, edit profiles, lesson
   progress and settings; the earlier catalog-only export is migrated on import.
 - DSLIST: line commands S (short information), CO/MO (3.3 prefilled, whole-data-set copy/move), X/NX, Z, =;

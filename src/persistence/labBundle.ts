@@ -9,6 +9,8 @@
 import { isValidDsname, isValidMemberName } from "@/catalog/catalog";
 import type { Catalog, Dataset, Member, Recfm, SpaceUnits } from "@/catalog/types";
 import type { EditProfiles } from "@/editor/profile";
+import { EMPTY_JES, type JesState } from "@/jes/types";
+import { loadJes, sanitizeJes, saveJes } from "./jesStore";
 import { loadCatalog, saveCatalog } from "./catalogStore";
 import { loadProfiles, sanitizeProfiles, saveProfiles } from "./profileStore";
 import { EMPTY_PROGRESS, loadProgress, saveProgress, type LessonProgress, type Progress } from "./progressStore";
@@ -28,6 +30,7 @@ export interface LabBundle {
   editProfiles: EditProfiles;
   progress: Progress;
   settings: Settings;
+  jobs: JesState;
 }
 
 export interface ImportSummary {
@@ -36,6 +39,7 @@ export interface ImportSummary {
   members: number;
   profiles: number;
   lessons: number;
+  jobs: number;
   migratedFrom?: number;
 }
 
@@ -156,6 +160,7 @@ export function buildBundle(storage: StorageAdapter, userid: string, now = new D
     editProfiles: loadProfiles(storage, u),
     progress: loadProgress(storage),
     settings: loadSettings(storage),
+    jobs: loadJes(storage, u),
   };
 }
 
@@ -190,6 +195,7 @@ export function parseBundle(json: string): { bundle: LabBundle; migratedFrom?: n
         editProfiles: sanitizeProfiles(raw.editProfiles),
         progress: validateProgress(raw.progress),
         settings: validateSettings(raw.settings),
+        jobs: sanitizeJes(raw.jobs),
       },
     };
   }
@@ -197,7 +203,7 @@ export function parseBundle(json: string): { bundle: LabBundle; migratedFrom?: n
     const catalog = validateCatalog(raw.catalog);
     const userid = catalog.hlq || "USER01";
     return {
-      bundle: { format: BUNDLE_FORMAT, version: BUNDLE_VERSION, exportedAt: str(raw.exportedAt, ""), userid, catalog, editProfiles: {}, progress: EMPTY_PROGRESS, settings: DEFAULT_SETTINGS },
+      bundle: { format: BUNDLE_FORMAT, version: BUNDLE_VERSION, exportedAt: str(raw.exportedAt, ""), userid, catalog, editProfiles: {}, progress: EMPTY_PROGRESS, settings: DEFAULT_SETTINGS, jobs: EMPTY_JES },
       migratedFrom: 1,
     };
   }
@@ -211,6 +217,7 @@ export function applyBundle(storage: StorageAdapter, bundle: LabBundle, migrated
   saveProfiles(storage, bundle.userid, bundle.editProfiles);
   saveProgress(storage, bundle.progress);
   saveSettings(storage, bundle.settings);
+  saveJes(storage, bundle.userid, bundle.jobs);
   const datasets = Object.values(bundle.catalog.datasets);
   return {
     userid: bundle.userid,
@@ -218,6 +225,7 @@ export function applyBundle(storage: StorageAdapter, bundle: LabBundle, migrated
     members: datasets.reduce((n, d) => n + Object.keys(d.members ?? {}).length, 0),
     profiles: Object.keys(bundle.editProfiles).length,
     lessons: Object.keys(bundle.progress.lessons).length,
+    jobs: bundle.jobs.jobs.length,
     migratedFrom,
   };
 }

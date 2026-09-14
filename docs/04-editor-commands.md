@@ -79,7 +79,7 @@ itself), `LINE COMMANDS NOT ALLOWED IN BROWSE`. Blanking a pending command cance
 | `BOUNDS [left right]` | `BNDS`, `BND` | no operands: show `=BNDS>` line; with operands: set the search window used by FIND/CHANGE/EXCLUDE; `INVALID BOUNDS` |
 | `COLS` | | `=COLS>` ruler above the first line |
 | `HEX ON|OFF` | | accepted, display unchanged |
-| `SUBMIT` | `SUB` | not available yet (Priority 5 adds the virtual JES) |
+| `SUBMIT` | `SUB` | submit the buffer to the virtual JES; `JOB name(JOBnnnnn) SUBMITTED` (deviation: ISPF submits the saved data set) |
 | `CREATE member` / `REPLACE member` | `CRE`, `REP` | write the buffer to another member of the same library |
 | `COPY member` | | insert another member's records after `A` / before `B` (or into an empty member) |
 | `PROFILE` | `PROF` | show two `=PROF>` lines: name, LRECL, CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE, HEX, BOUNDS |

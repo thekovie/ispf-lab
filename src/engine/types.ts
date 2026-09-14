@@ -6,6 +6,7 @@ import type { Catalog, DsnRef } from "@/catalog/types";
 import type { EditorMode, EditorSession } from "@/editor/types";
 import type { Settings } from "@/persistence/settingsStore";
 import type { EditProfiles } from "@/editor/profile";
+import type { JesState } from "@/jes/types";
 
 export type ListMode = "E" | "B" | "V" | "M";
 
@@ -35,6 +36,10 @@ export type ScreenFrame =
   | { id: "DATASET_INFO"; dsn: string; short?: boolean }
   | { id: "MEMBER_LIST"; dsn: string; mode: ListMode; top: number; lastCmd?: string; pending?: PendingListCommand[] }
   | { id: "MEMBER_INFO"; dsn: string; member: string }
+  | { id: "SDSF_MENU" }
+  | { id: "SDSF_STATUS"; queue: "ST" | "O"; top: number; owner: string; prefix: string; sort?: "JOBNAME" | "JOBID" | "STATUS"; lastCmd?: string; pending?: PendingListCommand[] }
+  | { id: "SDSF_JOB_DS"; jobId: string; top: number }
+  | { id: "CONFIRM_PURGE"; jobId: string }
   | { id: "EDIT" }
   | { id: "BROWSE" }
   | { id: "VIEW" }
@@ -73,6 +78,7 @@ export interface SimulatorState {
   activeScreen: number;
   /** per-data-set-type edit profiles (PROFILE command), persisted per userid */
   editProfiles: EditProfiles;
+  jes: JesState;
   /** ISPF command retrieval stack (RETRIEVE / F12), newest first; shared by all logical screens */
   retrieveStack: string[];
   /** position in retrieveStack for consecutive RETRIEVEs */
@@ -103,6 +109,7 @@ export type SimAction =
   | { type: "LOAD_CATALOG"; catalog: Catalog }
   | { type: "LOAD_SETTINGS"; settings: Settings }
   | { type: "LOAD_PROFILES"; profiles: EditProfiles }
+  | { type: "LOAD_JES"; jes: JesState }
   | { type: "RESET_ENVIRONMENT" }
   | { type: "GOTO"; screen: ScreenFrame; clearStack?: boolean }
   | { type: "LOGOFF" }
@@ -128,6 +135,12 @@ export type SimEvent =
   | { type: "LIST_LINES_EXCLUDED"; screen: ScreenId; count: number }
   | { type: "LIST_RESET"; screen: ScreenId }
   | { type: "LIST_COMMANDS_PROCESSED"; screen: ScreenId; count: number }
+  | { type: "JOB_SUBMITTED"; jobId: string; jobName: string; source?: DsnRef; from: ScreenId }
+  | { type: "JOB_COMPLETED"; jobId: string; jobName: string; status: "OUTPUT" | "JCL_ERROR"; maxRc?: number; abend?: string }
+  | { type: "JCL_ERROR_GENERATED"; jobId: string; jobName: string }
+  | { type: "JOB_STATUS_OPENED"; queue: string }
+  | { type: "JOB_OUTPUT_OPENED"; jobId: string; ddname?: string }
+  | { type: "JOB_PURGED"; jobId: string }
   | { type: "DATASET_ALLOCATED"; dsn: string; datasetType: "PDS" | "PS" }
   | { type: "DATASET_DELETED"; dsn: string }
   | { type: "DATASET_RENAMED"; from: string; to: string }

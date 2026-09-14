@@ -14,6 +14,7 @@ import { parseBoundsLine, specialRows } from "@/editor/special";
 import type { EditorEvent, EditorMessage, EditorResult, EditorSession } from "@/editor/types";
 import { parseEditorPrimaryCommand } from "@/parsers/editorPrimaryCommand";
 import { dim, f, label, t } from "../rows";
+import { submitRecords } from "../jesActions";
 import { pop, withMessage } from "../navigation";
 import type { Fields, Message, Row, ScreenHandler, SimEvent, SimulatorState, StepResult } from "../types";
 
@@ -309,8 +310,11 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
       return withEvents(createMember(base, effect.member, effect.replace));
     case "copy":
       return withEvents(copyIntoBuffer(base, effect.member));
-    case "submit":
-      return withEvents(withMessage(base, { short: "SUBMIT NOT AVAILABLE IN THIS TRAINING MODULE", long: "JCL submission arrives with the simulated JES.", severity: "error" }));
+    case "submit": {
+      // ISPF submits the data set on disk; submitting the buffer lets a learner try unsaved JCL (documented deviation).
+      const s = base.editor!;
+      return withEvents(submitRecords(base, bufferRecords(s), { dsn: s.dsn, member: s.member }, base.screen.id));
+    }
     default:
       return withEvents({ state: base, events: [] });
   }

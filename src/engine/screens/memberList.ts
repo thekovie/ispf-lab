@@ -7,6 +7,7 @@ import type { Member } from "@/catalog/types";
 import { tokenize } from "@/parsers/editorPrimaryCommand";
 import { parseMemberLineCommand } from "@/parsers/listLineCommand";
 import { blank, dim, f, label, t, titleRow } from "../rows";
+import { submitRecords } from "../jesActions";
 import { collectListCommands, resumeListCommands, runListCommands } from "../listCommands";
 import { fail, pop, push, replace } from "../navigation";
 import { openRef } from "../open";
@@ -150,9 +151,11 @@ function runLineCommand(state: SimulatorState, member: string, raw: string): Ste
         : { state: { ...state, catalog: rr.catalog, message: { short: "STATISTICS RESET", long: `${frame.dsn}(${member}) now shows version 01.00, created and changed today by ${state.userid}.`, severity: "info" } }, events: [{ type: "MEMBER_STATS_RESET", dsn: frame.dsn, member }] };
       break;
     }
-    case "J":
-      r = fail(state, "SUBMIT NOT AVAILABLE IN THIS TRAINING MODULE", "J submits the member as a batch job. Job submission arrives with the virtual JES module.");
+    case "J": {
+      const m = ds?.members?.[member];
+      r = m ? submitRecords(state, m.records, ref, "MEMBER_LIST") : fail(state, "MEMBER NOT FOUND");
       break;
+    }
     default:
       r = fail(state, "INVALID LINE COMMAND");
   }

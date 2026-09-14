@@ -4,6 +4,7 @@
  * Reference: docs/02-architecture.md §State machine, ADR 0002.
  */
 import { buildSeed } from "@/catalog/seed";
+import { EMPTY_JES } from "@/jes/types";
 import { push } from "./navigation";
 import { handlerFor } from "./registry";
 import { splitScreen, swapScreen } from "./splitScreen";
@@ -75,6 +76,8 @@ function reduceAction(state: SimulatorState, action: SimAction): StepResult {
       return { state: { ...state, today: action.today }, events: [] };
     case "LOAD_CATALOG":
       return { state: { ...state, catalog: action.catalog }, events: [] };
+    case "LOAD_JES":
+      return { state: { ...state, jes: action.jes }, events: [] };
     case "LOAD_PROFILES":
       return { state: { ...state, editProfiles: action.profiles }, events: [] };
     case "LOAD_SETTINGS":
@@ -84,6 +87,7 @@ function reduceAction(state: SimulatorState, action: SimAction): StepResult {
         ...state,
         catalog: buildSeed(state.userid),
         editProfiles: {},
+        jes: EMPTY_JES,
         retrieveStack: [],
         retrieveIndex: 0,
         screens: [],

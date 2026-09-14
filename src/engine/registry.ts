@@ -15,6 +15,7 @@ import { dslistSearchScreen } from "./screens/dslistSearch";
 import { dslistResultsScreen } from "./screens/dslistResults";
 import { memberListScreen } from "./screens/memberList";
 import { memberInfoScreen } from "./screens/memberInfo";
+import { confirmPurgeScreen, sdsfJobDsScreen, sdsfMenuScreen, sdsfStatusScreen } from "./screens/sdsf";
 import { editorScreen } from "./screens/editor";
 import { autosavePromptScreen } from "./screens/autosavePrompt";
 import { confirmDeleteScreen, copyMovePopupScreen, messageScreen, renameScreen } from "./screens/dialogs";
@@ -39,6 +40,10 @@ const HANDLERS: Record<ScreenId, AnyHandler> = {
   DATASET_INFO: datasetInfoScreen,
   MEMBER_LIST: memberListScreen,
   MEMBER_INFO: memberInfoScreen,
+  SDSF_MENU: sdsfMenuScreen,
+  SDSF_STATUS: sdsfStatusScreen,
+  SDSF_JOB_DS: sdsfJobDsScreen,
+  CONFIRM_PURGE: confirmPurgeScreen,
   EDIT: editorScreen,
   BROWSE: editorScreen,
   VIEW: editorScreen,

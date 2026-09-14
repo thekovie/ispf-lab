@@ -69,7 +69,7 @@ simulator; the provider dispatches `GOTO` / `LOAD_CATALOG` for a lesson's `start
 (150 ms) and flushed on unload. A backend later replaces the adapter; the engine does not change.
 
 **Export / Import Lab** (`labBundle.ts`, ADR 0013): `{format:"ispf-lab", version:2, exportedAt, userid, catalog,
-editProfiles, progress, settings}`. `parseBundle` rebuilds every object from known keys with type checks (5 MB cap,
+editProfiles, progress, settings, jobs}` (`jobs` = the virtual JES state, `ispf-lab:jes:v1:<USERID>`, optional on import). `parseBundle` rebuilds every object from known keys with type checks (5 MB cap,
 names validated, unknown keys dropped, nothing executed) and migrates the v0.1 catalog-only export; `applyBundle`
 writes the per-userid keys and the global progress/settings. The Progress page downloads the file and also shows it
 in a textarea in case the browser blocks downloads.

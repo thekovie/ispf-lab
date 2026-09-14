@@ -21,6 +21,7 @@ const MENU: [string, string, string][] = [
   ["9", "IBM Products", "IBM program development products"],
   ["10", "SCLM", "SW Configuration Library Manager"],
   ["11", "Workplace", "ISPF Object/Action Workplace"],
+  ["S", "SDSF", "Spool display and search (SIMULATED)"],
 ];
 
 export const primaryMenuScreen: ScreenHandler<{ id: "PRIMARY_OPTION_MENU" }> = {
@@ -30,6 +31,8 @@ export const primaryMenuScreen: ScreenHandler<{ id: "PRIMARY_OPTION_MENU" }> = {
     "You can chain options: 3.4 opens Utilities (3) then Data Set List (4).",
     "=3.4 jumps there from any panel; RETURN (PF4) comes straight back here.",
     "PF3 (End) returns to the previous panel one step at a time.",
+    "S opens the simulated SDSF to look at jobs you submitted (the letter",
+    "varies by site: S, SD or M.5 are common).",
     "X or PF3 here logs you off.",
   ],
   render(state) {
