@@ -661,13 +661,6 @@ const FIXJCL_JCL = ["//{HLQ}J  JOB (ACCT),'FIX ME 1',CLASS=A,MSGCLASS=X", "//STE
 const FIXDSN_JCL = ["//{HLQ}Q  JOB (ACCT),'FIX ME 2',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//OUT      DD  DSN={HLQ}.NOTES.TXTT,DISP=SHR", "//"];
 const FIXPGM_JCL = ["//{HLQ}Z  JOB (ACCT),'FIX ME 3',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR41", "//STEP2    EXEC PGM=IEFBR14", "//"];
 
-const FAULTY = [
-  { letter: "J", id: "jcl", member: "FIXJCL" },
-  { letter: "Q", id: "dsn", member: "FIXDSN" },
-  { letter: "Z", id: "pgm", member: "FIXPGM" },
-  { letter: "W", id: "rc", member: "FIXRC" },
-] as const;
-
 const trbRead = (letter: string) => eventIs("JOB_OUTPUT_OPENED", (e, ctx: LessonContext) => e.ddname === "JESYSMSG" && outputOfJob(letter)(e, ctx));
 const trbFixed = (letter: string) => eventIs("JOB_COMPLETED", (e, ctx: LessonContext) => e.jobName === `${ctx.hlq}${letter}` && e.status === "OUTPUT" && e.maxRc === 0 && !e.abend);
 /** A run of {HLQ}<letter> that did not end CC 0000 (JCL error, abend or a nonzero code). */
