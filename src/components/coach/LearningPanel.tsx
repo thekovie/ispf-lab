@@ -4,9 +4,10 @@
  * Practice: objective + hints on request. Challenge: task + counters + final verdict.
  * Reference: docs/05-course-design.md §Coaching UI.
  */
+import { useState } from "react";
 import { useSimulator } from "@/state/SimulatorProvider";
 import { useTutorial } from "@/state/TutorialProvider";
-import type { AppMode } from "@/tutorial/types";
+import type { AppMode, Question } from "@/tutorial/types";
 import { LESSONS } from "@/tutorial/lessons";
 import { missingPrerequisites } from "@/tutorial/prerequisites";
 
@@ -48,6 +49,49 @@ function PrerequisiteNote() {
       <p className="coach__dim">
         This lesson builds on {missing.map((l) => `lesson ${l.number} (${l.title})`).join(" and ")}. You can carry on without it.
       </p>
+    </Section>
+  );
+}
+
+/** A multiple-choice check (ADR 0018). A wrong choice is recorded as a mistake by the tutorial; the card only says so. */
+function QuestionCard({ question }: { question: Question }) {
+  const t = useTutorial();
+  const [missed, setMissed] = useState<number | undefined>(undefined);
+  return (
+    <fieldset className="coach__question">
+      <legend>{t.text(question.prompt)}</legend>
+      {question.options.map((option, i) => (
+        <button
+          key={option}
+          type="button"
+          className="crt-button"
+          aria-label={`Answer: ${option}`}
+          onClick={() => setMissed(t.answer(question.id, i) ? undefined : i)}
+        >
+          {option}
+        </button>
+      ))}
+      {missed !== undefined && <p className="coach__error">Not quite: {question.options[missed]} is not the answer. Think again.</p>}
+    </fieldset>
+  );
+}
+
+function StepQuestion() {
+  const { lesson, step } = useTutorial();
+  const q = lesson?.questions?.find((x) => x.id === step?.questionId);
+  return q ? <Section label="Check"><QuestionCard key={q.id} question={q} /></Section> : null;
+}
+
+/** Challenge: every question the lesson asks, until each is answered. */
+function ChallengeQuestions() {
+  const { lesson, runner } = useTutorial();
+  const open = lesson?.questions?.filter((q) => !runner?.answers?.[q.id]) ?? [];
+  if (open.length === 0) return null;
+  return (
+    <Section label="Questions">
+      {open.map((q) => (
+        <QuestionCard key={q.id} question={q} />
+      ))}
     </Section>
   );
 }
@@ -118,6 +162,8 @@ export function LearningPanel() {
               {step.explanation && <Section label="Why?">{t.text(step.explanation)}</Section>}
             </>
           )}
+          {mode !== "challenge" && <StepQuestion />}
+          {mode === "challenge" && <ChallengeQuestions />}
           {mode === "practice" && <Section label="How it works">Work it out yourself. Reveal a hint if you get stuck; each hint is recorded.</Section>}
           {mode === "challenge" && (
             <Section label="Rules">

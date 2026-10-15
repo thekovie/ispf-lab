@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { SimEvent, SimulatorState } from "@/engine/types";
 import { STORAGE_PREFIX } from "@/persistence/keys";
 import { lessonProgress, loadProgress, resetProgress as clearProgress, saveProgress, updateLesson, type Progress } from "@/persistence/progressStore";
-import { currentStep, feedEvents, fillHlq, scoreFor, startRunner, useHint as applyHint } from "@/tutorial/engine";
+import { answerQuestion, currentStep, feedEvents, fillHlq, scoreFor, startRunner, useHint as applyHint, type RunnerUpdate } from "@/tutorial/engine";
 import { explainTerm, type GlossaryEntry } from "@/tutorial/explain";
 import { LESSONS, lessonById } from "@/tutorial/lessons";
 import { startActions, workAtRisk } from "@/tutorial/scenario";
@@ -30,6 +30,8 @@ export interface TutorialApi {
   restartLesson: () => void;
   nextLesson: () => void;
   showHint: () => void;
+  /** answer a check question (ADR 0018); true when the choice was right */
+  answer: (questionId: string, choice: number) => boolean;
   progress: Progress;
   resetProgress: () => void;
   score?: number;
@@ -142,6 +144,27 @@ export function TutorialProvider({ children, confirmDiscard }: TutorialProviderP
     [store, persistProgress, applyLessonStart, confirmLoss],
   );
 
+  /** Take a runner update: keep the new runner and, when it finished the lesson, record the result. */
+  const settle = useCallback(
+    (l: Lesson, r: RunnerUpdate) => {
+      setRunner(r.runner);
+      if (!r.completed) return;
+      const p = loadProgress(store.storage);
+      const lp = lessonProgress(p, l.id);
+      const score = scoreFor(r.runner);
+      persistProgress(
+        updateLesson(p, l.id, {
+          status: "completed",
+          hintsUsed: lp.hintsUsed + r.runner.hintsUsed,
+          mistakes: lp.mistakes + r.runner.mistakes,
+          bestScore: Math.max(lp.bestScore ?? 0, score),
+          completedAt: new Date().toISOString(),
+        }),
+      );
+    },
+    [store, persistProgress],
+  );
+
   // feed simulator events to the runner
   useEffect(() => {
     return store.onEvents((events, state) => {
@@ -150,24 +173,9 @@ export function TutorialProvider({ children, confirmDiscard }: TutorialProviderP
       const explain = events.find((e) => e.type === "EXPLAIN_REQUESTED");
       if (explain && explain.type === "EXPLAIN_REQUESTED") setExplainQuery(explain.term);
       if (!lesson || !runner || mode === "sandbox") return;
-      const r = feedEvents(lesson, runner, events, state, mode);
-      if (r.runner !== runner) setRunner(r.runner);
-      if (r.completed) {
-        const p = loadProgress(store.storage);
-        const lp = lessonProgress(p, lesson.id);
-        const score = scoreFor(r.runner);
-        persistProgress(
-          updateLesson(p, lesson.id, {
-            status: "completed",
-            hintsUsed: lp.hintsUsed + r.runner.hintsUsed,
-            mistakes: lp.mistakes + r.runner.mistakes,
-            bestScore: Math.max(lp.bestScore ?? 0, score),
-            completedAt: new Date().toISOString(),
-          }),
-        );
-      }
+      settle(lesson, feedEvents(lesson, runner, events, state, mode));
     });
-  }, [store, lesson, runner, mode, persistProgress]);
+  }, [store, lesson, runner, mode, settle]);
 
   const setMode = useCallback(
     (m: AppMode) => {
@@ -205,6 +213,12 @@ export function TutorialProvider({ children, confirmDiscard }: TutorialProviderP
         if (n) startLesson(n.id);
       },
       showHint: () => runner && setRunner(applyHint(runner)),
+      answer: (questionId: string, choice: number) => {
+        const q = lesson?.questions?.find((x) => x.id === questionId);
+        if (!lesson || !runner || !q || mode === "sandbox") return false;
+        settle(lesson, answerQuestion(lesson, runner, questionId, choice, store.getState(), mode));
+        return choice === q.correct;
+      },
       progress,
       resetProgress: () => setProgress(clearProgress(store.storage)),
       score: runner ? scoreFor(runner) : undefined,
@@ -213,7 +227,7 @@ export function TutorialProvider({ children, confirmDiscard }: TutorialProviderP
       setExplainQuery,
       lastEvents,
     };
-  }, [mode, setMode, lesson, runner, startLesson, progress, explainQuery, lastEvents, store]);
+  }, [mode, setMode, lesson, runner, startLesson, progress, explainQuery, lastEvents, store, settle]);
 
   return <TutorialContext.Provider value={api}>{children}</TutorialContext.Provider>;
 }

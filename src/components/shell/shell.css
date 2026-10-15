@@ -62,6 +62,9 @@
 .coach__label { color: var(--crt-cyan); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 4px; font-weight: 700; }
 .coach__body { white-space: normal; }
 .coach__error { white-space: normal; color: var(--crt-red, #ff6b6b); font-weight: 600; }
+.coach__question { border: 0; margin: 0; padding: 0; min-width: 0; }
+.coach__question legend { padding: 0; margin-bottom: 6px; white-space: normal; }
+.coach__question .crt-button { display: block; margin: 4px 0; }
 .coach__dim { white-space: normal; color: var(--crt-dim); }
 .coach__ok { color: var(--crt-green); font-weight: 700; }
 .coach__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }

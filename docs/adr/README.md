@@ -22,3 +22,4 @@ Write a new ADR the moment a non-obvious choice is made; never rewrite history â
 | [0015](0015-submit-and-sj-simulation-disclosure.md) | Edit SUBMIT matches IBM's wording; SDSF SJ/SE are disclosed simplifications |
 | [0016](0016-challenge-completion-guard.md) | Challenge completion needs a guard and an outcome check, not a repeat of the Learn steps (*Accepted*) |
 | [0017](0017-lesson-metadata-and-start-stack.md) | Lesson `requires` is advice, `sources` is checked by format only, lessons start with the menu underneath |
+| [0018](0018-display-order-draft-gate-and-check-questions.md) | Display order is separate from lesson numbers, draft lessons are gated by a flag, concepts can be checked with multiple-choice questions |

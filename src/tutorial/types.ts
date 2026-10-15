@@ -15,6 +15,17 @@ export interface LessonContext {
   hlq: string;
   /** Challenge mode only: every event since the Challenge started, including this batch (oldest first) */
   history?: SimEvent[];
+  /** ids of the check questions the learner has answered correctly in this attempt (ADR 0018) */
+  answers?: Record<string, true>;
+}
+
+/** A multiple-choice check of a concept that has no simulator event (ADR 0018). */
+export interface Question {
+  id: string;
+  prompt: string;
+  options: string[];
+  /** index into `options` */
+  correct: number;
 }
 
 export type Validator = (ctx: LessonContext) => boolean;
@@ -29,6 +40,8 @@ export interface LessonStep {
   validator: Validator;
   /** the step tells the learner to provoke a terminal error (invalid option, SAVE in Browse): it is not scored as a mistake */
   expectsError?: boolean;
+  /** a check question shown with this step (Learn and Practice); the step's validator reads it with `answered(id)` */
+  questionId?: string;
   /** field id to hint visually in Learn mode */
   highlightField?: string;
 }
@@ -71,7 +84,11 @@ export interface Lesson {
   requires?: string[];
   /** evidence ids for the claims this lesson makes, e.g. "SRC-003#disp-defaults" (docs/curriculum/verified-sources.md). Format only; not enforced against the doc. */
   sources?: string[];
+  /** awaiting independent review (docs/curriculum/lesson-authoring-standards.md section 9): hidden from learners unless NEXT_PUBLIC_SHOW_DRAFT_LESSONS=1 (ADR 0018) */
+  draft?: boolean;
   startingState?: LessonStart;
+  /** check questions for concepts the simulator cannot observe; a wrong choice is a mistake, a right one is remembered until restart */
+  questions?: Question[];
   steps: LessonStep[];
   /** Challenge mode: the final-state check (defaults to the last step's validator) */
   challenge?: { task: string; validator: Validator };
@@ -95,4 +112,6 @@ export interface RunnerState {
   armed?: boolean;
   /** Challenge mode only: events since the Challenge started (capped), handed to validators as `history` */
   history?: SimEvent[];
+  /** check questions answered correctly in this attempt (cleared on every start) */
+  answers?: Record<string, true>;
 }

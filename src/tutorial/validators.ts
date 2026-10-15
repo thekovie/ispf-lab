@@ -22,6 +22,12 @@ export const noEditSession: Validator = ({ state }) => !state.editor || state.ed
 /** No editor session is open (the learner has left the editor). */
 export const editorClosed: Validator = ({ state }) => !state.editor;
 
+/** The check question with this id has been answered correctly in this attempt (ADR 0018). */
+export const answered =
+  (questionId: string): Validator =>
+  (ctx) =>
+    ctx.answers?.[questionId] === true;
+
 /** An event of this type happened; `match` narrows it. */
 export const eventIs =
   <T extends SimEvent["type"]>(type: T, match?: (e: EventOf<T>, ctx: LessonContext) => boolean): Validator =>
@@ -132,11 +138,6 @@ export const editorHasLine =
   (test: (text: string) => boolean): Validator =>
   (ctx) =>
     !!ctx.state.editor && ctx.state.editor.lines.some((l) => test(l.text.trimEnd()));
-
-export const editorLineCount =
-  (test: (n: number) => boolean): Validator =>
-  (ctx) =>
-    !!ctx.state.editor && test(ctx.state.editor.lines.length);
 
 export const savedMember =
   (dsn: string, member?: string): Validator =>

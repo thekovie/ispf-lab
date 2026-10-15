@@ -9,7 +9,7 @@ import type { AppMode, Lesson, LessonContext, RunnerState, Validator } from "./t
 export const SCORE = { base: 100, perMistake: 10, perHint: 15 } as const;
 
 /** Cap on the Challenge event history kept in the runner (oldest events are dropped). */
-export const HISTORY_CAP = 400;
+export const HISTORY_CAP = 2000;
 
 /** The check that completes a lesson in Challenge mode: its own outcome validator, else the last step's. */
 export function challengeValidator(lesson: Lesson): Validator | undefined {
@@ -25,7 +25,7 @@ export function startRunner(lesson: Lesson, baseline?: SimulatorState): RunnerSt
   const runner: RunnerState = { lessonId: lesson.id, stepIndex: 0, status: lesson.steps.length ? "running" : "completed", hintsUsed: 0, mistakes: 0, completedSteps: [], hintShown: false };
   if (!baseline) return runner;
   const check = challengeValidator(lesson);
-  const trueAtStart = check ? check({ state: baseline, hlq: baseline.userid, history: [] }) : false;
+  const trueAtStart = check ? check({ state: baseline, hlq: baseline.userid, history: [], answers: {} }) : false;
   return { ...runner, armed: !trueAtStart };
 }
 
@@ -60,7 +60,7 @@ export function feedEvents(lesson: Lesson, runner: RunnerState, events: SimEvent
   if (mode === "challenge") {
     const validator = challengeValidator(lesson);
     const history = [...(runner.history ?? []), ...events].slice(-HISTORY_CAP);
-    const ok = validator ? passes(validator, events, state, hlq, history) : false;
+    const ok = validator ? passes(validator, events, state, hlq, history, runner.answers) : false;
     const tracked: RunnerState = { ...next, history };
     // Guard (ADR 0016): the outcome check must have been seen false since the Challenge started, then become true.
     if (!ok) return { runner: { ...tracked, armed: true }, advancedSteps: 0, completed: false };
@@ -71,7 +71,7 @@ export function feedEvents(lesson: Lesson, runner: RunnerState, events: SimEvent
   let advanced = 0;
   while (next.status === "running") {
     const step = lesson.steps[next.stepIndex];
-    if (!step || !passes(step.validator, events, state, hlq)) break;
+    if (!step || !passes(step.validator, events, state, hlq, undefined, runner.answers)) break;
     advanced++;
     const stepIndex = next.stepIndex + 1;
     next = {
@@ -90,9 +90,21 @@ export function feedEvents(lesson: Lesson, runner: RunnerState, events: SimEvent
   return { runner: next, advancedSteps: advanced, completed: next.status === "completed" };
 }
 
-function passes(validator: (ctx: LessonContext) => boolean, events: SimEvent[], state: SimulatorState, hlq: string, history?: SimEvent[]): boolean {
-  for (const event of events) if (validator({ event, state, hlq, history })) return true;
-  return validator({ state, hlq, history });
+function passes(validator: (ctx: LessonContext) => boolean, events: SimEvent[], state: SimulatorState, hlq: string, history?: SimEvent[], answers?: Record<string, true>): boolean {
+  for (const event of events) if (validator({ event, state, hlq, history, answers })) return true;
+  return validator({ state, hlq, history, answers });
+}
+
+/**
+ * A check question was answered (ADR 0018). A wrong or out-of-range choice is a mistake and changes nothing else;
+ * a right one is remembered and the lesson re-checked, so steps or the Challenge that read `answered(id)` can pass.
+ * An unknown question, or one already solved, changes nothing.
+ */
+export function answerQuestion(lesson: Lesson, runner: RunnerState, questionId: string, choice: number, state: SimulatorState, mode: AppMode): RunnerUpdate {
+  const q = lesson.questions?.find((x) => x.id === questionId);
+  if (!q || runner.status === "completed" || runner.answers?.[questionId]) return { runner, advancedSteps: 0, completed: false };
+  if (choice !== q.correct) return { runner: { ...runner, mistakes: runner.mistakes + 1 }, advancedSteps: 0, completed: false };
+  return feedEvents(lesson, { ...runner, answers: { ...runner.answers, [questionId]: true } }, [], state, mode);
 }
 
 /** A valid ISPF action that did not advance the lesson — used for a gentle nudge, never an error. */

@@ -15,8 +15,8 @@ import baseline from "./fixtures/baseline-ids.json";
 describe("lesson and step ids", () => {
   const ids = baseline as Record<string, { number: number; steps: string[] }>;
 
-  it("every baseline lesson id still exists with the same number, in the same order", () => {
-    expect(LESSONS.slice(0, Object.keys(ids).length).map((l) => [l.id, l.number])).toEqual(Object.entries(ids).map(([id, v]) => [id, v.number]));
+  it("every baseline lesson id still exists with the same number, in the same relative order", () => {
+    expect(LESSONS.filter((l) => ids[l.id]).map((l) => [l.id, l.number])).toEqual(Object.entries(ids).map(([id, v]) => [id, v.number]));
   });
 
   it("every baseline step id is unchanged and in the same order", () => {
@@ -26,11 +26,11 @@ describe("lesson and step ids", () => {
     }
   });
 
-  it("the 28 baseline lessons and 137 steps are all still there; new lessons come after them", () => {
+  it("the 28 baseline lessons and 137 steps are all still there; the other lessons are numbered 29 and up (ADR 0018)", () => {
     const baseline = LESSONS.filter((l) => ids[l.id]);
     expect(baseline).toHaveLength(28);
     expect(baseline.reduce((n, l) => n + l.steps.length, 0)).toBe(137);
-    expect(LESSONS.slice(0, 28).map((l) => l.id)).toEqual(baseline.map((l) => l.id));
+    expect(LESSONS.filter((l) => !ids[l.id]).every((l) => l.number >= 29)).toBe(true);
   });
 });
 
