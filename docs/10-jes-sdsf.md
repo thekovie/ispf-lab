@@ -12,7 +12,7 @@ z/OS SDSF User's Guide; Redbook SG24-6366 ch. 6.
 - `jcl.ts` — recogniser: `//name JOB`, `//name EXEC PGM=|PROC=`, `//dd DD`, `//*`, `//` null, `DD *`/`DD DATA` … `/*`,
   continuation (trailing comma → next line `// `), columns 73–80 ignored, comments after the operand field.
   Errors: IEFC605I UNIDENTIFIED OPERATION FIELD, IEFC621I EXPECTED CONTINUATION NOT RECEIVED, IEFC630I UNIDENTIFIED
-  KEYWORD x, IEFC606I MISPLACED … STATEMENT, IEFC662I INVALID LABEL, IEFC452I JOB NOT RUN (no JOB statement).
+  KEYWORD x, IEFC019I MISPLACED … STATEMENT, IEFC662I INVALID LABEL, IEFC452I JOB NOT RUN (no JOB statement).
 - `programs.ts` — IEFBR14 (RC 0; allocation/disposition do the work), IEBGENER (SYSUT1→SYSUT2, SYSPRINT), SORT /
   ICEMAN (`SORT FIELDS=(p,l,CH,A|D)` or `COPY`; ICE007A → RC 16), IDCAMS (`LISTCAT LEVEL(x)`, `DELETE 'dsn'`).
   Any other module → CSV003I + ABEND S806, later steps flushed.

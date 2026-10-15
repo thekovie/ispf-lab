@@ -84,13 +84,13 @@ describe("edit profile", () => {
     s.enter({ command: "RESET SPECIAL" });
     expect(rowsText(s)).not.toContain("=PROF>");
   });
-  it("STATS OFF keeps member statistics unchanged on save", () => {
+  it("STATS OFF discards the member's previous statistics on save (IBM, Edit and Edit Macros, STATS)", () => {
     const s = openHello().enter({ command: "STATS OFF" });
-    const before = getMember(s.state.catalog, "USER01.JCL", "HELLO")!;
     s.enter({ "line:1": "//X", command: "SAVE" });
     const after = getMember(s.state.catalog, "USER01.JCL", "HELLO")!;
-    expect(after.mod).toBe(before.mod);
-    expect(after.modifiedAt).toBe(before.modifiedAt);
+    expect(after.mod).toBeUndefined();
+    expect(after.version).toBeUndefined();
+    expect(after.modifiedAt).toBeUndefined();
     expect(after.records[0].trimEnd()).toBe("//X");
   });
   it("NUMBER ON writes sequence numbers in columns 73-80; UNNUM removes them", () => {

@@ -205,7 +205,7 @@ export function submitJob(jes: JesState, catalog: Catalog, input: SubmitInput): 
       }
       const disp = disposeStep(cat, st, !!run.abend);
       cat = disp.catalog;
-      sysmsg.push(...disp.sysmsg, `IEF374I STEP/${st.name.padEnd(8)}/STOP  ${day} RC=${cc(run.rc ?? 0)}`);
+      sysmsg.push(...disp.sysmsg, `IEF374I STEP/${st.name.padEnd(8)}/STOP  ${day} CPU 0MIN 00.01SEC SRB 0MIN 00.00SEC VIRT 4K SYS 180K EXT 4K SYS 9424K`);
     }
     sysmsg.push(`IEF376I  JOB/${jobName.padEnd(8)}/STOP  ${day} CPU=0MIN 00.01SEC`);
     const ended = abend ? `ABEND=${abend}` : status === "JCL_ERROR" ? "JCL ERROR" : `RC=${cc(maxRc ?? 0)}`;

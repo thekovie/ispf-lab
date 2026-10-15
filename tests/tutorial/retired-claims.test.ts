@@ -18,6 +18,10 @@ const RETIRED: Retired[] = [
   { claim: /SJ opens the submitted JCL/i, why: "IBM: SJ edits the JCL held for the job; changes are not saved (EV-C c3/c4, ADR 0015)" },
   { claim: /IEF212I names the data set/i, why: "IBM: IEF212I names the job, step and DD (EV-B 2.2)" },
   { claim: /IEF212I[^.]*which data set\?/i, why: "the DD statement names the data set, not the message" },
+  { claim: /without the space figures|omits the space/i, why: "IBM: S omits the directory blocks and member count of a PDS, not the space figures (UG2 option 3.4 S)" },
+  { claim: /audit trail operators/i, why: "IBM: 'These numbers can be useful in controlling library members'; 'audit trail' is only used for RECOVERY (EV-A 6)" },
+  { claim: /every save[^.]*bumps the modification level/i, why: "IBM: the level rises on the first change of a session (EM, Statistics for PDS members)" },
+  { claim: /STATS OFF[^.]*stops the editor updating/i, why: "IBM: with STATS OFF, previous statistics are lost on save (EM, STATS)" },
 ];
 
 /** Every string a lesson shows the learner. */

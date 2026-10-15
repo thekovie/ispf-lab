@@ -75,7 +75,7 @@ manual reference; corrections go here first, then into code and tests.
 | = | repeat the last line command entered on this list; `NO PREVIOUS LINE COMMAND` | | |
 | other | `INVALID LINE COMMAND` (text kept for correction) | | |
 
-**DSLIST primary commands**: `SORT NAME|DSORG|RECFM|LRECL|VOLUME [A|D]` (`SORTED BY x`, `INVALID SORT FIELD`);
+**DSLIST primary commands**: `SORT NAME|DSORG|RECFM|LRECL|VOLUME [A|D]` (no direction: LRECL descending, the others ascending, per UG2 Table 12; the simulator implements 5 of IBM's 16 fields) (`SORTED BY x`, `INVALID SORT FIELD`);
 `FIND text` / `RFIND` (PF5) search names from the row after the top, wrapping (`CHARS 'x' FOUND`, `NO CHARS 'x' FOUND`,
 `NO PREVIOUS FIND`); `EXCLUDE text [ALL]` (`n DATA SET(S) EXCLUDED`); `RESET` redisplays excluded rows (sort is kept).
 The catalog is never changed by these; they live in the DSLIST frame.
@@ -113,7 +113,8 @@ The job runs to completion inside the reducer; message `JOB name(JOBnnnnn) SUBMI
 
 - Data-set names ≤ 44 chars; qualifiers 1–8 chars, first char alphabetic/#/$/@. Member names 1–8.
 - `SYS1.*` libraries are read-only: no save, delete, rename, move.
-- Records are padded/truncated to LRECL on save. Member statistics: created, changed, ID (userid), version.mod.
+- Records are padded/truncated to LRECL on save. Member statistics: created, changed, ID (userid), version.mod. The modification level rises by one for the first change of an edit session (not on every save) and stops at 99; saving with STATS OFF discards a member's statistics. `G` resets at once (real ISPF shows a Reset Member Statistics panel first).
+- Data set information: `I` shows the full panel; `S` is the same panel without, for a PDS, the directory blocks and the number of members (UG2 option 3.4 `S`).
 - Everything is stored per userid in `localStorage`; **Reset environment** restores `buildSeed(userid)`.
 
 ## Seed catalog (per HLQ)

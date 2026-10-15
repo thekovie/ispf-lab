@@ -16,6 +16,8 @@ const PAGE = 14;
 type Frame = Extract<ScreenFrame, { id: "DSLIST_RESULTS" }>;
 
 const SORT_FIELDS: DslistSortField[] = ["NAME", "DSORG", "RECFM", "LRECL", "VOLUME"];
+/** IBM (UG2 Table 12): these fields sort descending when no direction is given; the other implemented fields ascend. */
+const DESCENDING_BY_DEFAULT: DslistSortField[] = ["LRECL"];
 
 /** One display row: a data set, or a marker standing in for a run of excluded data sets. */
 type Entry = { kind: "ds"; ds: Dataset } | { kind: "excluded"; count: number };
@@ -231,7 +233,7 @@ function runPrimary(state: SimulatorState, frame: Frame, raw: string): StepResul
       if (!SORT_FIELDS.includes(field)) r = fail(withCmd, "INVALID SORT FIELD", "SORT NAME, DSORG, RECFM, LRECL or VOLUME, optionally followed by A or D.");
       else if (dir && dir !== "A" && dir !== "D") r = fail(withCmd, "INVALID SORT DIRECTION", "Use A (ascending) or D (descending).");
       else {
-        const rr = replace(state, { ...frame, top: 0, sort: { field, descending: dir === "D" } }, { short: `SORTED BY ${field}`, severity: "info" });
+        const rr = replace(state, { ...frame, top: 0, sort: { field, descending: dir ? dir === "D" : DESCENDING_BY_DEFAULT.includes(field) } }, { short: `SORTED BY ${field}`, severity: "info" });
         r = { state: rr.state, events: [{ type: "LIST_SORTED", screen: "DSLIST_RESULTS", field }, ...rr.events] };
       }
       break;

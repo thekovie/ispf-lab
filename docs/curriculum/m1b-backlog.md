@@ -14,7 +14,9 @@ todo with an asserting test that cites the same finding.
 | A3 | **No change needed**: SUBMIT from Edit submits the buffer (ADR 0015), so `resubmit` passes on an unsaved fix and `save` still requires the saved member; asserted |
 | A8 | **Accepted as designed**: L28's objective says "by whatever route you choose", so Learn steps 1-2 also accept a run that already succeeded |
 | B5 (L5 step 2, L6 steps 3-4, L9 and L11 step 6) | **Fixed** (M1b-3); L11 step 5 (exclude) also fixed: its alternative `editorLineCount > 0` was always true |
-| A4, A5, A9, B1-B4, B6 | Open (wording, message ids, housekeeping) |
+| A4, A5 | **Fixed** (M1b-2: SJ and IEF212I wording) |
+| B2, B3, B4 | **Fixed** (M1b-2, M1b-4): SUBMIT/SJ wording, `IEF374I` (no `RC=`), `IEFC606I` to `IEFC019I`, `ICE026A` to `ICE056A` or plain text, `S` vs `I`, `SORT LRECL` default, modification level once per session capped at 99, `STATS OFF` discards statistics. Still open inside B3/B4: the invented `IEFC605I` variants, other inexact layouts (`IEF376I`, `IEF237I`, `ICE000I`), `G` panel, member-info labels |
+| A9, B1, B6 | Open (wording of the remaining lessons, housekeeping) |
 
 ## 1. The five deferred test cases
 

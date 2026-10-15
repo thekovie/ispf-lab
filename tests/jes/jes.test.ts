@@ -24,8 +24,8 @@ describe("parseJcl", () => {
     expect(parseJcl(["//J JOB", "//S EXCE PGM=IEFBR14"]).errors).toEqual([{ line: 2, id: "IEFC605I", text: "UNIDENTIFIED OPERATION FIELD" }]);
     expect(parseJcl(["//J JOB (A),", "//S EXEC PGM=IEFBR14"]).errors[0]).toMatchObject({ id: "IEFC621I" });
     expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14,FOO=1"]).errors[0]).toMatchObject({ id: "IEFC630I", text: "UNIDENTIFIED KEYWORD FOO" });
-    expect(parseJcl(["//S EXEC PGM=IEFBR14"]).errors[0]).toMatchObject({ id: "IEFC606I" });
-    expect(parseJcl(["//J JOB", "//DD1 DD DUMMY"]).errors[0]).toMatchObject({ id: "IEFC606I", text: "MISPLACED DD STATEMENT" });
+    expect(parseJcl(["//S EXEC PGM=IEFBR14"]).errors[0]).toMatchObject({ id: "IEFC019I", text: "MISPLACED EXEC STATEMENT" });
+    expect(parseJcl(["//J JOB", "//DD1 DD DUMMY"]).errors[0]).toMatchObject({ id: "IEFC019I", text: "MISPLACED DD STATEMENT" });
     expect(parseJcl([]).errors[0]).toMatchObject({ id: "IEFC452I" });
   });
 });
@@ -104,5 +104,31 @@ describe("column 72", () => {
   it("ignores columns 73-80, so a long line with a trailing comma reports IEFC621I", () => {
     const p = parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "//SYSUT2 DD DSN=USER01.NOTES.BKUP,DISP=(NEW,CATLG,DELETE),SPACE=(TRK,(5,2))", "//"]);
     expect(p.errors[0]).toMatchObject({ line: 3, id: "IEFC621I" });
+  });
+});
+
+describe("message ids that IBM documents (M1b-4, EV-B)", () => {
+  const sysmsg = (r: ReturnType<typeof submitJob>) => out(r, "JESYSMSG");
+
+  it("IEF374I carries the step statistics and no return code", () => {
+    const line = sysmsg(submit(HELLO)).split("\n").find((l) => l.startsWith("IEF374I"))!;
+    expect(line).toMatch(/^IEF374I STEP\/STEP1\s+\/STOP\s+\S+ CPU 0MIN 00\.01SEC SRB 0MIN 00\.00SEC VIRT 4K SYS 180K EXT 4K SYS 9424K$/);
+    expect(line).not.toContain("RC=");
+  });
+
+  it("the return code is on IEF142I, as IBM documents", () => {
+    expect(sysmsg(submit(HELLO))).toContain("IEF142I USER01H STEP1 - STEP WAS EXECUTED - COND CODE 0000");
+  });
+
+  it("a missing SORTIN DD is ICE056A, not the non-existent ICE026A", () => {
+    const r = submit(["//J JOB", "//S EXEC PGM=SORT", "//SYSOUT DD SYSOUT=*", "//SORTOUT DD SYSOUT=*", "//SYSIN DD *", "  SORT FIELDS=(1,3,CH,A)", "/*", "//"]);
+    const text = out(r, "SYSOUT");
+    expect(text).toContain("ICE056A SORTIN NOT DEFINED");
+    expect(text).not.toContain("ICE026A");
+  });
+
+  it("a misplaced statement is IEFC019I; IEFC606I does not exist", () => {
+    const ids = [...parseJcl(["//S EXEC PGM=IEFBR14"]).errors, ...parseJcl(["//J JOB", "//DD1 DD DUMMY"]).errors, ...parseJcl(["//J JOB", "//J2 JOB"]).errors].map((e) => e.id);
+    expect(ids).toEqual(["IEFC019I", "IEFC019I", "IEFC019I"]);
   });
 });

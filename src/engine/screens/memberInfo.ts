@@ -39,12 +39,13 @@ export const memberInfoScreen: ScreenHandler<Frame> = {
         [label("Member Name  . . . . : "), t(m.name, "white")],
         blank,
         [t("ISPF Statistics", "white", true)],
-        [label("  Version.Mod  . . . : "), t(`${vv(m.version)}.${vv(m.mod ?? 0)}`, "green")],
+        ...(m.version === undefined
+          ? [padRow("  This member has no ISPF statistics (it was saved with STATS OFF).", "yellow")]
+          : [[label("  Version.Mod  . . . : "), t(`${vv(m.version)}.${vv(m.mod ?? 0)}`, "green")]]),
         [label("  Created  . . . . . : "), t(m.createdAt ?? "", "green")],
         [label("  Last changed . . . : "), t(`${m.modifiedAt ?? ""} 00:00`, "green")],
         [label("  Current size . . . : "), t(String(m.records.length), "green"), label("  records")],
         [label("  Initial size . . . : "), t(String(m.records.length), "green"), label("  records")],
-        [label("  Modified lines . . : "), t(String(m.mod ?? 0), "green")],
         [label("  Last changed by  . : "), t(m.modifiedBy ?? "", "green")],
         blank,
         padRow("  Statistics are stored in the PDS directory. They are maintained by the ISPF", "dim"),

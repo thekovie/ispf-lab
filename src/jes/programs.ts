@@ -129,12 +129,12 @@ function sortProgram(ctx: ProgramContext): ProgramResult {
   const sortin = dd(ctx.step, "SORTIN");
   const sortout = dd(ctx.step, "SORTOUT");
   if (!sortin || !sortout) {
-    log.push(`ICE026A 0 ${!sortin ? "SORTIN" : "SORTOUT"} DD STATEMENT MISSING`, "ICE052I 3 END OF DFSORT");
+    log.push(`ICE056A ${!sortin ? "SORTIN" : "SORTOUT"} NOT DEFINED`, "ICE052I 3 END OF DFSORT");
     return finish(ctx.catalog, 16);
   }
   const input = readDd(ctx.catalog, sortin);
   if (input.error) {
-    log.push(`ICE026A 0 ${input.error}`, "ICE052I 3 END OF DFSORT");
+    log.push(`SIMULATOR - SORTIN: ${input.error}`, "ICE052I 3 END OF DFSORT");
     return finish(ctx.catalog, 16);
   }
   const records = [...(input.records ?? [])];
@@ -152,7 +152,7 @@ function sortProgram(ctx: ProgramContext): ProgramResult {
   }
   const w = writeDd(ctx, ctx.catalog, sortout, records, out);
   if (w.error) {
-    log.push(`ICE026A 0 ${w.error}`, "ICE052I 3 END OF DFSORT");
+    log.push(`SIMULATOR - SORTOUT: ${w.error}`, "ICE052I 3 END OF DFSORT");
     return finish(ctx.catalog, 16);
   }
   log.push("ICE201I 0 RECORD TYPE IS F - DATA STARTS IN POSITION 1", "ICE055I 0 INSERT 0, DELETE 0", `ICE054I 0 RECORDS - IN: ${records.length}, OUT: ${records.length}`, "ICE052I 0 END OF DFSORT");

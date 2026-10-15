@@ -329,13 +329,13 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
 function saveSession(state: SimulatorState, thenExit: boolean): StepResult {
   const s = state.editor!;
   const ref = { dsn: s.dsn, member: s.member };
-  const r = saveRecords(state.catalog, ref, bufferRecords(s), { today: state.today, userid: state.userid, stats: s.profile.stats });
+  const r = saveRecords(state.catalog, ref, bufferRecords(s), { today: state.today, userid: state.userid, stats: s.profile.stats, bumpMod: s.dirty && !s.modBumped });
   if (r.error) return withMessage(state, { short: r.error, severity: "error", long: r.error === MSG.READ_ONLY ? "Use CANCEL (PF12) to leave without saving." : undefined });
   const events: SimEvent[] = [];
   if (r.created) events.push({ type: "MEMBER_CREATED", dsn: s.dsn, member: s.member! });
   events.push({ type: "MEMBER_SAVED", dsn: s.dsn, member: s.member });
   const label = s.member ? `Member ${s.member} saved` : `${s.dsn} saved`;
-  const saved: SimulatorState = { ...state, catalog: r.catalog, editor: commitSaved(s) };
+  const saved: SimulatorState = { ...state, catalog: r.catalog, editor: { ...commitSaved(s), modBumped: s.modBumped || s.dirty } };
   if (thenExit) {
     const p = pop({ ...saved, editor: undefined, activeMember: undefined }, { short: "MEMBER SAVED", long: label, severity: "info" });
     return { state: p.state, events: [...events, ...p.events] };

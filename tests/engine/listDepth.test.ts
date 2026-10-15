@@ -7,14 +7,32 @@ const rowsText = (s: Sim) => JSON.stringify(s.rendered().rows);
 const names = (s: Sim) => s.rendered().fields.filter((f) => f.startsWith("cmd:")).map((f) => f.slice(4));
 
 describe("DSLIST line commands", () => {
-  it("S opens short information, I the full panel", () => {
+  it("S on a PDS omits the directory blocks and the member count that I shows (UG2 option 3.4 S, EV-A 6)", () => {
     const s = dslist().enter({ "cmd:USER01.JCL": "S" });
     expect(s.screenId).toBe("DATASET_INFO");
-    expect(rowsText(s)).toContain("Short information");
-    expect(rowsText(s)).not.toContain("Allocated");
     expect(s.events.some((e) => e.type === "DATASET_INFO_VIEWED" && e.short === true)).toBe(true);
+    const short = rowsText(s);
+    expect(short).toContain("Allocated"); // the space figures stay
+    expect(short).not.toMatch(/dir\. blocks/);
+    expect(short).not.toContain("Number of members");
     s.pf(3).enter({ "cmd:USER01.JCL": "I" });
-    expect(rowsText(s)).toContain("Allocated");
+    const full = rowsText(s);
+    expect(full).toMatch(/Maximum dir\. blocks/);
+    expect(full).toMatch(/Used dir\. blocks/);
+    expect(full).toContain("Number of members");
+  });
+  it("S and I show the same panel for a sequential data set", () => {
+    const short = rowsText(dslist().enter({ "cmd:USER01.NOTES.TXT": "S" }));
+    const full = rowsText(dslist().enter({ "cmd:USER01.NOTES.TXT": "I" }));
+    expect(short).toBe(full);
+  });
+  it("SORT LRECL with no direction is descending, NAME ascending (UG2 Table 12)", () => {
+    const lrecl = dslist().cmd("SORT LRECL");
+    const desc = dslist().cmd("SORT LRECL D");
+    expect(names(lrecl)).toEqual(names(desc));
+    expect(names(dslist().cmd("SORT LRECL A"))).not.toEqual(names(lrecl));
+    const byName = names(dslist().cmd("SORT NAME"));
+    expect(byName).toEqual([...byName].sort());
   });
   it("CO opens Move/Copy prefilled and copies a whole PDS member by member", () => {
     const s = dslist().enter({ "cmd:USER01.JCL": "CO" });

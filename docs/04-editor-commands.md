@@ -72,7 +72,7 @@ itself), `LINE COMMANDS NOT ALLOWED IN BROWSE`. Blanking a pending command cance
 | `CAPS ON|OFF` | | upper-case typed text; stored in the profile |
 | `NUMBER ON|OFF` | `NUM` | ON writes 8-digit sequence numbers in columns 73-80 (80-byte records only; other LRECLs answer `NUMBER SUPPORTED FOR LRECL 80 ONLY`); OFF blanks them |
 | `UNNUM` | | remove sequence numbers and set NUMBER OFF |
-| `STATS ON|OFF` | | OFF leaves the member statistics unchanged on save |
+| `STATS ON|OFF` | | OFF: saving a member discards its previous statistics (IBM, Edit and Edit Macros, STATS); ON creates them on the next save if absent |
 | `RECOVERY ON|OFF` | `RECOVRY` | enables UNDO (no recovery data set is simulated) |
 | `SETUNDO ON|OFF|STORAGE` | | enables/disables UNDO |
 | `AUTOSAVE ON|OFF [PROMPT|NOPROMPT]` | | END with unsaved changes: ON saves, OFF PROMPT shows *Edit - Save or Cancel Changes*, OFF NOPROMPT discards |

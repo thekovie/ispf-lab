@@ -201,7 +201,7 @@ export function parseJcl(records: string[]): ParsedJcl {
     const params = parseParams(st.operands);
     if (st.operation === "JOB") {
       if (result.jobName) {
-        errors.push({ line: st.line, id: "IEFC606I", text: "MISPLACED JOB STATEMENT" });
+        errors.push({ line: st.line, id: "IEFC019I", text: "MISPLACED JOB STATEMENT" });
         continue;
       }
       if (!name) errors.push({ line: st.line, id: "IEFC605I", text: "JOB STATEMENT NAME FIELD MISSING" });
@@ -211,7 +211,7 @@ export function parseJcl(records: string[]): ParsedJcl {
       continue;
     }
     if (!result.jobName) {
-      errors.push({ line: st.line, id: "IEFC606I", text: "MISPLACED DD OR EXEC STATEMENT - NO JOB STATEMENT" });
+      errors.push({ line: st.line, id: "IEFC019I", text: `MISPLACED ${st.operation} STATEMENT` });
       result.jobName = "NONAME";
     }
     if (st.operation === "EXEC") {
@@ -226,7 +226,7 @@ export function parseJcl(records: string[]): ParsedJcl {
       continue;
     }
     if (!step) {
-      errors.push({ line: st.line, id: "IEFC606I", text: "MISPLACED DD STATEMENT" });
+      errors.push({ line: st.line, id: "IEFC019I", text: "MISPLACED DD STATEMENT" });
       continue;
     }
     for (const key of Object.keys(params)) {

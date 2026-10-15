@@ -54,7 +54,7 @@ export const lesson22: Lesson = {
   title: "DSLIST like an operator: SORT, FIND, EXCLUDE, S",
   description: "Sort and search a data set list, hide what you do not need, and use S for a quick look at attributes.",
   objective: "In DSLIST for {HLQ}: SORT LRECL D, FIND COBOL, EXCLUDE LOADLIB, S on {HLQ}.JCL, then RESET.",
-  teaches: ["SORT field [A|D] reorders the list", "FIND / RFIND (PF5) search names", "EXCLUDE hides rows; RESET restores", "S = short information, I = full information"],
+  teaches: ["SORT field [A|D] reorders the list", "FIND / RFIND (PF5) search names", "EXCLUDE hides rows; RESET restores", "S = short information (for a PDS it leaves out the directory blocks and the member count), I = full information"],
   startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
   steps: [
     {
@@ -65,7 +65,7 @@ export const lesson22: Lesson = {
     },
     {
       id: "sort",
-      instruction: "Type SORT LRECL D. The longest records come first (the load library with RECFM U shows 0).",
+      instruction: "Type SORT LRECL D. The longest records come first (the load library with RECFM U shows 0). LRECL already sorts descending without the D; NAME sorts ascending.",
       hint: "SORT LRECL D, Enter.",
       validator: eventIs("LIST_SORTED"),
     },
@@ -83,7 +83,7 @@ export const lesson22: Lesson = {
     },
     {
       id: "short-info",
-      instruction: "Type S next to {HLQ}.JCL. Short information shows the attributes without the space figures; I shows everything.",
+      instruction: "Type S next to {HLQ}.JCL. Short information is the same panel as I, but for a PDS it leaves out the directory blocks and the number of members.",
       hint: "S in the command column of {HLQ}.JCL, Enter.",
       validator: eventIs("DATASET_INFO_VIEWED", (e) => e.short === true),
     },
@@ -103,7 +103,7 @@ export const lesson23: Lesson = {
   title: "Member statistics: I and G",
   description: "Read the ISPF statistics of a member and reset them.",
   objective: "On the member list of {HLQ}.JCL, show the statistics of HELLO with I, reset them with G, and look again.",
-  teaches: ["ISPF statistics live in the PDS directory", "I shows VV.MM, created, changed, size, user", "G resets them to 01.00 / today / you", "STATS OFF in the profile stops the editor updating them"],
+  teaches: ["ISPF statistics live in the PDS directory", "I shows VV.MM, created, changed, size, user", "G resets them to 01.00 / today / you", "Saving a member with STATS OFF loses its statistics; the modification level rises once per edit session"],
   startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {
@@ -115,13 +115,13 @@ export const lesson23: Lesson = {
     {
       id: "info",
       instruction: "Type I next to HELLO. The Member Information panel shows Version.Mod, Created, Last changed, sizes and the last user.",
-      explanation: "Every save with STATS ON bumps the modification level and stamps your userid - the audit trail operators rely on.",
+      explanation: "With STATS ON the editor adds one to the modification level the first time you change the member in an edit session (up to 99) and stamps your userid. These numbers can help you control the members of a library.",
       hint: "I in the command column of HELLO, Enter.",
       validator: eventIs("MEMBER_INFO_VIEWED", (e) => e.member === "HELLO"),
     },
     {
       id: "reset-stats",
-      instruction: "Press PF3, then type G next to HELLO to reset its statistics.",
+      instruction: "Press PF3, then type G next to HELLO to reset its statistics. (Real ISPF first shows a Reset Member Statistics panel where you choose what to reset; the simulator resets everything at once.)",
       hint: "F3, then G on HELLO, Enter.",
       validator: eventIs("MEMBER_STATS_RESET", (e) => e.member === "HELLO"),
     },

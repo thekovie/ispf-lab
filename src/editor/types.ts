@@ -57,6 +57,8 @@ export interface EditorSession {
   nextId: number;
   pending: PendingCommand[];
   dirty: boolean;
+  /** the modification level was already raised in this edit session (it rises once, on the first change) */
+  modBumped?: boolean;
   /** index (into lines) of the first displayed line */
   top: number;
   /** 0-based first displayed data column */
