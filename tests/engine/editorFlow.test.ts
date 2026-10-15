@@ -308,6 +308,38 @@ describe("a new, empty member offers input lines (M3, lesson b-04; EM: 'several 
     expect(s.state.editor!.lines.map((l) => l.text.trim())).toEqual(["//FRESH   JOB"]);
   });
 
+  describe("as the browser sends it: every displayed field comes back with its shown value (found in the M3 browser run)", () => {
+    const drafts = (s: Sim) => {
+      const out: Record<string, string> = {};
+      for (const row of s.rendered().rows) for (const seg of row) if (seg.kind === "field") out[seg.id] = seg.value;
+      return out;
+    };
+
+    it("the shown quote marks are not a typed line command: unused input lines stay and no error appears", () => {
+      const s = openNew();
+      const before = lineIds(s).length;
+      s.enter({ ...drafts(s), command: "TOP" });
+      expect(lineIds(s).length).toBe(before);
+      expect(s.state.message?.severity).not.toBe("error");
+    });
+
+    it("typing data on one input line drops the other unused ones", () => {
+      const s = openNew();
+      const d = drafts(s);
+      s.enter({ ...d, [`line:${lineIds(s)[0]}`]: "//FRESH   JOB" });
+      expect(s.state.editor!.lines.map((l) => l.text.trim())).toEqual(["//FRESH   JOB"]);
+    });
+
+    it("I typed over the quote marks of an input line is read as I", () => {
+      const s = openNew();
+      const d = drafts(s);
+      const first = lineIds(s)[0];
+      s.enter({ ...d, [`line:${first}`]: "//A", [`prefix:${first}`]: "I'''''" });
+      expect(s.state.editor!.lines.map((l) => l.text.trim())).toContain("//A");
+      expect(s.state.editor!.lines.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
   it("an existing member is unchanged: no extra input lines", () => {
     const s = Sim.loggedOn().cmd("2").enter({ other: "USER01.JCL(HELLO)" });
     expect(s.state.editor!.lines.every((l) => !l.inserted)).toBe(true);

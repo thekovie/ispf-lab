@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { getMember } from "@/catalog/catalog";
 import { lessonById } from "@/tutorial/lessons";
-import { Attempt, type Script } from "./walks";
+import { answerB01, Attempt, type Script } from "./walks";
 
 const HLQ = "USER01";
 const entry = (dsn: string) => ({ project: "", group: "", type: "", member: "", other: dsn });
@@ -119,13 +119,13 @@ describe("a-01-panel-fields-scroll", () => {
       expect(c.done).toBe(false);
     });
 
-    it("MAX put in the field (not one-time) leaves the field at MAX and does not complete", () => {
+    it("MAX put in the field is also one-time in real ISPF (UG1 p.60): the field returns to HALF, so this route completes", () => {
       const c = challenge(ID, (a) => {
         open(a);
         a.pf(8, { scroll: "HALF" });
         a.pf(8, { scroll: "MAX" });
       });
-      expect(c.done).toBe(false);
+      expect(c.done).toBe(true);
     });
 
     it("scrolling pages without ever using HALF is not enough", () => {
@@ -188,8 +188,37 @@ describe("b-01-zos-big-picture", () => {
     c.enter({ "cmd:JOB00001": "S" });
     expect(stepId(c)).toBe("leave");
     c.pf(3);
+    expect(stepId(c)).toBe("check-session");
+    c.answer("role-session", 1);
+    expect(stepId(c)).toBe("check-jes");
+    c.answer("role-jes", 2);
+    expect(stepId(c)).toBe("check-sdsf");
+    c.answer("role-sdsf", 0);
     expect(c.done).toBe(true);
     expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("a wrong choice is a mistake and does not advance; the right one then does", () => {
+    const c = learn(ID, (a) => {
+      tso(a);
+      editHello(a);
+      a.enter({ command: "SUBMIT" });
+      toSdsf(a);
+      a.enter({ "cmd:JOB00001": "S" });
+      a.pf(3);
+    });
+    expect(stepId(c)).toBe("check-session");
+    c.answer("role-session", 3);
+    expect(stepId(c)).toBe("check-session");
+    expect(c.runner.mistakes).toBe(1);
+    c.answer("role-session", 1);
+    expect(stepId(c)).toBe("check-jes");
+  });
+
+  it("the questions can be answered before the trace but the lesson only completes when the trace is done too", () => {
+    const c = learn(ID, answerB01);
+    expect(c.done).toBe(false);
+    expect(stepId(c)).toBe("tso");
   });
 
   it("opening a different member in Edit does not pass the ISPF step", () => {
@@ -223,8 +252,38 @@ describe("b-01-zos-big-picture", () => {
         a.enter({ command: "SUBMIT" });
         a.pf(3);
         sdsfOutput(a);
+        answerB01(a);
       });
       expect(c.done).toBe(true);
+    });
+
+    it("the full trace without the three answers does not complete it", () => {
+      const c = challenge(ID, (a) => {
+        tso(a);
+        editHello(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+        sdsfOutput(a);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("the three answers without the trace do not complete it", () => {
+      expect(challenge(ID, answerB01).done).toBe(false);
+    });
+
+    it("one wrong answer on the way costs 10 points and the Challenge still completes", () => {
+      const c = challenge(ID, (a) => {
+        tso(a);
+        editHello(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+        sdsfOutput(a);
+        a.answer("role-session", 0);
+        answerB01(a);
+      });
+      expect(c.done).toBe(true);
+      expect(c.runner.mistakes).toBe(1);
     });
 
     it("also completes with J on the member list and any TSO command typed on the option line", () => {
@@ -234,6 +293,7 @@ describe("b-01-zos-big-picture", () => {
         a.enter(entry(`${HLQ}.JCL`));
         a.enter({ "cmd:HELLO": "J" });
         sdsfOutput(a);
+        answerB01(a);
       });
       expect(c.done).toBe(true);
     });
@@ -452,7 +512,7 @@ describe("b-03-jcl-anatomy", () => {
     const c = new Attempt(lessonById(ID)!);
     expect(c.lesson.number).toBe(32);
     expect(c.lesson.requires).toEqual(["b-02-dataset-types"]);
-    expect(getMember(c.sim.state.catalog, `${HLQ}.JCL`, "BROKEN")!.records[0].trimEnd()).toBe("//USER01B  JOB (ACCT),'FIX ME',CLASS=A,");
+    expect(getMember(c.sim.state.catalog, `${HLQ}.JCL`, "BROKEN")!.records[0].trimEnd()).toBe("//USER01B  JOB (ACCT),'FIX ME',CLASS=A,MSGCLASS=X,");
   });
 
   it("walks the Learn steps in order", () => {
@@ -817,7 +877,7 @@ describe("b-06-multistep-rc", () => {
   const fixSort = (a: Attempt, control = "  SORT FIELDS=(1,3,CH,A)") => {
     a.cmd("=2");
     a.enter(entry(`${HLQ}.JCL(RCJOB)`));
-    a.enter({ [`line:${a.lineId(/FIELDZ/)}`]: control });
+    a.enter({ [`line:${a.lineId(/CH A/)}`]: control });
   };
 
   it("is lesson 35 and advises lesson 34", () => {
@@ -917,7 +977,7 @@ describe("b-10-job-troubleshooting", () => {
     FIXJCL: { match: /DIPS/, text: `//OUT      DD  DSN=${HLQ}.TRB.DATA,DISP=(NEW,CATLG),` },
     FIXDSN: { match: /OUT /, text: `//OUT      DD  DSN=${HLQ}.NOTES.TXT,DISP=SHR` },
     FIXPGM: { match: /IEFBR41/, text: "//STEP1    EXEC PGM=IEFBR14" },
-    FIXRC: { match: /FIELDZ/, text: "  SORT FIELDS=(1,3,CH,A)" },
+    FIXRC: { match: /CH A/, text: "  SORT FIELDS=(1,3,CH,A)" },
   };
   const toMenu = (a: Attempt) => {
     for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(a.sim.state.screen.id); i++) a.pf(3);

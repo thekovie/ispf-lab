@@ -3,7 +3,7 @@
  * Reference: docs/03-ispf-behaviour-reference.md §Edit/View Entry.
  */
 import { parseDsnRef } from "@/catalog/catalog";
-import { blank, f, label, t, titleRow } from "../rows";
+import { blank, commandRow, f, label, t, titleRow } from "../rows";
 import { fail, pop } from "../navigation";
 import { openRef } from "../open";
 import type { ScreenHandler } from "../types";
@@ -28,12 +28,12 @@ export const editEntryScreen: ScreenHandler<Frame> = {
         { key: 1, label: "Help" },
         { key: 3, label: "Exit" },
       ],
-      fields: ["project", "group", "type", "member", "other"],
+      fields: ["project", "group", "type", "member", "other", "command"],
       focus: state.focusField ?? "other",
       message: msg,
       rows: [
         titleRow(title, msg?.short, msg?.severity === "error" ? "red" : "yellow"),
-        [label("Command ===> "), t("_".repeat(60), "dim")],
+        commandRow("command", v("command"), "Command ===>", 60),
         blank,
         [t("ISPF Library:", "white", true)],
         [label("   Project . . . "), f("project", 8, v("project", state.userid))],

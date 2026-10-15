@@ -1,12 +1,12 @@
 # b-06-multistep-rc — Multi-step jobs: return codes and abends
 
-Track / module:           B z/OS and batch / Foundations
+Track / module:           B z/OS and batch / Batch jobs and SDSF (display position: after lesson 27)
 Number and stable ID:     lesson 35, `b-06-multistep-rc` (never changes)
 Audience and difficulty:  intermediate
 Lesson type:              interactive
 Prerequisites:            `b-05-disp` (advice only). Leaves behind: members RCJOB and ABENDJOB in `{HLQ}.JCL` (recreated on every start) and their jobs (cleared on start)
 Estimated time:           25 minutes
-Review status:            **draft** — claims checked against the sources below by the author only. Source review, fidelity review and expert review pending
+Review status:            **draft** — an author check and a second-pass AI source examination (claim-level evidence in `../m3-evidence-matrix.md`; findings and resolutions in this spec's last section). **Not an independent review.** Independent source review, fidelity review and expert review are pending (authoring standards section 9). Hidden from learners by the draft gate (ADR 0018).
 
 ## Learning objectives
 1. Read the condition code of each step from IEF142I and the job's highest code in SDSF.
@@ -61,3 +61,14 @@ SRC-019 MVS System Messages: IEF142I, IEF272I, IEF450I, CSV003I (via EV-B 2.2). 
 
 ## Starting state and reset
 `createMembers` RCJOB and ABENDJOB, `resetJobs`, screen Primary Option Menu.
+
+## Second-pass examination: findings and resolutions (2026-10-16)
+| Finding | Resolution |
+|---|---|
+| b-06-C09 (HIGH): ICE007A was taught for a misspelt keyword (`FIELDZ`), which IBM does not list as an ICE007A cause | the fault is now a missing comma, a documented ICE007A cause: `SORT FIELDS=(1,3,CH A)`; the simulator's SORT parser now checks p,m,f,s groups and format types so this really produces ICE007A |
+| b-06-C12: "every step ends 0000" after the fix depends on a DUMMY SORTIN | the rerun step labels it the simulator's result |
+| S806 over-general | "S806 reason 04" |
+| "later steps are not executed" absolute | "normally" with the IF/EVEN/ONLY/recovery exceptions |
+| IEF142I only for steps that complete normally; IEF472I is the abend marker the simulator omits | stated |
+| placement of CSV003I/IEF450I in JESYSMSG vs the job log | stated as the simulator's |
+| Max-RC is the default (JOBRC=MAXRC), not universal | "by default" |

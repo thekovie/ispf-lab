@@ -11,7 +11,7 @@
  */
 import type { SimEvent } from "@/engine/types";
 import type { Validator } from "./types";
-import { allOf, anyOf, is, noEditSession, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
+import { allOf, answered, anyOf, is, noEditSession, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
 import { buildDatasetIsRight, dispKeepExists, outputOfJob, trbFailed, typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
 
 export interface Challenge {
@@ -137,8 +137,8 @@ export const CHALLENGES: Record<string, Challenge> = {
     validator: allOf(typesSeqIsRight, typesLibIsRight, shown("SEQ", true), shown("LIB", false)),
   },
   "b-01-zos-big-picture": {
-    task: "Run any TSO command at the ISPF Command Shell, submit {HLQ}.JCL(HELLO) from ISPF, and open that job's output in SDSF.",
-    validator: traceHelloJob,
+    task: "Run any TSO command at the ISPF Command Shell, submit {HLQ}.JCL(HELLO) from ISPF, open that job's output in SDSF, and answer the three questions about which piece did what.",
+    validator: allOf(traceHelloJob, answered("role-session"), answered("role-jes"), answered("role-sdsf")),
   },
   "a-01-panel-fields-scroll": {
     task: "Open {HLQ}.DATA(SCROLL) in Edit. Set the Scroll field to HALF and scroll down with it, then jump to the last page with a one-time MAX, leaving the field at HALF.",

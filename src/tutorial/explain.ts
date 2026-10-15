@@ -390,7 +390,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     term: "SUBMIT",
     aliases: ["sub", "submit command", "line command j"],
     summary: "Sends JCL to JES: SUBMIT in the editor, J next to a member in a member list, or TSO SUBMIT dsn(member).",
-    detail: "ISPF answers IKJ56250I JOB name(JOB00001) SUBMITTED. In Edit, SUBMIT submits the member or data set you are editing (IBM does not say whether changes you have not saved are included; this simulator submits what is in the edit session, so save first if you want the member and the job to agree). In Browse, IBM's SUBMIT submits the data set itself, not the copy on screen. Then go to SDSF (option S) to see how the job ended.",
+    detail: "The TSO SUBMIT command answers IKJ56250I JOB name(JOB00001) SUBMITTED (JES assigned the job number). In Edit, SUBMIT submits the member or data set you are editing (IBM does not say whether changes you have not saved are included; this simulator submits what is in the edit session, so save first if you want the member and the job to agree). In Browse, IBM's SUBMIT submits the data set itself, not the copy on screen. Then go to SDSF (option S) to see how the job ended.",
     readMore: { resource: "redbook", section: "Chapter 6.2 JCL" },
   },
 ];

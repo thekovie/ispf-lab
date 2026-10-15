@@ -149,7 +149,7 @@ export const lesson24: Lesson = {
   title: "Submit your first job",
   description: "Read a tiny JCL job and hand it to JES with SUBMIT.",
   objective: "Open {HLQ}.JCL(HELLO) in Edit, read the JOB and EXEC statements, SUBMIT it, and note the job id in the message.",
-  teaches: ["//name JOB and //step EXEC PGM= (HELLO has no DD statement: IEFBR14 needs none)", "SUBMIT sends the JCL to JES", "JES answers JOB name(JOBnnnnn) SUBMITTED", "The job id is how you find the job in SDSF"],
+  teaches: ["//name JOB and //step EXEC PGM= (HELLO has no DD statement: IEFBR14 needs none)", "SUBMIT sends the JCL to JES", "SUBMIT reports JOB name(JOBnnnnn) SUBMITTED; JES assigned the job number", "The job id is how you find the job in SDSF"],
   startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetJobs: true, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {

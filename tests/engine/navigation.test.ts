@@ -222,3 +222,21 @@ describe("option 2 edit entry, 3.2 allocate, 3.3 copy, 6 TSO", () => {
     expect(s.has("SETTING_CHANGED")).toBe(true);
   });
 });
+
+describe("the Edit and View entry panels have a working Command line (M3 browser run: PF3 from the editor lands here, and lessons say to jump with =S)", () => {
+  it("renders command as a field on the Edit entry panel", () => {
+    const s = Sim.loggedOn().cmd("2");
+    expect(s.rendered().fields).toContain("command");
+  });
+
+  it("=S typed in the entry panel's Command line jumps to SDSF", () => {
+    const s = Sim.loggedOn().cmd("2");
+    s.enter({ command: "=S" });
+    expect(s.state.screen.id).toBe("SDSF_MENU");
+  });
+
+  it("the cursor still starts in Data Set Name", () => {
+    const s = Sim.loggedOn().cmd("2");
+    expect(s.rendered().focus ?? "other").toBe("other");
+  });
+});

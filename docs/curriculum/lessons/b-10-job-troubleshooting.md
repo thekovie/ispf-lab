@@ -1,12 +1,12 @@
 # b-10-job-troubleshooting — Batch troubleshooting: classify the failure, then fix it
 
-Track / module:           B z/OS and batch / Foundations
+Track / module:           B z/OS and batch / Batch jobs and SDSF (display position: after b-06)
 Number and stable ID:     lesson 36, `b-10-job-troubleshooting` (never changes)
 Audience and difficulty:  intermediate
 Lesson type:              diagnostic
 Prerequisites:            `b-06-multistep-rc` (advice only). Leaves behind: members FIXJCL, FIXDSN, FIXPGM, FIXRC in `{HLQ}.JCL` and data set `{HLQ}.TRB.DATA`; members recreated, data set removed, jobs cleared on every start
 Estimated time:           30 minutes
-Review status:            **draft** — claims checked against the sources below by the author only. Source review, fidelity review and expert review pending. The roadmap lists lesson b-08 (abends) as a prerequisite; it is not built, so this lesson uses only the S806 abend the simulator has and says so
+Review status:            **draft** — an author check and a second-pass AI source examination (claim-level evidence in `../m3-evidence-matrix.md`; findings and resolutions in this spec's last section). **Not an independent review.** Independent source review, fidelity review and expert review are pending (authoring standards section 9). Hidden from learners by the draft gate (ADR 0018). The roadmap lists lesson b-08 (abends) as a prerequisite; it is not built, so this lesson uses only the S806 abend the simulator has and says so
 
 ## Learning objectives
 1. Say which of four kinds of failure a job log shows: a JCL error, an allocation failure, an abend, or a bad return code.
@@ -40,10 +40,10 @@ For each of four jobs, in this order (JCL error, allocation failure, abend, bad 
 - Fixing a symptom in the wrong job.
 
 ## Expected results
-FIXJCL: JCL ERROR, `IEFC630I UNIDENTIFIED KEYWORD DIPS`. FIXDSN: JCL ERROR status with IEF212I. FIXPGM: ABEND S806 and IEF272I for the later step. FIXRC: CC 0016 with all steps run.
+FIXJCL: JCL ERROR, `IEFC630I UNIDENTIFIED KEYWORD` (the simulator also appends the keyword; the real message appends a location phrase). FIXDSN: JCL ERROR status with IEF212I. FIXPGM: ABEND S806 and IEF272I for the later step. FIXRC: CC 0016 with all steps run.
 
 ## Simulator limitations (shown to the learner)
-- The simulator shows both a JCL error and a failed allocation as JCL ERROR in the SDSF status; use the messages in JESYSMSG to tell them apart.
+- Both a converter error and an allocation error show JCL ERROR in the SDSF status; real JES2 does the same ($HASP165 covers the converter and initiator phases). Classify by the message id (IEFC converter or IEF allocation) in JESYSMSG. This is IBM behaviour, not a simulator gap.
 - Message layouts for IEFC630I and IEF450I follow the simulator, not IBM's exact templates (SIMULATED).
 - Only S806 exists as an abend; the faults are fixed, not rotated (determinism). A z/OS practitioner should review them.
 
@@ -57,3 +57,14 @@ SRC-019 MVS System Messages: IEFC630I, IEF212I, IEF272I, IEF142I, CSV003I (via E
 
 ## Starting state and reset
 `createMembers` FIXJCL, FIXDSN, FIXPGM, FIXRC; `removeDatasets` `{HLQ}.TRB.DATA`; `resetJobs`; screen Primary Option Menu.
+
+## Second-pass examination: findings and resolutions (2026-10-16)
+| Finding | Resolution |
+|---|---|
+| b-10-C05 (HIGH): IEFC630I does not echo the bad keyword; its text locates the error from the last correct keyword | lesson no longer says it names the word; layout labelled simulated |
+| b-10-C27 (HIGH): ICE007A for a misspelt keyword | FIXRC now uses the documented missing-comma fault (as in b-06) |
+| b-10-C14 (MEDIUM-HIGH): IBM does not distinguish "JCL error" and "allocation failure" by status; both are JCL ERROR. The valid line is the message source (IEFC converter vs IEF allocation) | categories renamed "converter (syntax) error" and "allocation error"; both stated to show JCL ERROR; classification is by message id; the "simulator limitation" about the identical status is removed (it is IBM behaviour) |
+| S806 over-general | "reason 04" |
+| IEF236I was printed before a failed allocation's IEF212I | simulator fixed (regression test) |
+| "status" vs the Max-RC column; "suggested order" vs IBM-defined order | reworded |
+| `sources` lacked SRC-021/023/024 | added |

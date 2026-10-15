@@ -10,7 +10,7 @@
  */
 import { Sim } from "../engine/harness";
 import { reduce } from "@/engine/reducer";
-import { feedEvents, startRunner } from "@/tutorial/engine";
+import { answerQuestion, feedEvents, startRunner } from "@/tutorial/engine";
 import { startActions } from "@/tutorial/scenario";
 import type { AppMode, Lesson, RunnerState } from "@/tutorial/types";
 
@@ -44,6 +44,11 @@ export class Attempt {
   pf(key: number, fields: Record<string, string> = {}) {
     this.sim.pf(key, fields);
     return this.feed();
+  }
+  /** Choose option `choice` (0-based) of a check question (ADR 0018). */
+  answer(questionId: string, choice: number) {
+    this.runner = answerQuestion(this.lesson, this.runner, questionId, choice, this.sim.state, this.mode).runner;
+    return this.runner;
   }
   get done() {
     return this.runner.status === "completed";
@@ -341,6 +346,13 @@ WALKS["a-01-panel-fields-scroll"] = (c) => {
   c.pf(3);
 };
 
+/** The right choices for b-01's three check questions. */
+export const answerB01 = (c: Attempt) => {
+  c.answer("role-session", 1);
+  c.answer("role-jes", 2);
+  c.answer("role-sdsf", 0);
+};
+
 WALKS["b-01-zos-big-picture"] = (c) => {
   c.cmd("6");
   c.enter({ command: `LISTDS '${HLQ}.JCL'` });
@@ -352,6 +364,7 @@ WALKS["b-01-zos-big-picture"] = (c) => {
   c.cmd("ST");
   c.enter({ "cmd:JOB00001": "S" });
   c.pf(3);
+  answerB01(c);
 };
 
 WALKS["b-02-dataset-types"] = (c) => {
@@ -453,7 +466,7 @@ WALKS["b-06-multistep-rc"] = (c) => {
   toMenu();
   c.cmd("=2");
   c.enter(entry(`${HLQ}.JCL(RCJOB)`));
-  c.enter({ [`line:${c.lineId(/FIELDZ/)}`]: "  SORT FIELDS=(1,3,CH,A)" });
+  c.enter({ [`line:${c.lineId(/CH A/)}`]: "  SORT FIELDS=(1,3,CH,A)" });
   c.enter({ command: "SUBMIT" });
   c.pf(3);
   toMenu();
@@ -466,7 +479,7 @@ WALKS["b-10-job-troubleshooting"] = (c) => {
     FIXJCL: [/DIPS/, `//OUT      DD  DSN=${HLQ}.TRB.DATA,DISP=(NEW,CATLG),`],
     FIXDSN: [/OUT /, `//OUT      DD  DSN=${HLQ}.NOTES.TXT,DISP=SHR`],
     FIXPGM: [/IEFBR41/, "//STEP1    EXEC PGM=IEFBR14"],
-    FIXRC: [/FIELDZ/, "  SORT FIELDS=(1,3,CH,A)"],
+    FIXRC: [/CH A/, "  SORT FIELDS=(1,3,CH,A)"],
   };
   const toMenu = () => {
     for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(c.sim.state.screen.id); i++) c.pf(3);

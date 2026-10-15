@@ -95,7 +95,7 @@ export const editorScreen: ScreenHandler<Frame> = {
       }
       const prefixId = `prefix:${line.id}`;
       const lineId = `line:${line.id}`;
-      const prefixValue = pendingById.get(line.id) ?? (line.inserted && line.text.trim() === "" ? "''''''" : NUM(i + 1));
+      const prefixValue = pendingById.get(line.id) ?? (line.inserted && line.text.trim() === "" ? QUOTE_MARKS : NUM(i + 1));
       const visibleText = line.text.slice(s.leftCol, s.leftCol + s.pageCols);
       if (editable) {
         rows.push([f(prefixId, 6, prefixValue, { editorLine: true, color: pendingById.has(line.id) ? "yellow" : "cyan" }), t(" "), f(lineId, s.pageCols, visibleText, { editorLine: true, noUpper: !s.profile.caps })]);
@@ -221,6 +221,9 @@ function collectTextEdits(s: EditorSession, fields: Fields): Record<number, stri
   return edits;
 }
 
+/** The prefix shown on an unused input line of an empty member. */
+const QUOTE_MARKS = "''''''";
+
 function collectPrefixCommands(s: EditorSession, fields: Fields): Record<number, string> {
   const typed: Record<number, string> = {};
   const index = new Map(s.lines.map((l, i) => [l.id, i]));
@@ -237,6 +240,9 @@ function collectPrefixCommands(s: EditorSession, fields: Fields): Record<number,
     }
     const i = index.get(id);
     if (i === undefined) continue;
+    // The quote marks the panel shows on an unused input line come back with every Enter; they are not a command.
+    // (Text typed on that line is applied before this runs, so the line no longer looks unused here.)
+    if (v === QUOTE_MARKS) continue;
     const original = pending.get(id) ?? (s.lines[i].excluded ? "- - - " : NUM(i + 1));
     if (v === original) {
       if (pending.has(id)) typed[id] = v; // still pending, untouched

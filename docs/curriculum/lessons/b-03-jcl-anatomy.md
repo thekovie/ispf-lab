@@ -1,12 +1,12 @@
 # b-03-jcl-anatomy — Reading a job: JOB, EXEC, DD, columns and continuation
 
-Track / module:           B z/OS and batch / Foundations
+Track / module:           B z/OS and batch / Batch jobs and SDSF (display position: after lesson 26)
 Number and stable ID:     lesson 32, `b-03-jcl-anatomy` (never changes)
 Audience and difficulty:  beginner
 Lesson type:              hybrid (read, then diagnose and fix)
 Prerequisites:            `b-02-dataset-types` (advice only). Leaves behind: member `{HLQ}.JCL(BROKEN)` (recreated on every start) and its jobs (cleared on start)
 Estimated time:           20 minutes
-Review status:            **draft** — claims checked against SRC-003 and SRC-019 evidence by the author only. Source review, fidelity review and expert review pending
+Review status:            **draft** — an author check and a second-pass AI source examination (claim-level evidence in `../m3-evidence-matrix.md`; findings and resolutions in this spec's last section). **Not an independent review.** Independent source review, fidelity review and expert review are pending (authoring standards section 9). Hidden from learners by the draft gate (ADR 0018).
 
 ## Learning objectives
 1. Recognise the three statement types of a simple job (JOB, EXEC, DD) and the five fields of a statement.
@@ -63,3 +63,15 @@ SRC-003 *MVS JCL Reference* SA23-1385-70: printed p.13-17 (statement fields, col
 
 ## Starting state and reset
 `createMembers` BROKEN, `resetJobs`, `resetMembers` HELLO, screen Primary Option Menu. A restart restores BROKEN and asks first if the learner changed it.
+
+## Second-pass examination: findings and resolutions (2026-10-16)
+| Finding | Resolution |
+|---|---|
+| b-03-C21 (HIGH): `TSO SUBMIT JCL(BROKEN)` is not what real TSO resolves (CNTL qualifier) | the Submit step now says so |
+| the lesson jobs omitted MSGCLASS but sent the learner to read output in SDSF | `MSGCLASS=X` added to BROKEN and to the learner-typed job in b-04 |
+| "a job is JOB, EXEC and DD statements; a null statement ends it" over-general | reworded ("a simple job"; the null statement is optional) |
+| "nothing past column 71" ignores comment statements and column 72 | reworded |
+| a comma inside apostrophes is not a continuation | "a comma ending the last operand" |
+| PF3 saves only with AUTOSAVE on | stated |
+| which spool data set holds IEFC messages, and the `STMT NO. MESSAGE` header, are UNVERIFIED | lesson says "the job's messages / the simulator's layout"; flagged for the expert |
+| simulator: stray text lines were numbered by record, not by listing; a `/*` with a comment was a data record | fixed with regression tests (`tests/jes/jes.test.ts`) |

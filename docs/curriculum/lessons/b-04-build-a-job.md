@@ -1,12 +1,12 @@
 # b-04-build-a-job — Build a job from scratch
 
-Track / module:           B z/OS and batch / Foundations
+Track / module:           B z/OS and batch / Batch jobs and SDSF (display position: after b-03)
 Number and stable ID:     lesson 33, `b-04-build-a-job` (never changes)
 Audience and difficulty:  beginner
 Lesson type:              interactive
 Prerequisites:            `b-03-jcl-anatomy` (advice only). Leaves behind: member `{HLQ}.JCL(NEWDS)` and data set `{HLQ}.BUILD.DATA`; both removed on every start
 Estimated time:           25 minutes
-Review status:            **draft** — claims checked against SRC-003 by the author only. Source review, fidelity review and expert review pending
+Review status:            **draft** — an author check and a second-pass AI source examination (claim-level evidence in `../m3-evidence-matrix.md`; findings and resolutions in this spec's last section). **Not an independent review.** Independent source review, fidelity review and expert review are pending (authoring standards section 9). Hidden from learners by the draft gate (ADR 0018).
 
 ## Learning objectives
 1. Write a valid JOB, EXEC PGM=IEFBR14 and DD statement without a template.
@@ -18,7 +18,7 @@ IEFBR14, DSN, DISP, SPACE, UNIT, DCB, RECFM, LRECL, BLKSIZE.
 
 ## Conceptual explanation (original wording; sources in brackets)
 - DSNAME (DSN) names the data set: for a new data set the name is assigned to it, for an existing one the system uses it to find it. [SRC-003 printed p.164]
-- DISP gives the data set's status to the system and says what to do with it after the step or job ends, normally and abnormally. If status is omitted it is NEW. [SRC-003 p.147-148]
+- DISP gives the data set's status to the system and says what to do with it after the step or job ends, normally and abnormally. If status is omitted it is NEW. [SRC-003 p.147-148, defaults p.153]
 - SPACE requests space for a new data set on a direct access volume. UNIT asks for a device or a group of devices. [SRC-003 p.251, p.278]
 - DCB completes data set information such as record format and length when the program does not supply it. [SRC-003 p.126]
 - IEFBR14 is a program that does not actually process any data, so a job that runs it exists for the allocation and disposition work the system does around the step. [SRC-018 JCL User's Guide, PDF p.32-33]
@@ -32,7 +32,7 @@ IEFBR14, DSN, DISP, SPACE, UNIT, DCB, RECFM, LRECL, BLKSIZE.
 //             DCB=(RECFM=FB,LRECL=80,BLKSIZE=27920)
 //
 ```
-The data set is created when the step is allocated and cataloged at the end because of CATLG; DELETE would remove it if the step ended abnormally.
+The data set is created when the step is allocated; CATLG keeps it and records it in the catalog (on SMS-managed disk the catalog entry is made at allocation, SRC-018 p.116); DELETE would remove it if the step ended abnormally.
 
 ## Guided activity
 1. Open the new member `{HLQ}.JCL(NEWDS)` in Edit (it is empty).
@@ -70,3 +70,13 @@ SRC-003 *MVS JCL Reference* SA23-1385-70: printed p.126 (DCB), p.147-148 (DISP),
 
 ## Starting state and reset
 `removeDatasets` `{HLQ}.BUILD.DATA`, `removeMembers` `{HLQ}.JCL(NEWDS)`, `resetJobs`, screen Primary Option Menu.
+
+## Second-pass examination: findings and resolutions (2026-10-16)
+| Finding | Resolution |
+|---|---|
+| b-04-C08/C27: "cataloged at the end" contradicts the SMS allocation-time cataloging the spec's own limitation states | lesson and spec corrected |
+| b-04-C13: UNIT=SYSDA is installation-defined and ignored for SMS DASD | lesson says so |
+| b-04-C21: "unused input lines disappear" is documented only for `I` lines | labelled the simulator's behaviour |
+| b-04-C24: "PS, FB, 80" is the Attributes view of 3.4 | lesson explains the view |
+| b-04-C30: no MSGCLASS | `MSGCLASS=X` in the typed JOB statement |
+| simulator: new-member quote lines vanished on the first Enter and were not offered for an existing empty member | fixed: they stay until data is typed and also open for existing empty members (regression tests) |
