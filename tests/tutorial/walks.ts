@@ -341,6 +341,19 @@ WALKS["a-01-panel-fields-scroll"] = (c) => {
   c.pf(3);
 };
 
+WALKS["b-01-zos-big-picture"] = (c) => {
+  c.cmd("6");
+  c.enter({ command: `LISTDS '${HLQ}.JCL'` });
+  c.pf(3);
+  openEdit(c, `${HLQ}.JCL(HELLO)`);
+  c.enter({ command: "SUBMIT" });
+  c.pf(3);
+  c.cmd("=S");
+  c.cmd("ST");
+  c.enter({ "cmd:JOB00001": "S" });
+  c.pf(3);
+};
+
 const E = (ref: string) => entry(ref);
 
 /**

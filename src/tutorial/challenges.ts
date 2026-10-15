@@ -64,7 +64,21 @@ const helloJobBrowsed: Validator = ({ history = [], hlq }) => {
   );
 };
 
+/** A TSO command, then HELLO submitted from ISPF (editor or member list), then that same job's output opened in SDSF. */
+const traceHelloJob: Validator = ({ history = [], hlq }) => {
+  const tso = history.findIndex((e) => e.type === "TSO_COMMAND_ENTERED");
+  if (tso < 0) return false;
+  const at = history.findIndex((e, i) => i > tso && e.type === "JOB_SUBMITTED" && e.jobName === `${hlq}H` && e.from !== "TSO_COMMAND");
+  if (at < 0) return false;
+  const jobId = (history[at] as Submitted).jobId;
+  return history.slice(at).some((e) => e.type === "JOB_OUTPUT_OPENED" && e.jobId === jobId);
+};
+
 export const CHALLENGES: Record<string, Challenge> = {
+  "b-01-zos-big-picture": {
+    task: "Run any TSO command at the ISPF Command Shell, submit {HLQ}.JCL(HELLO) from ISPF, and open that job's output in SDSF.",
+    validator: traceHelloJob,
+  },
   "a-01-panel-fields-scroll": {
     task: "Open {HLQ}.DATA(SCROLL) in Edit. Set the Scroll field to HALF and scroll down with it, then jump to the last page with a one-time MAX, leaving the field at HALF.",
     validator: allOf(

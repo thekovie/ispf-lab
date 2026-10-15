@@ -2,7 +2,7 @@
  * Module 11 - Foundations (M3). Lesson specs: docs/curriculum/lessons/<id>.md. Review status of every lesson here: draft
  * (author-checked against the sources named in the spec; independent source, fidelity and expert review pending).
  */
-import { editorClosed, editorOpen, eventIs } from "../validators";
+import { editorClosed, editorOpen, eventIs, onScreen } from "../validators";
 import type { Lesson, Validator } from "../types";
 
 const MODULE = "Foundations";
@@ -83,6 +83,70 @@ export const lessonA01: Lesson = {
       instruction: "Press PF3 to leave the member. You changed nothing, so there is nothing to save.",
       hint: "F3.",
       validator: editorClosed,
+    },
+  ],
+};
+
+export const lessonB01: Lesson = {
+  id: "b-01-zos-big-picture",
+  number: 30,
+  module: MODULE,
+  title: "The big picture: TSO/E, ISPF, JES and SDSF",
+  description: "Follow one job through the four pieces you use every day: a TSO/E session, ISPF, JES and SDSF.",
+  objective:
+    "Run a TSO command at the ISPF Command Shell, edit and submit {HLQ}.JCL(HELLO) from ISPF, then read that job's output in SDSF - and say which piece you were using at each step.",
+  teaches: [
+    "TSO/E gives you an interactive session with z/OS and a basic command prompt",
+    "ISPF is the full-panel application on top of it, with an editor and utilities",
+    "JES receives submitted jobs, schedules them and controls their output",
+    "SDSF shows what JES holds on the spool",
+  ],
+  sources: ["SRC-001"],
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetJobs: true, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
+  steps: [
+    {
+      id: "tso",
+      instruction: "Open option 6, the ISPF Command Shell, and enter LISTDS '{HLQ}.JCL'. This is TSO: a command typed at its basic prompt.",
+      explanation:
+        "TSO/E gives a user an interactive session with z/OS, with a single-user logon and a basic command prompt. Most people reach it through ISPF's menus, but the commands underneath are still TSO commands. LISTDS shows a data set and its attributes. (In this simulator the Command Shell is an ISPF panel that runs the TSO command for you.)",
+      hint: "6, Enter, then LISTDS '{HLQ}.JCL', Enter.",
+      validator: eventIs("TSO_COMMAND_ENTERED", (e) => /^(TSO\s+)?LISTDS\b/i.test(e.command.trim())),
+    },
+    {
+      id: "ispf",
+      instruction: "Press PF3 to return to the menu, then open {HLQ}.JCL(HELLO) in Edit (option 2). This is ISPF.",
+      explanation:
+        "ISPF is a full-panel application you drive from the keyboard. It includes a text editor and browser, and utilities for finding and listing data sets. HELLO is a small JCL job: a JOB statement and one step.",
+      hint: "F3, then 2, Enter, {HLQ}.JCL(HELLO), Enter.",
+      validator: editorOpen("{HLQ}.JCL", "HELLO", "EDIT"),
+    },
+    {
+      id: "jes",
+      instruction: "Type SUBMIT on the command line and press Enter. The message says JOB {HLQ}H(JOBnnnnn) SUBMITTED. That is the system accepting the job: JES now has it.",
+      explanation:
+        "The job entry subsystem (JES) receives jobs into the operating system, schedules them for processing and controls their output. One way a job reaches JES is from ISPF with SUBMIT. On a real system the job then waits in a queue until it is selected to run; here it runs at once.",
+      hint: "SUBMIT, Enter.",
+      validator: eventIs("JOB_SUBMITTED", (e) => e.from === "EDIT"),
+    },
+    {
+      id: "sdsf",
+      instruction: "Press PF3 to leave the editor, jump to SDSF with =S, and open ST (status).",
+      explanation: "SDSF is the System Display and Search Facility. It displays output held in the JES spool area, so you can inspect it and delete what you do not need. You reach it from the ISPF menu, but it reads JES, not ISPF.",
+      hint: "F3, =S, Enter, ST, Enter.",
+      validator: eventIs("JOB_STATUS_OPENED"),
+    },
+    {
+      id: "output",
+      instruction: "Type S next to {HLQ}H and press Enter to browse its output.",
+      explanation: "That is the end of the trace: your session (TSO/E) used ISPF to edit a job, JES ran and kept it, and SDSF showed what JES kept. Next lessons open each piece up.",
+      hint: "S in the NP column of {HLQ}H, Enter.",
+      validator: eventIs("JOB_OUTPUT_OPENED"),
+    },
+    {
+      id: "leave",
+      instruction: "Press PF3 to return to the status panel.",
+      hint: "F3.",
+      validator: onScreen("SDSF_STATUS"),
     },
   ],
 };

@@ -148,3 +148,148 @@ describe("a-01-panel-fields-scroll", () => {
     expect(getMember(again.sim.state.catalog, `${HLQ}.DATA`, "SCROLL")!.records[0].trimEnd()).not.toBe("CHANGED");
   });
 });
+
+describe("b-01-zos-big-picture", () => {
+  const ID = "b-01-zos-big-picture";
+  const tso = (a: Attempt) => {
+    a.cmd("6");
+    a.enter({ command: "LISTDS 'USER01.JCL'" });
+    a.pf(3);
+  };
+  const editHello = (a: Attempt) => {
+    a.cmd("2");
+    a.enter(entry(`${HLQ}.JCL(HELLO)`));
+  };
+  const toSdsf = (a: Attempt) => {
+    a.pf(3);
+    a.cmd("=S");
+    a.cmd("ST");
+  };
+
+  it("is lesson 30 with no prerequisite", () => {
+    const l = lessonById(ID)!;
+    expect(l.number).toBe(30);
+    expect(l.requires ?? []).toEqual([]);
+  });
+
+  it("walks the Learn steps in order", () => {
+    const c = new Attempt(lessonById(ID)!);
+    c.cmd("6");
+    expect(stepId(c)).toBe("tso");
+    c.enter({ command: "LISTDS 'USER01.JCL'" });
+    expect(stepId(c)).toBe("ispf");
+    c.pf(3);
+    editHello(c);
+    expect(stepId(c)).toBe("jes");
+    c.enter({ command: "SUBMIT" });
+    expect(stepId(c)).toBe("sdsf");
+    toSdsf(c);
+    expect(stepId(c)).toBe("output");
+    c.enter({ "cmd:JOB00001": "S" });
+    expect(stepId(c)).toBe("leave");
+    c.pf(3);
+    expect(c.done).toBe(true);
+    expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("opening a different member in Edit does not pass the ISPF step", () => {
+    const c = learn(ID, (a) => {
+      tso(a);
+      a.cmd("2");
+      a.enter(entry(`${HLQ}.JCL(COPYJOB)`));
+    });
+    expect(stepId(c)).toBe("ispf");
+  });
+
+  it("a command that is not LISTDS does not pass the TSO step", () => {
+    const c = learn(ID, (a) => {
+      a.cmd("6");
+      a.enter({ command: "TIME" });
+    });
+    expect(stepId(c)).toBe("tso");
+  });
+
+  describe("Challenge", () => {
+    const sdsfOutput = (a: Attempt, job = "JOB00001") => {
+      a.cmd("=S");
+      a.cmd("ST");
+      a.enter({ [`cmd:${job}`]: "S" });
+    };
+
+    it("TSO command, submit from the editor, then that job's output completes it", () => {
+      const c = challenge(ID, (a) => {
+        tso(a);
+        editHello(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+        sdsfOutput(a);
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("also completes with J on the member list and any TSO command typed on the option line", () => {
+      const c = challenge(ID, (a) => {
+        a.cmd("TSO TIME");
+        a.cmd("=2");
+        a.enter(entry(`${HLQ}.JCL`));
+        a.enter({ "cmd:HELLO": "J" });
+        sdsfOutput(a);
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("without any TSO command it does not complete", () => {
+      const c = challenge(ID, (a) => {
+        editHello(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+        sdsfOutput(a);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("the TSO command after the submit is the wrong order", () => {
+      const c = challenge(ID, (a) => {
+        editHello(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+        a.cmd("6");
+        a.enter({ command: "TIME" });
+        a.pf(3);
+        sdsfOutput(a);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("the output of another job does not count", () => {
+      const c = challenge(ID, (a) => {
+        tso(a);
+        editHello(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+        a.cmd("TSO SUBMIT JCL(SORTJOB)");
+        sdsfOutput(a, "JOB00002");
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("TSO SUBMIT instead of submitting from ISPF does not count", () => {
+      const c = challenge(ID, (a) => {
+        tso(a);
+        a.cmd("TSO SUBMIT JCL(HELLO)");
+        sdsfOutput(a);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("submitting without reading the output is not enough", () => {
+      const c = challenge(ID, (a) => {
+        tso(a);
+        editHello(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(false);
+    });
+  });
+});
