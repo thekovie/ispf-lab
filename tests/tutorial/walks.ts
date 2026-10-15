@@ -413,6 +413,31 @@ WALKS["b-04-build-a-job"] = (c) => {
   c.enter({ level: `${HLQ}.BUILD` });
 };
 
+WALKS["b-05-disp"] = (c) => {
+  const submit = (member: string) => {
+    for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(c.sim.state.screen.id); i++) c.pf(3);
+    c.cmd(`TSO SUBMIT JCL(${member})`);
+  };
+  submit("DISPNEW");
+  c.cmd("=S");
+  c.cmd("ST");
+  c.enter({ "cmd:JOB00001": "?" });
+  c.enter({ "cmd:JESYSMSG": "S" });
+  submit("DISPMOD");
+  c.cmd("=3.4");
+  c.enter({ level: `${HLQ}.DISP` });
+  c.enter({ [`cmd:${HLQ}.DISP.OUT`]: "B" });
+  submit("DISPDEL");
+  submit("KEEPIT");
+  c.cmd("=3.4");
+  c.enter({ level: `${HLQ}.DISP` });
+  c.cmd("=2");
+  c.enter(entry(`${HLQ}.JCL(KEEPIT)`));
+  c.enter({ [`line:${c.lineId(/ DD /)}`]: `//OUT      DD  DSN=${HLQ}.DISP.KEEP,DISP=(NEW,CATLG),` });
+  c.enter({ command: "SUBMIT" });
+  c.pf(3);
+};
+
 const E = (ref: string) => entry(ref);
 
 /**

@@ -16,7 +16,7 @@ engine that verifies what you actually do.
 - **ISPF editor**: overtype records, prefix-area line commands (`I In D Dn DD R RR C CC M MM A B X XX S F L COLS TS
   LC UC …`), primary commands (`SAVE CANCEL FIND RFIND CHANGE RCHANGE EXCLUDE RESET LOCATE TOP BOTTOM UP DOWN LEFT
   RIGHT CAPS COLS CREATE REPLACE COPY …`), PF3 saves, PF12 cancels, terminal-style error messages — never web dialogs.
-- **Course**: 28 lessons in 10 modules (plus 5 draft foundation lessons awaiting review) (navigation, data sets, the editor and its power tools, split screen, DSLIST
+- **Course**: 28 lessons in 10 modules (plus 6 draft foundation lessons awaiting review) (navigation, data sets, the editor and its power tools, split screen, DSLIST
   depth, batch jobs and simulated SDSF), in Learn / Practice / Challenge modes, validated by simulator events and the
   resulting catalog (any legitimate ISPF route is accepted). Sandbox mode = the whole simulator, no lesson.
 - **Explain**: a glossary of z/OS terminology (`EXPLAIN PDS` on any command line).

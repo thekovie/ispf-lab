@@ -427,3 +427,131 @@ export const lessonB04: Lesson = {
     },
   ],
 };
+
+const outJob = (letter: string, title: string, sysut1: string, disp: string) => [
+  `//{HLQ}${letter}  JOB (ACCT),'${title}',CLASS=A,MSGCLASS=X`,
+  "//STEP1    EXEC PGM=IEBGENER",
+  "//SYSPRINT DD  SYSOUT=*",
+  "//SYSIN    DD  DUMMY",
+  "//SYSUT1   DD  *",
+  sysut1,
+  "/*",
+  `//SYSUT2   DD  DSN={HLQ}.DISP.OUT,DISP=${disp},`,
+  "//             SPACE=(TRK,(1,1)),DCB=(RECFM=FB,LRECL=80)",
+  "//",
+];
+const DISPNEW_JCL = outJob("D", "DISP NEW", "FIRST RECORD", "(NEW,CATLG)");
+const DISPMOD_JCL = outJob("M", "DISP MOD", "SECOND RECORD", "MOD");
+const DISPDEL_JCL = ["//{HLQ}X  JOB (ACCT),'DISP DELETE',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//OUT      DD  DSN={HLQ}.DISP.OUT,DISP=(OLD,DELETE)", "//"];
+/** No DISP at all: the DD is NEW and the normal disposition defaults to DELETE for a new data set. */
+const KEEPIT_JCL = ["//{HLQ}K  JOB (ACCT),'KEEP IT',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//OUT      DD  DSN={HLQ}.DISP.KEEP,", "//             SPACE=(TRK,(1,1)),UNIT=SYSDA,", "//             DCB=(RECFM=FB,LRECL=80)", "//"];
+
+/** DISP=(status,normal,abnormal) of a DD as written, upper-cased; missing parts are "". */
+const dispParts = (params: Record<string, string>): string[] => {
+  const d = (params.DISP ?? "").toUpperCase();
+  const inner = d.startsWith("(") ? d.slice(1, -1) : d;
+  const [status = "", normal = "", abnormal = ""] = inner.split(",").map((p) => p.trim());
+  return [status, normal, abnormal];
+};
+/** The editor text has a DD for {HLQ}.DISP.KEEP that creates it (NEW) and keeps it (CATLG or KEEP) when the step ends normally. */
+const keepDdKeeps = (jcl: string[], hlq: string): boolean =>
+  parseJcl(jcl).steps.some((st) =>
+    st.dds.some((dd) => {
+      const [status, normal] = dispParts(dd.params);
+      return dd.params.DSN?.toUpperCase() === `${hlq}.DISP.KEEP` && status === "NEW" && (normal === "CATLG" || normal === "KEEP");
+    }),
+  );
+export const dispKeepExists: Validator = ({ state, hlq }) => !!state.catalog.datasets[`${hlq}.DISP.KEEP`];
+const jobOk = (letter: string) => eventIs("JOB_COMPLETED", (e, ctx: LessonContext) => e.jobName === `${ctx.hlq}${letter}` && e.status === "OUTPUT" && e.maxRc === 0);
+const dispOut = (ctx: LessonContext) => ctx.state.catalog.datasets[`${ctx.hlq}.DISP.OUT`];
+
+export const lessonB05: Lesson = {
+  id: "b-05-disp",
+  number: 34,
+  module: MODULE,
+  title: "Disposition: what happens to a data set after the step",
+  description: "Run four small jobs, watch the data set they create, extend and delete, and fix a job that throws its own output away.",
+  objective: "Run DISPNEW, DISPMOD and DISPDEL and say what each did to {HLQ}.DISP.OUT, then fix {HLQ}.JCL(KEEPIT) so {HLQ}.DISP.KEEP survives the job.",
+  teaches: [
+    "DISP=(status,normal,abnormal): what the data set is and what happens to it afterwards",
+    "No DISP means NEW, and a new data set defaults to DELETE at the end of the step",
+    "MOD adds records to the end of an existing sequential data set, or creates the data set if it is not there",
+    "IEF285I tells you the outcome: CATALOGED, KEPT or DELETED",
+  ],
+  requires: ["b-04-build-a-job"],
+  sources: ["SRC-003", "SRC-019"],
+  startingState: {
+    screen: { id: "PRIMARY_OPTION_MENU" },
+    resetJobs: true,
+    removeDatasets: ["{HLQ}.DISP.OUT", "{HLQ}.DISP.KEEP"],
+    createMembers: [
+      { dsn: "{HLQ}.JCL", member: "DISPNEW", records: DISPNEW_JCL },
+      { dsn: "{HLQ}.JCL", member: "DISPMOD", records: DISPMOD_JCL },
+      { dsn: "{HLQ}.JCL", member: "DISPDEL", records: DISPDEL_JCL },
+      { dsn: "{HLQ}.JCL", member: "KEEPIT", records: KEEPIT_JCL },
+    ],
+  },
+  steps: [
+    {
+      id: "new",
+      instruction: "Submit DISPNEW: TSO SUBMIT JCL(DISPNEW) on the Option line. It copies one record into {HLQ}.DISP.OUT with DISP=(NEW,CATLG).",
+      explanation: "DISP describes the status of a data set (here NEW: this job creates it) and what happens to it afterwards. CATLG puts an entry for it in the catalog and keeps it.",
+      hint: "TSO SUBMIT JCL(DISPNEW), Enter.",
+      validator: (ctx) => jobOk("D")(ctx) && dispOut(ctx)?.records?.length === 1,
+    },
+    {
+      id: "read",
+      instruction: "Open SDSF (=S, ST), put ? next to {HLQ}D and S next to JESYSMSG. Find the IEF285I line for {HLQ}.DISP.OUT: CATALOGED.",
+      explanation: "IEF285I reports the disposition of each data set after the step. CATALOGED, KEPT and DELETED are the words you will see most.",
+      hint: "=S, ST, ? on {HLQ}D, S on JESYSMSG.",
+      validator: eventIs("JOB_OUTPUT_OPENED", (e) => e.ddname === "JESYSMSG"),
+    },
+    {
+      id: "mod",
+      instruction: "Press PF3 back to the menu and submit DISPMOD. Its SYSUT2 is DISP=MOD on the data set that now exists.",
+      explanation: "MOD adds records to the end of an existing sequential data set. (If the data set did not exist, the system would assume it is being created in the step.) Compare OLD, which starts writing from the beginning.",
+      hint: "F3 until the menu, then TSO SUBMIT JCL(DISPMOD).",
+      validator: (ctx) => jobOk("M")(ctx) && dispOut(ctx)?.records?.length === 2,
+    },
+    {
+      id: "browse",
+      instruction: "List {HLQ}.DISP in the Data Set List Utility (=3.4) and type B next to {HLQ}.DISP.OUT: two records, FIRST then SECOND.",
+      hint: "=3.4, {HLQ}.DISP, Enter, B on {HLQ}.DISP.OUT.",
+      validator: eventIs("MEMBER_OPENED", (e, ctx) => e.dsn === `${ctx.hlq}.DISP.OUT`),
+    },
+    {
+      id: "del",
+      instruction: "Press PF3 until the menu and submit DISPDEL. Its DD says DISP=(OLD,DELETE).",
+      explanation: "DELETE removes the data set and its catalog entry when the step ends normally. The job ends CC 0000 and the data set is gone.",
+      hint: "F3 until the menu, TSO SUBMIT JCL(DISPDEL).",
+      validator: (ctx) => jobOk("X")(ctx) && !dispOut(ctx),
+    },
+    {
+      id: "gone",
+      instruction: "Now submit KEEPIT. It ends CC 0000. Then check with =3.4 and level {HLQ}.DISP: {HLQ}.DISP.KEEP is not there, so the list finds nothing (that message is expected and not counted against you).",
+      explanation: "KEEPIT's DD has no DISP at all. The status defaults to NEW, and for a new data set the normal disposition defaults to DELETE. A CC 0000 job can still have thrown its output away.",
+      hint: "TSO SUBMIT JCL(KEEPIT), then =3.4 with level {HLQ}.DISP.",
+      validator: (ctx) => eventIs("DATASET_SEARCHED", (e, c) => e.level.toUpperCase().startsWith(`${c.hlq}.DISP`) && e.results === 0)(ctx) && !ctx.state.catalog.datasets[`${ctx.hlq}.DISP.KEEP`] && !dispOut(ctx),
+      expectsError: true,
+    },
+    {
+      id: "fix",
+      instruction: "Edit {HLQ}.JCL(KEEPIT). On the OUT DD statement add DISP=(NEW,CATLG), after DSN={HLQ}.DISP.KEEP and before the continuation.",
+      explanation: "Add the disposition you want: NEW, because the job creates the data set, and CATLG, so it is kept and cataloged. The comma after DISP=(NEW,CATLG) continues the statement onto the SPACE record.",
+      hint: "2, {HLQ}.JCL(KEEPIT); overtype the //OUT line: //OUT      DD  DSN={HLQ}.DISP.KEEP,DISP=(NEW,CATLG),",
+      validator: (ctx) => editorOpen("{HLQ}.JCL", "KEEPIT", "EDIT")(ctx) && keepDdKeeps(editorText(ctx), ctx.hlq),
+    },
+    {
+      id: "rerun",
+      instruction: "Type SUBMIT. This time the data set survives.",
+      hint: "SUBMIT, Enter.",
+      validator: (ctx) => jobOk("K")(ctx) && dispKeepExists(ctx),
+    },
+    {
+      id: "save",
+      instruction: "Press PF3 to save the corrected member.",
+      hint: "F3.",
+      validator: (ctx) => editorClosed(ctx) && memberSatisfies("{HLQ}.JCL", "KEEPIT", (records) => keepDdKeeps(records, ctx.hlq))(ctx),
+    },
+  ],
+};

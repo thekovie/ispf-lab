@@ -665,3 +665,136 @@ describe("b-04-build-a-job", () => {
     });
   });
 });
+
+describe("b-05-disp", () => {
+  const ID = "b-05-disp";
+  const OUT = `${HLQ}.DISP.OUT`;
+  const KEEP = `${HLQ}.DISP.KEEP`;
+  const submit = (a: Attempt, member: string) => {
+    for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(a.sim.state.screen.id); i++) a.pf(3);
+    a.cmd(`TSO SUBMIT JCL(${member})`);
+  };
+  const exists = (a: Attempt, dsn: string) => !!a.sim.state.catalog.datasets[dsn];
+  const records = (a: Attempt) => (a.sim.state.catalog.datasets[OUT]?.records ?? []).map((r) => r.trimEnd());
+  const jesysmsg = (a: Attempt, job = "JOB00001") => {
+    a.cmd("=S");
+    a.cmd("ST");
+    a.enter({ [`cmd:${job}`]: "?" });
+    a.enter({ "cmd:JESYSMSG": "S" });
+  };
+  const fixKeepit = (a: Attempt) => {
+    a.cmd("=2");
+    a.enter(entry(`${HLQ}.JCL(KEEPIT)`));
+    a.enter({ [`line:${a.lineId(/ DD /)}`]: `//OUT      DD  DSN=${KEEP},DISP=(NEW,CATLG),` });
+  };
+
+  it("is lesson 34 and advises lesson 33", () => {
+    const l = lessonById(ID)!;
+    expect(l.number).toBe(34);
+    expect(l.requires).toEqual(["b-04-build-a-job"]);
+  });
+
+  it("creates the four job members for this userid and no leftover data sets", () => {
+    const c = new Attempt(lessonById(ID)!);
+    for (const m of ["DISPNEW", "DISPMOD", "DISPDEL", "KEEPIT"]) expect(getMember(c.sim.state.catalog, `${HLQ}.JCL`, m), m).toBeDefined();
+    expect(getMember(c.sim.state.catalog, `${HLQ}.JCL`, "KEEPIT")!.records[0].trimEnd()).toMatch(/^\/\/USER01K\s+JOB/);
+    expect(exists(c, OUT) || exists(c, KEEP)).toBe(false);
+  });
+
+  it("walks the Learn steps in order", () => {
+    const c = new Attempt(lessonById(ID)!);
+    submit(c, "DISPNEW");
+    expect(stepId(c)).toBe("read");
+    expect(records(c)).toEqual(["FIRST RECORD"]);
+    jesysmsg(c);
+    expect(stepId(c)).toBe("mod");
+    submit(c, "DISPMOD");
+    expect(stepId(c)).toBe("browse");
+    expect(records(c)).toEqual(["FIRST RECORD", "SECOND RECORD"]);
+    c.cmd("=3.4");
+    c.enter({ level: `${HLQ}.DISP` });
+    c.enter({ [`cmd:${OUT}`]: "B" });
+    expect(stepId(c)).toBe("del");
+    submit(c, "DISPDEL");
+    expect(stepId(c)).toBe("gone");
+    expect(exists(c, OUT)).toBe(false);
+    submit(c, "KEEPIT");
+    expect(stepId(c)).toBe("gone");
+    expect(exists(c, KEEP)).toBe(false);
+    c.cmd("=3.4");
+    c.enter({ level: `${HLQ}.DISP` });
+    expect(stepId(c)).toBe("fix");
+    fixKeepit(c);
+    expect(stepId(c)).toBe("rerun");
+    c.enter({ command: "SUBMIT" });
+    expect(stepId(c)).toBe("save");
+    expect(exists(c, KEEP)).toBe(true);
+    c.pf(3);
+    expect(c.done).toBe(true);
+    expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("running DISPMOD before DISPNEW does not skip ahead (the job name is checked, in order)", () => {
+    const c = learn(ID, (a) => submit(a, "DISPMOD"));
+    expect(stepId(c)).toBe("new");
+  });
+
+  it("editing KEEPIT without a disposition that keeps the data set does not pass the fix step", () => {
+    const c = learn(ID, (a) => {
+      submit(a, "DISPNEW");
+      jesysmsg(a);
+      submit(a, "DISPMOD");
+      a.cmd("=3.4");
+      a.enter({ level: `${HLQ}.DISP` });
+      a.enter({ [`cmd:${OUT}`]: "B" });
+      submit(a, "DISPDEL");
+      submit(a, "KEEPIT");
+      a.cmd("=3.4");
+      a.enter({ level: `${HLQ}.DISP` });
+      a.cmd("=2");
+      a.enter(entry(`${HLQ}.JCL(KEEPIT)`));
+      a.enter({ [`line:${a.lineId(/ DD /)}`]: `//OUT      DD  DSN=${KEEP},DISP=(NEW,DELETE),` });
+    });
+    expect(stepId(c)).toBe("fix");
+  });
+
+  describe("Challenge", () => {
+    it("fixing KEEPIT and running it completes it", () => {
+      const c = challenge(ID, (a) => {
+        fixKeepit(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("DISP=(NEW,KEEP) is also accepted", () => {
+      const c = challenge(ID, (a) => {
+        a.cmd("=2");
+        a.enter(entry(`${HLQ}.JCL(KEEPIT)`));
+        a.enter({ [`line:${a.lineId(/ DD /)}`]: `//OUT      DD  DSN=${KEEP},DISP=(NEW,KEEP),` });
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("running KEEPIT unchanged does not complete it (the data set is deleted)", () => {
+      expect(challenge(ID, (a) => submit(a, "KEEPIT")).done).toBe(false);
+    });
+
+    it("creating the data set with the Data Set Utility does not count", () => {
+      const c = challenge(ID, (a) => {
+        a.cmd("=3.2");
+        a.enter({ option: "A", other: KEEP });
+        a.enter({ recfm: "FB", lrecl: "80", dirblocks: "0" });
+        submit(a, "KEEPIT");
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("running a different job does not complete it", () => {
+      expect(challenge(ID, (a) => submit(a, "DISPNEW")).done).toBe(false);
+    });
+  });
+});

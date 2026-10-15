@@ -12,7 +12,7 @@
 import type { SimEvent } from "@/engine/types";
 import type { Validator } from "./types";
 import { allOf, anyOf, is, noEditSession, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
-import { buildDatasetIsRight, typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
+import { buildDatasetIsRight, dispKeepExists, typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
 
 export interface Challenge {
   task: string;
@@ -83,6 +83,14 @@ const shown = (tail: "SEQ" | "LIB", anyForm: boolean) =>
   );
 
 export const CHALLENGES: Record<string, Challenge> = {
+  "b-05-disp": {
+    task: "Fix {HLQ}.JCL(KEEPIT) so that after the job runs {HLQ}.DISP.KEEP exists. The job has to create it, not the Data Set Utility.",
+    validator: allOf(
+      dispKeepExists,
+      sawAll(is("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}K` && e.status === "OUTPUT" && e.maxRc === 0)),
+      ({ history = [], hlq }) => !history.some((e) => e.type === "DATASET_ALLOCATED" && e.dsn === `${hlq}.DISP.KEEP`),
+    ),
+  },
   "b-04-build-a-job": {
     task: "Write and run a job that creates {HLQ}.BUILD.DATA as an FB, LRECL 80 data set. The data set does not exist now, and it has to be created by your job, not by the Data Set Utility.",
     validator: allOf(
