@@ -62,7 +62,7 @@ export const sdsfMenuScreen: ScreenHandler<MenuFrame> = {
     "jobs. In this simulator jobs run to completion the moment you SUBMIT them,",
     "so ST (status) and O (output) are the panels that matter. Type ST and press",
     "Enter, then use ? on a job to list its spool data sets and S to browse one.",
-    "The real SDSF option letter varies by site: S, SD or M.5 are common.",
+    "SDSF is option S on the standard ISPF menu, or the option your site configures.",
   ],
   render(state) {
     const msg = state.message;

@@ -92,9 +92,9 @@ work within the current library only; labels and edit macros are not simulated.
 ## Edit profile
 
 One profile per data set *type* (last qualifier: `JCL`, `COBOL`, `DATA` …), persisted per userid under
-`ispf-lab:editprofile:v1:<USERID>` (see ADR 0010). Defaults: CAPS OFF, NUMBER OFF, STATS ON, RECOVERY OFF,
-SETUNDO ON, AUTOSAVE ON, HEX OFF, BOUNDS 1 LRECL. Real defaults vary by installation (ISPF ships RECOVERY/SETUNDO
-OFF; many sites turn them on) — the lessons say so.
+`ispf-lab:editprofile:v1:<USERID>` (see ADR 0010). The simulator starts a new profile with CAPS OFF, NUMBER OFF, STATS ON, RECOVERY OFF, SETUNDO ON, AUTOSAVE ON, HEX OFF,
+BOUNDS 1 LRECL. These are simulator starting values, not IBM defaults: in real ISPF the defaults come from the site's
+configuration, and CAPS is set from the data when a member opens (EM, CAPS).
 
 ## UNDO model
 

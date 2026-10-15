@@ -200,8 +200,8 @@ export const lesson25: Lesson = {
     },
     {
       id: "open-sdsf",
-      instruction: "Type =S to jump to SDSF (the option letter varies by site - S, SD or M.5), then ST for the status of your jobs.",
-      explanation: "SDSF is the window onto JES. ST shows every job you own; OWNER * would show everyone's on a real system.",
+      instruction: "Type =S to jump to SDSF (S on the standard menu, or whatever option your site configures), then ST for the status of your jobs.",
+      explanation: "SDSF is the window onto JES. ST lists the jobs that match the PREFIX and OWNER filters; this simulator starts with OWNER set to your userid.",
       hint: "=S, Enter, then ST, Enter.",
       validator: eventIs("JOB_STATUS_OPENED"),
     },

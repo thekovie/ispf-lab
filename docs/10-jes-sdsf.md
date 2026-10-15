@@ -31,7 +31,7 @@ unsaved edits are included, so the **buffer** is submitted — see ADR 0015), me
 
 | Panel | How | Content |
 |---|---|---|
-| SDSF menu | option `S` (`SD`, `SDSF`, `M.5`, `=S`) | ST, O, LOG; I→ST and H→O with a note; DA/PR/INIT not available |
+| SDSF menu | option `S` (`SDSF`, `=S`; the real option is what the site configures) | ST, O, LOG; I→ST and H→O with a note; DA/PR/INIT not available |
 | ST / O | `ST` / `O` | NP JOBNAME JobID Owner Prty Queue C Pos Max-RC Date; default filter OWNER = userid, PREFIX `*` |
 | actions | NP column | `S` browse all output, `?` job data sets, `P` purge (confirm), `SJ`/`SE` open the saved source member (real SDSF edits a copy of the job's JCL and does not save changes; `SE` edits output data sets — see ADR 0015), `=` repeat; several per Enter |
 | commands | command line | `OWNER [id|*]`, `PREFIX [name*|*]`, `SORT JOBNAME|JOBID|STATUS`, `FIND`, `ST`, `O`, `LOG`, `END` |

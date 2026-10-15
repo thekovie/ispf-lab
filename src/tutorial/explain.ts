@@ -130,7 +130,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     term: "jump",
     aliases: ["jump function", "=3.4", "=", "equals sign"],
     summary: "=option on any command line ends the current dialog and selects that option from the Primary Option Menu, e.g. =3.4 or =2.",
-    detail: "The jump function is RETURN followed by the option: an open editor session is ended first (saved when AUTOSAVE is ON), the panel chain is unwound, and the new option is selected. Only the active logical screen is affected.",
+    detail: "The jump function ends panels with repeated END until a primary option menu shows, then selects the option: an open editor session is ended first (saved when AUTOSAVE is ON). RETURN does the same repeated END but stops at the primary option menu. Only the active logical screen is affected.",
     readMore: { resource: "ispf-users-guide", section: "Using the jump function" },
   },
   {
@@ -194,7 +194,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     term: "D",
     aliases: ["delete", "dd"],
     summary: "Delete: D removes one line (or a list entry, with confirmation); D3 removes three; DD on two lines removes the block between them.",
-    detail: "There is no undo in classic ISPF Edit. CANCEL abandons all changes since the last SAVE.",
+    detail: "UNDO reverses the last edit interaction when SETUNDO or RECOVERY is on. CANCEL abandons all changes since the last SAVE.",
   },
   {
     term: "R",
@@ -204,7 +204,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   },
   {
     term: "C/A",
-    aliases: ["c", "copy", "a", "after", "b", "before", "cc", "c a", "m a", "m b", "c b"],
+    aliases: ["c", "copy", "a", "after", "before", "cc", "c a", "m a", "m b", "c b"],
     summary: "Two-part editor commands: C (copy) or M (move) marks the source; A (after) or B (before) marks the destination.",
     detail: "Press Enter with both marked, or mark the source, press Enter (it stays pending), then mark the destination. Block forms CC...CC and MM...MM mark a range. RESET clears a pending command.",
     readMore: { resource: "share-lab", section: "Copy, move, repeat" },
@@ -242,24 +242,17 @@ export const GLOSSARY: GlossaryEntry[] = [
   {
     term: "SPLIT",
     aliases: ["pf2", "f2", "split screen", "logical screen", "start"],
-    summary: "PF2 / SPLIT opens a second logical screen; START does the same from a command line. Up to 8 screens, each with its own panels and editor.",
+    summary: "PF2 / SPLIT opens a second logical screen; START does the same from a command line. 8 screens by default (a site can allow up to 32), each with its own panels and editor.",
     detail: "The new screen starts on the Primary Option Menu. The SWAPBAR row lists every screen with * on the active one. PF3 or X on a screen’s Primary Option Menu ends that screen instead of logging off.",
-    analogy: "Like browser tabs - but every tab is a full ISPF session with its own history, and there are never more than eight.",
+    analogy: "Like browser tabs - but every tab is a full ISPF session with its own history, and there is a limit (8 by default, up to 32 if the site allows).",
     readMore: { resource: "ispf-users-guide", section: "Split-screen mode" },
   },
   {
     term: "SWAP",
     aliases: ["pf9", "f9", "swap list", "swapbar"],
     summary: "PF9 / SWAP switches to the next logical screen; SWAP n, SWAP PREV and SWAP LIST target a specific one.",
-    detail: "Whatever you typed on the screen you leave is still there when you come back, and an editor session with unsaved changes stays open. The status line shows S1/2, S2/2.",
+    detail: "An editor session with unsaved changes stays open on the screen you leave. The status line shows S1/2, S2/2.",
     readMore: { resource: "ispf-users-guide", section: "Split-screen mode" },
-  },
-  {
-    term: "JCL",
-    aliases: ["job control language", "job"],
-    summary: "Job Control Language: the statements (// JOB, // EXEC, // DD) that tell z/OS how to run a batch job.",
-    detail: "JCL lives in PDS members such as USER01.JCL(HELLO). Columns 1-2 are //, statements end by column 71, and //* starts a comment.",
-    readMore: { resource: "redbook", section: "Chapter 6 Using JCL and SDSF" },
   },
   {
     term: "SYS1.PARMLIB",
@@ -284,14 +277,14 @@ export const GLOSSARY: GlossaryEntry[] = [
   {
     term: "RECOVERY",
     aliases: ["edit recovery", "recovery on", "recovery off", "recovry"],
-    summary: "Edit profile setting that journals your changes to a recovery data set so an interrupted session can be recovered (and UNDO works).",
+    summary: "Edit profile setting that writes a recovery data set so an interrupted session can be recovered; UNDO works with it too.",
     detail: "On a real system RECOVERY ON writes a recovery table and offers 'Edit - Recovery' the next time you enter Edit after an abend or a lost session. In this simulator RECOVERY only enables UNDO; no recovery data set is created.",
     readMore: { resource: "ispf-edit", section: "RECOVERY - control edit recovery" },
   },
   {
     term: "BOUNDS",
     aliases: ["bnds", "=bnds>", "bounds line", "column bounds"],
-    summary: "The left and right columns that FIND, CHANGE and EXCLUDE search. BOUNDS l r sets them; BNDS shows an editable =BNDS> line.",
+    summary: "The left and right columns that FIND, CHANGE and EXCLUDE search. BOUNDS l r sets them. In real ISPF the BNDS line command (typed in the prefix area) shows an editable =BNDS> line.",
     detail: "The default bounds are 1 and the record length. Narrow them (BOUNDS 20 72) to change text only in a column range - typical for fixed-format languages. On the =BNDS> line, type < for the left bound and > for the right one. Overtyping records is not limited by the bounds. Bounds are kept in the edit profile.",
     readMore: { resource: "ispf-edit", section: "BOUNDS - control the search bounds" },
   },
@@ -355,7 +348,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     term: "SDSF",
     aliases: ["system display and search facility", "spool display", "option s", "sdsf st"],
     summary: "System Display and Search Facility - the ISPF application for looking at jobs, their status, their output and the system log.",
-    detail: "ST shows the status of your jobs (JOBNAME, JobID, Owner, Max-RC), O the output queue, DA active users, LOG the system log. On a job line type S to browse all its output, ? to list its spool data sets, P to purge it, SJ to edit the JCL held for the job (real SDSF does not save those changes; the simulator opens the saved member). OWNER and PREFIX filter the list. The option letter that opens SDSF varies by site: S, SD or M.5 are common. Everything here is labelled (SIMULATED).",
+    detail: "ST shows the status of your jobs (JOBNAME, JobID, Owner, Max-RC), O the output queue, DA active users, LOG the system log. On a job line type S to browse all its output, ? to list its spool data sets, P to purge it, SJ to edit the JCL held for the job (real SDSF does not save those changes; the simulator opens the saved member). OWNER and PREFIX filter the list. SDSF is option S on the standard ISPF menu, or the option your site configures. Everything here is labelled (SIMULATED).",
     readMore: { resource: "redbook", section: "Chapter 6.3 SDSF" },
   },
   {

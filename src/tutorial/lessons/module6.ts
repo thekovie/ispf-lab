@@ -25,7 +25,7 @@ export const lesson15: Lesson = {
     {
       id: "split",
       instruction: "Press PF2 (SPLIT). A second logical screen opens on the Primary Option Menu; the editor is still alive in screen 1. Notice the SWAPBAR row above the PF legend.",
-      explanation: "ISPF supports up to 8 logical screens (SPLIT/START). Each one has its own panel stack, so screen 2 starts at the Primary Option Menu while screen 1 stays in the editor.",
+      explanation: "ISPF allows 8 logical screens by default (a site can allow up to 32) with SPLIT/START. In this simulator each logical screen fills the whole display; real ISPF splits a 3270 display in two with a horizontal line. Each one has its own panel stack, so screen 2 starts at the Primary Option Menu while screen 1 stays in the editor.",
       hint: "Press F2, or click the F2 button.",
       validator: eventIs("SCREEN_SPLIT"),
     },

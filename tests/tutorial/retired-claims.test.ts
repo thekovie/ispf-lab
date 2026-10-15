@@ -22,6 +22,15 @@ const RETIRED: Retired[] = [
   { claim: /audit trail operators/i, why: "IBM: 'These numbers can be useful in controlling library members'; 'audit trail' is only used for RECOVERY (EV-A 6)" },
   { claim: /every save[^.]*bumps the modification level/i, why: "IBM: the level rises on the first change of a session (EM, Statistics for PDS members)" },
   { claim: /STATS OFF[^.]*stops the editor updating/i, why: "IBM: with STATS OFF, previous statistics are lost on save (EM, STATS)" },
+  { claim: /never pops up|never pop up/i, why: "IBM: the long message shows in a pop-up window by default (UG1 Getting help; UG2 Settings 'Long message in pop-up')" },
+  { claim: /so it takes two PF3s/i, why: "IBM: typing 3.4 bypasses the second menu (UG1); the PF3 count depends on the route" },
+  { claim: /there is no undo in classic/i, why: "IBM: Edit has UNDO (EM, UNDO) with SETUNDO or RECOVERY on" },
+  { claim: /never more than eight|up to 8 (logical )?screens/i, why: "IBM: the default is 8 and up to 32 may be allowed (UG1 split screen)" },
+  { claim: /journals your (keystrokes|changes)|keeps UNDO available|ISPF ships RECOVERY OFF/i, why: "IBM: RECOVERY writes a recovery data set; defaults come from the site's configuration (EM, RECOVERY/SETUNDO)" },
+  { claim: /CAPS OFF to restore the default/i, why: "IBM: CAPS is set from the data when a member opens; it has no fixed default (EM, CAPS)" },
+  { claim: /AUTOSAVE ON \(the default/i, why: "IBM states no universal default (EM, AUTOSAVE)" },
+  { claim: /option letter varies by site - S, SD or M\.5|S, SD or M\.5/i, why: "SDSF is option S on the standard menu or what the site configures; SD and M.5 are not IBM-documented (EV-C a1)" },
+  { claim: /=option is RETURN followed by the option|is RETURN followed by the option/i, why: "IBM: the jump ends panels with repeated END to a primary option menu, then selects the option (UG1 jump function)" },
 ];
 
 /** Every string a lesson shows the learner. */
@@ -50,6 +59,24 @@ describe("retired claims are not taught", () => {
   it.each(RETIRED)("$claim ($why)", ({ claim }) => {
     const hits = texts.filter((t) => claim.test(t.text)).map((t) => t.where);
     expect(hits).toEqual([]);
+  });
+});
+
+describe("the glossary has no shadowed entries", () => {
+  it("every term and alias is unique", () => {
+    const seen = new Map<string, string>();
+    const dup: string[] = [];
+    for (const g of GLOSSARY) {
+      for (const key of [g.term, ...(g.aliases ?? [])].map((k) => k.toLowerCase())) {
+        const prev = seen.get(key);
+        if (prev && prev !== g.term) dup.push(`${key}: ${prev} / ${g.term}`);
+        seen.set(key, g.term);
+      }
+    }
+    expect(dup).toEqual([]);
+  });
+  it("there is a single JCL entry", () => {
+    expect(GLOSSARY.filter((g) => g.term === "JCL")).toHaveLength(1);
   });
 });
 

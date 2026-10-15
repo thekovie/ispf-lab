@@ -18,7 +18,7 @@ export const lesson16: Lesson = {
   title: "Jump anywhere with = and come home with RETURN",
   description: "Stop pressing PF3 five times: =option jumps from any panel, RETURN (PF4) goes straight to the Primary Option Menu.",
   objective: "From DSLIST jump to Edit with =2, open {HLQ}.JCL(HELLO), jump to =3.4 from inside the editor, then RETURN.",
-  teaches: ["=option is RETURN followed by the option", "Jumping out of Edit ends the session (AUTOSAVE saves)", "RETURN / PF4 unwinds the whole panel chain", "Only the active logical screen is affected"],
+  teaches: ["=option ends panels with repeated END until a primary option menu, then selects the option", "Jumping out of Edit ends the session (AUTOSAVE saves)", "RETURN / PF4 does the same repeated END but stops at the primary option menu", "Only the active logical screen is affected"],
   startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
   steps: [
     {
@@ -128,7 +128,7 @@ export const lesson18: Lesson = {
     {
       id: "bounds",
       instruction: "Type BOUNDS 8 72. From now on FIND, CHANGE and EXCLUDE only look between columns 8 and 72.",
-      explanation: "Bounds are stored in the edit profile, so they stay until you change them. BNDS on its own shows an editable =BNDS> line.",
+      explanation: "Bounds are stored in the edit profile, so they stay until you change them. In real ISPF the BNDS line command (typed in the prefix area) shows an editable =BNDS> line; this simulator also accepts BNDS on the command line.",
       hint: "BOUNDS 8 72, Enter.",
       validator: eventIs("BOUNDS_CHANGED"),
     },
@@ -140,7 +140,7 @@ export const lesson18: Lesson = {
     },
     {
       id: "reset",
-      instruction: "Type RESET to remove the ruler (RESET SPECIAL would do only that). The bounds stay - type BOUNDS 1 72 if you want the default back.",
+      instruction: "Type RESET to remove the ruler (RESET SPECIAL would do only that). The bounds stay in the profile - type BOUNDS 1 72 to widen them again.",
       hint: "RESET, Enter.",
       validator: allOf(hasSpecial("COLS", false), editorOpen("{HLQ}.COBOL", "HELLO")),
     },
@@ -171,7 +171,7 @@ export const lesson19: Lesson = {
     },
     {
       id: "profile",
-      instruction: "Type PROFILE. Two =PROF> lines show the current settings: the profile name JCL, LRECL, CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE, BOUNDS.",
+      instruction: "Type PROFILE. =PROF> lines show the current settings: the profile name JCL, LRECL, CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE. (Real ISPF shows five such lines; this simulator shows two and adds BOUNDS for convenience.)",
       explanation: "ISPF keeps one profile per data set type - the last qualifier. Every member of a .JCL library shares the JCL profile.",
       hint: "PROFILE, Enter.",
       validator: hasSpecial("PROF"),
@@ -191,7 +191,7 @@ export const lesson19: Lesson = {
     },
     {
       id: "caps-off",
-      instruction: "Type CAPS OFF to restore the default, then PF3 to leave.",
+      instruction: "Type CAPS OFF to put it back the way you found it, then PF3 to leave. (Real ISPF also sets CAPS from the data when a member opens, so the value you see there can differ from the one you set.)",
       hint: "CAPS OFF, Enter, F3.",
       validator: allOf(editorClosed, ({ state }) => state.editProfiles.JCL?.caps === false),
     },
@@ -229,8 +229,8 @@ export const lesson20: Lesson = {
     },
     {
       id: "recovery",
-      instruction: "Type RECOVERY ON. On a real system this journals your keystrokes so a lost session can be recovered; here it is a profile flag that keeps UNDO available.",
-      explanation: "Sites differ: ISPF ships RECOVERY OFF and SETUNDO OFF, many installations turn them on. PROFILE tells you.",
+      instruction: "Type RECOVERY ON. On a real system RECOVERY ON writes a recovery data set so an interrupted session can be recovered; here it is a profile flag. UNDO also works with SETUNDO ON alone.",
+      explanation: "Whether RECOVERY and SETUNDO are on by default depends on how your site configured ISPF. PROFILE tells you.",
       hint: "RECOVERY ON, Enter.",
       validator: eventIs("PROFILE_CHANGED", (_e, ctx) => ctx.state.editor?.profile.recovery === true),
     },

@@ -21,14 +21,14 @@ export const lesson07: Lesson = {
     {
       id: "browse",
       instruction: "List {HLQ}.JCL in DSLIST, open its member list with B, then type B next to HELLO and press Enter.",
-      explanation: "Browse shows records without letting you change them - the safe way to read production JCL. Notice the line numbers are plain text and the prefix area is not typeable.",
+      explanation: "Browse shows records without letting you change them - the safe way to read production JCL. Real Browse has no prefix area and does not number the lines; this simulator shows plain-text line numbers for orientation, and you cannot type on them.",
       hint: "Dsname Level {HLQ}.JCL, Enter; B on the row; B on HELLO.",
       validator: editorOpen(HELLO, "HELLO", "BROWSE"),
     },
     {
       id: "try-typing",
       instruction: "Try typing SAVE on the command line and press Enter. Read the message, then press PF3 twice to get back to DSLIST.",
-      explanation: "Browse refuses SAVE because nothing can be changed. The message area tells you why - ISPF always explains.",
+      explanation: "Browse has no SAVE command because nothing can be changed; the simulator answers with an error message. The message area tells you why - ISPF always explains.",
       hint: "SAVE, Enter, then F3, F3.",
       validator: onScreen("DSLIST_RESULTS"),
     },
@@ -54,9 +54,9 @@ export const lesson08: Lesson = {
   number: 8,
   module: "The editor",
   title: "Editing your first member",
-  description: "Overtype a record, watch the MODIFIED flag, and SAVE.",
+  description: "Overtype a record, watch the status line (the lab shows MODIFIED there as a trainer aid), and SAVE.",
   objective: "Change the STEP1 line of {HLQ}.JCL(HELLO) to run IEBGENER instead of IEFBR14, then SAVE it.",
-  teaches: ["Overtype editing", "Dirty (modified) state", "SAVE keeps you in the editor", "PF3 ends and, with AUTOSAVE ON (the default), saves; CANCEL discards"],
+  teaches: ["Overtype editing", "Dirty (modified) state", "SAVE keeps you in the editor", "PF3 ends and, with AUTOSAVE ON (typical, set in your edit profile), saves; CANCEL discards"],
   startingState: { screen: { id: "DSLIST_SEARCH" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {
@@ -68,7 +68,7 @@ export const lesson08: Lesson = {
     {
       id: "overtype",
       instruction: "Move the cursor onto the STEP1 record (Tab or the arrow keys), put it on IEFBR14, and type IEBGENER over it. Then press Enter.",
-      explanation: "The 3270 terminal is an overtype device: characters replace what is under the cursor. Nothing reaches the editor until you press Enter - then the status line shows MODIFIED.",
+      explanation: "The 3270 terminal is an overtype device: characters replace what is under the cursor. Nothing reaches the editor until you press Enter - then the lab\'s status line shows MODIFIED (a trainer aid; ISPF itself does not display that word).",
       hint: "Place the cursor on the I of IEFBR14 and type IEBGENER, then Enter.",
       validator: editorHasLine((t) => /IEBGENER/i.test(t)),
     },
@@ -83,7 +83,7 @@ export const lesson08: Lesson = {
     {
       id: "pf3",
       instruction: "Press PF3 to end the edit session. Because nothing changed since SAVE, ISPF just returns to the member list.",
-      explanation: "PF3 means END. In Edit, with the profile setting AUTOSAVE ON (the default on most systems), END saves your changes first; with AUTOSAVE OFF it would ask. If you ever want to throw changes away, type CANCEL (or press PF12) instead.",
+      explanation: "PF3 means END. In Edit, with the profile setting AUTOSAVE ON (typical; the site configures it), END saves your changes first; with AUTOSAVE OFF it would ask. If you ever want to throw changes away, type CANCEL (or press PF12) instead.",
       hint: "F3.",
       validator: allOf(editorClosed, memberSatisfies(HELLO, "HELLO", (r) => r.some((t) => /IEBGENER/.test(t)))),
     },

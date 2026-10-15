@@ -27,7 +27,7 @@ export function profileNameFor(dsn: string): string {
 }
 
 export function defaultProfile(name: string): EditProfile {
-  // Real defaults vary by installation (ISPF ships RECOVERY OFF / SETUNDO OFF; many sites turn them on).
+  // Simulator starting values, not IBM defaults: real defaults come from the site's configuration and CAPS follows the data.
   return { name, caps: false, number: false, stats: true, recovery: false, setundo: true, autosave: "ON", hex: false, bounds: { left: 1, right: 0 } };
 }
 

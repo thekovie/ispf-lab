@@ -41,7 +41,7 @@ export const lesson01: Lesson = {
     {
       id: "type-something",
       instruction: "Type an option that does not exist, such as 99, on the Option ===> line and press Enter. Watch the short message at the top right.",
-      explanation: "ISPF never pops up dialog boxes. Errors appear as a short message in the top-right corner (and PF1 shows a longer one). Learning to look there is half of ISPF fluency.",
+      explanation: "ISPF reports a mistake as a short message in the top-right corner; PF1 then shows the long explanation. Learning to look there is half of ISPF fluency.",
       hint: "Type 99 then Enter. The message INVALID OPTION is expected - it is the lesson.",
       validator: eventIs("MESSAGE_SHOWN", (e) => e.text === "INVALID OPTION"),
       highlightField: "option",
@@ -99,7 +99,7 @@ export const lesson02: Lesson = {
     },
     {
       id: "home",
-      instruction: "Press PF3 until you are back on the Primary Option Menu. Notice that 3.4 still went through Utilities, so it takes two PF3s.",
+      instruction: "Press PF3 until you are back on the Primary Option Menu. (In real ISPF, typing 3.4 goes straight to the Data Set List Utility and skips the Utility Selection panel; this simulator keeps that panel on the stack, so you may need one more PF3.)",
       explanation: "Even when you jump, ISPF remembers the intermediate menu, so PF3 behaves the same either way.",
       hint: "F3, F3.",
       validator: onScreen("PRIMARY_OPTION_MENU"),
@@ -128,7 +128,7 @@ export const lesson03: Lesson = {
     {
       id: "change-scroll",
       instruction: "Tab to the Default scroll amount field, type HALF over PAGE, and press PF3 to save and return.",
-      explanation: "Scroll amount controls how far PF7/PF8 move in lists and the editor. PAGE is a full screen; HALF is half; CSR scrolls to the cursor.",
+      explanation: "In this simulator Option 0 also holds a default scroll amount, as a convenience; on real z/OS you change the Scroll ===> field on each panel. Scroll amount controls how far PF7/PF8 move in lists and the editor. PAGE is a full screen; HALF is half; CSR scrolls to the cursor.",
       hint: "Press Tab until the cursor is on the scroll field, type HALF, then F3.",
       validator: eventIs("SETTING_CHANGED", (e) => e.setting === "scrollDefault"),
       highlightField: "scroll",
