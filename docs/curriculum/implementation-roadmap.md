@@ -14,7 +14,7 @@ Complexity: S ≈ under a day, M ≈ a few days, L ≈ one to two weeks (single 
 |---|---|---|---|
 | M0 | Review gate | **Closed** (conditionally accepted 2026-10-15) | Conditions C1-C6 applied; D1 and D2 approved; D3 accepted 2026-10-15 (ADR 0016) |
 | **M1a** | Assessment integrity and isolation | **Implemented 2026-10-15; awaiting review** | Challenge cannot complete without the learner doing the work; every lesson replays and survives a mode switch; the `startLesson` race is resolved either way; probes are asserting tests |
-| M1b | Content and fidelity corrections | Not authorised (needs review of M1a) | IBM-contradicted statements corrected with evidence; confirmed validator defects fixed; listed message IDs corrected |
+| M1b | Content and fidelity corrections | **Implemented, awaiting review** ([m1b-report.md](m1b-report.md)) | IBM-contradicted statements corrected with evidence; confirmed validator defects fixed; listed message IDs corrected |
 | M2 (reduced) | Optional `requires` / `sources` lesson fields | Not authorised | Only if M3 is approved |
 | M3 | First Track B batch | Not authorised | b-01 to b-06, b-10 and a-01 approved |
 | M4 | Simulator extensions for approved lessons | Backlog | Only as an approved lesson needs them |
@@ -66,7 +66,7 @@ M1a exit criteria: `pnpm check` green; all acceptance criteria above evidenced i
 
 Explicitly out of M1a: every M1b item (wording, message IDs, validator fixes unrelated to Challenge completion), new lessons, progress key changes, COND/IF/DISP/PROC work, SDSF changes, accessibility, mobile, CI, resource links.
 
-## 4. M1b — Content and fidelity corrections (not yet authorised)
+## 4. M1b — Content and fidelity corrections (implemented 2026-10-15, awaiting review: [m1b-report.md](m1b-report.md))
 
 Scope as in the M0 review section F (M1b-1 to M1b-5): contradicted lesson statements; SUBMIT and SJ wording per ADR 0015; `IEF374I` and the two non-existent message IDs; L22 `S`/`I` and SORT default; L23 STATS/modification level; L27/L28 validators and the IEF212I wording; stale counts; resource links; optional CI. Tracked item by item in [m1b-backlog.md](m1b-backlog.md) (the five deferred tests, the L27/L28 defects, and the M0 list). Needs your approval to start.
 

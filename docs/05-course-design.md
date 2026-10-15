@@ -78,7 +78,7 @@ bar, step list), Note (detour), Restart, Teaches. On completion: Next lesson / R
 
 ## Glossary
 
-`src/tutorial/explain.ts`: 32 entries with `summary`, `detail`, optional flagged `analogy`, and a `readMore`
+`src/tutorial/explain.ts`: glossary entries (unique terms and aliases, checked by a test) with `summary`, `detail`, optional flagged `analogy`, and a `readMore`
 pointer into `docs/08-resources.md`. Reached via the Explain button, `EXPLAIN <term>` on any command line, or
 `/lab?explain=<term>`.
 

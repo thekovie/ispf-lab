@@ -207,7 +207,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     aliases: ["c", "copy", "a", "after", "before", "cc", "c a", "m a", "m b", "c b"],
     summary: "Two-part editor commands: C (copy) or M (move) marks the source; A (after) or B (before) marks the destination.",
     detail: "Press Enter with both marked, or mark the source, press Enter (it stays pending), then mark the destination. Block forms CC...CC and MM...MM mark a range. RESET clears a pending command.",
-    readMore: { resource: "share-lab", section: "Copy, move, repeat" },
+    readMore: { resource: "ispf-edit", section: "C, M, A and B - copy and move" },
   },
   {
     term: "X",

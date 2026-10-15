@@ -13,7 +13,9 @@ pnpm test:coverage   # v8 coverage of src/{engine,catalog,parsers,editor,tutoria
 pnpm check           # typecheck + lint + test
 ```
 
-## Test files (1,658 tests, 5 todo)
+## Test files
+
+Run `pnpm test` for the current count (at the end of M1b: 26 files, 1,729 tests).
 
 | File | Covers |
 |---|---|
@@ -31,12 +33,16 @@ pnpm check           # typecheck + lint + test
 | `tests/engine/listDepth.test.ts` | DSLIST S/CO/MO/X/NX/Z/=, SORT/FIND/EXCLUDE/RESET, multi-command suspend/resume, member I/G/J/= |
 | `tests/persistence/labBundle.test.ts` | Export/Import Lab round trip, v0.1 migration, rejection reasons, key stripping |
 | `tests/tutorial/challenge.test.ts` | M1a regression suite over all 28 lessons: the legitimate route completes in Learn and Challenge; nothing completes from the start state; 15 cheap shortcuts from the Phase 0 / M0 probes never complete a lesson; every lesson replays, and runs after every other lesson (1,300+ cases) |
-| `tests/tutorial/challenge-routes.test.ts` | D3 validation: legitimate alternative routes are accepted and plausible wrong answers rejected, per lesson; five `it.todo` for M1b |
+| `tests/tutorial/challenge-routes.test.ts` | D3 validation: legitimate alternative routes are accepted and plausible wrong answers rejected, per lesson; the M1a `it.todo` cases are now asserted in `m1b-validators.test.ts` |
 | `tests/tutorial/guard.test.ts` | Challenge completion guard (armed / unarmed, baseline, Learn unaffected) and the Challenge event history |
 | `tests/tutorial/scenario.test.ts` | scenario reset: removeDatasets/Members, createDatasets, resetMembers, profiles, settings, `startActions` |
 | `tests/tutorial/provider.test.tsx` | TutorialProvider with React Testing Library: `startLesson` never completes the previous lesson (F-03), mode switch and restart re-apply the starting state, session closes on lesson start, progress untouched by a mode switch |
 | `tests/tutorial/compat.test.tsx` | lesson ids and step ids equal the baseline commit's (`fixtures/baseline-ids.json`), progress key and shape, stored progress survives start / mode switch / restart, local-only storage |
 | `tests/components/terminal-unsent.test.tsx` | the real `Terminal` reports editor text typed but not sent (and not an unsent command) |
+| `tests/tutorial/m1b-validators.test.ts` | M1b-3: each confirmed Learn-step or Challenge defect (L5, L6, L9, L11, L17, L21, L27, L28) has a negative test and a test that the legitimate route still passes |
+| `tests/tutorial/retired-claims.test.ts` | lesson and glossary text must not contain statements IBM contradicts (each names its evidence); glossary terms and aliases are unique |
+| `tests/engine/memberStats.test.ts` | modification level once per edit session and capped at 99; STATS OFF discards statistics |
+| `tests/content/resources.test.ts` | resources.ts, docs/08 and the glossary's read-more links agree; IBM links are the z/OS 3.2 PDFs |
 | `tests/tutorial/walks.ts` | shared helper (not a test file): `Attempt`, one `WALKS` route per lesson, `SHORTCUTS` |
 | `tests/jes/jes.test.ts`, `tests/engine/sdsf.test.ts` | JCL parser and errors, programs, allocation failures, S806; SUBMIT/J/TSO SUBMIT, SDSF ST/?/S/P/SJ/LOG, Day-One flow, persistence |
 

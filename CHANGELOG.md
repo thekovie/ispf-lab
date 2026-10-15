@@ -5,7 +5,17 @@ Versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Lesson and glossary statements that IBM's documentation contradicts were corrected (pop-ups, PF3 counts, Browse, MODIFIED,
+  AUTOSAVE, screen limit, jump/RETURN, BNDS, CAPS, RECOVERY, undo, SDSF option letter), and Edit SUBMIT and SDSF SJ are described as
+  IBM does (ADR 0015).
+- IBM resource links point at the z/OS 3.2 manuals; a CI workflow runs `pnpm check` and `pnpm build`.
+
 ### Fixed
+- Lessons 5, 6, 9, 11, 17, 21, 27 and 28 now check what they ask; lesson 28's Challenge accepts any repair that makes the job run.
+- Message ids: `IEF374I` has no return code; `IEFC019I` and `ICE056A` replace the non-existent `IEFC606I` and `ICE026A`.
+- DSLIST `S` omits the directory blocks and member count of a PDS (not the space figures); `SORT LRECL` sorts descending by default.
+- The member modification level rises once per edit session (max 99), and saving with `STATS OFF` discards the statistics.
 - Challenge mode could be completed without doing the lesson (18 lessons by a few cheap actions, 7 by none) or on
   leftover data; it now needs a completion guard plus an outcome check per lesson (ADR 0016).
 - Restarting a lesson, switching mode or starting another lesson silently discarded unsaved editor work; it now asks first,

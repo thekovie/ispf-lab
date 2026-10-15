@@ -1,4 +1,4 @@
-# M1b backlog (M1b in progress)
+# M1b backlog (M1b implemented; see [m1b-report.md](m1b-report.md))
 
 Everything here is **outside M1a**. M1b was approved on 2026-10-15; status per item is in the **Status** notes below. Sources: the lesson audit
 ([existing-lessons-audit.md](existing-lessons-audit.md)), the M0 review ([m0-acceptance-review.md](m0-acceptance-review.md)

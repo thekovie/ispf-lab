@@ -30,7 +30,7 @@ engine that verifies what you actually do.
 ```bash
 pnpm install
 pnpm dev          # http://localhost:3000
-pnpm test         # 127 engine tests (Vitest)
+pnpm test         # engine, editor, JES, tutorial and component tests (Vitest)
 pnpm check        # typecheck + lint + test
 pnpm build        # production build
 pnpm icons        # regenerate favicon.ico / icon PNGs from scripts/make-icons.mjs

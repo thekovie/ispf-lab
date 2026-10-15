@@ -448,5 +448,30 @@ learner-made work (`workAtRisk`, `confirmDiscard`, a read-only unsent-text probe
 lesson/step ids and stored progress; real browser walkthroughs (`docs/curriculum/m1a-acceptance.md`). Final: 22 test files,
 1,658 tests (+5 todo), `pnpm check` and `pnpm build` green. M1b backlog: `docs/curriculum/m1b-backlog.md`.
 
-**Not done (M1b).** Wording/IBM corrections, SUBMIT/SJ text (ADR 0015), message ids, L17/L21/L27/L28 validator fixes,
-stale counts, resource links, CI.
+**Not done in M1a (done in M1b below).** Wording/IBM corrections, SUBMIT/SJ text (ADR 0015), message ids, L17/L21/L27/L28
+validator fixes, stale counts, resource links, CI.
+
+## Phase 21 - M1b content and fidelity corrections (2026-10-15)
+
+Approved by the project owner after the M1a acceptance (ADR 0016 accepted). Branch `feat/m1b-content-fidelity`, one commit per
+sub-item. Tracked in `docs/curriculum/m1b-backlog.md`.
+
+- **M1b-3 validators.** The five deferred cases fixed, each with a negative test (`tests/tutorial/m1b-validators.test.ts`):
+  L17 needs the re-run (and the "press PF3 twice" text, wrong from Utility Selection, now counts nothing); L21 and L11 exclude
+  steps no longer pass on FLIP or an open editor; L27 reads the SYSUT1 statement (no comments, any case), requires SJ
+  (new `JOB_JCL_OPENED` event) and a PAYRPT job, and gets a Challenge outcome check; L28 Challenge accepts any repair
+  (edit the JCL or create the data set) and requires the SYSUT2 report of the run that worked (decision: the objective names it, so it is
+  assessed); L5, L6, L9 save steps check the data set and the saved member. A Browse of job output is an editor session of
+  the simulator, so Challenge checks use "no Edit session open", not `editorClosed`.
+- **M1b-2 SUBMIT/SJ.** Wording per ADR 0015 in the glossary, lesson 27, SDSF help, docs/10 and ADR 0012.
+- **M1b-4 simulator.** `IEF374I` without `RC=`; `IEFC606I` becomes `IEFC019I`; `ICE026A` becomes `ICE056A` or plain text; DSLIST `S` vs `I`
+  corrected; `SORT LRECL` descending by default; modification level once per edit session and capped at 99; `STATS OFF`
+  discards statistics.
+- **M1b-1 text.** Statements IBM contradicts retired from lessons 1-3, 7-8, 15-16, 18-20, 25 and the glossary (merged duplicate `JCL`
+  entry). `tests/tutorial/retired-claims.test.ts` keeps them out.
+- **M1b-5 housekeeping.** README and docs/05, docs/07 stop quoting counts; resources.ts and docs/08 re-synced with a test; IBM links
+  point at the z/OS 3.2 PDFs (User's Guide Vol I and II, Edit and Edit Macros); the unresolved SHARE link is removed; optional
+  `.github/workflows/ci.yml` runs `pnpm check` and `pnpm build` (not runnable locally; first run happens on push).
+
+Final: 26 test files, 1,729 tests, no todo. Residual items are in the backlog (invented IEFC605I variants, other inexact message layouts,
+`G` panel, the "uncataloged" premise, scored scripted errors in L1 and L7, browser re-check of the changed lessons).
