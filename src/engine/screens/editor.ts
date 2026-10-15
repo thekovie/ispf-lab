@@ -7,7 +7,7 @@ import { MSG, getMember, readRecords, saveRecords } from "@/catalog/catalog";
 import { applyLineCommands } from "@/editor/lineCommands";
 import { makeLines } from "@/editor/lineOps";
 import { applyPrimaryCommand } from "@/editor/primaryCommands";
-import { applyTextEdits, bufferRecords, commitSaved } from "@/editor/session";
+import { applyTextEdits, commitSaved, savedRecords } from "@/editor/session";
 import { recordInteraction } from "@/editor/history";
 import { withProfile } from "@/editor/profile";
 import { parseBoundsLine, specialRows } from "@/editor/special";
@@ -95,7 +95,7 @@ export const editorScreen: ScreenHandler<Frame> = {
       }
       const prefixId = `prefix:${line.id}`;
       const lineId = `line:${line.id}`;
-      const prefixValue = pendingById.get(line.id) ?? NUM(i + 1);
+      const prefixValue = pendingById.get(line.id) ?? (line.inserted && line.text.trim() === "" ? "''''''" : NUM(i + 1));
       const visibleText = line.text.slice(s.leftCol, s.leftCol + s.pageCols);
       if (editable) {
         rows.push([f(prefixId, 6, prefixValue, { editorLine: true, color: pendingById.has(line.id) ? "yellow" : "cyan" }), t(" "), f(lineId, s.pageCols, visibleText, { editorLine: true, noUpper: !s.profile.caps })]);
@@ -321,7 +321,7 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
     case "submit": {
       // Edit SUBMIT submits the member or data set being edited; IBM is silent on unsaved edits, so the buffer is submitted (ADR 0015).
       const s = base.editor!;
-      return withEvents(submitRecords(base, bufferRecords(s), { dsn: s.dsn, member: s.member }, base.screen.id));
+      return withEvents(submitRecords(base, savedRecords(s), { dsn: s.dsn, member: s.member }, base.screen.id));
     }
     default:
       return withEvents({ state: base, events: [] });
@@ -331,7 +331,7 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
 function saveSession(state: SimulatorState, thenExit: boolean): StepResult {
   const s = state.editor!;
   const ref = { dsn: s.dsn, member: s.member };
-  const r = saveRecords(state.catalog, ref, bufferRecords(s), { today: state.today, userid: state.userid, stats: s.profile.stats, bumpMod: s.dirty && !s.modBumped });
+  const r = saveRecords(state.catalog, ref, savedRecords(s), { today: state.today, userid: state.userid, stats: s.profile.stats, bumpMod: s.dirty && !s.modBumped });
   if (r.error) return withMessage(state, { short: r.error, severity: "error", long: r.error === MSG.READ_ONLY ? "Use CANCEL (PF12) to leave without saving." : undefined });
   const events: SimEvent[] = [];
   if (r.created) events.push({ type: "MEMBER_CREATED", dsn: s.dsn, member: s.member! });
@@ -397,7 +397,7 @@ function cancelEdit(state: SimulatorState): StepResult {
 function createMember(state: SimulatorState, member: string, replace: boolean): StepResult {
   const s = state.editor!;
   if (getMember(state.catalog, s.dsn, member) && !replace) return withMessage(state, { short: MSG.MEMBER_EXISTS, long: "Use REPLACE name to overwrite it.", severity: "error" });
-  const r = saveRecords(state.catalog, { dsn: s.dsn, member }, bufferRecords(s), { today: state.today, userid: state.userid });
+  const r = saveRecords(state.catalog, { dsn: s.dsn, member }, savedRecords(s), { today: state.today, userid: state.userid });
   if (r.error) return withMessage(state, { short: r.error, severity: "error" });
   const events: SimEvent[] = r.created ? [{ type: "MEMBER_CREATED", dsn: s.dsn, member }] : [];
   events.push({ type: "MEMBER_SAVED", dsn: s.dsn, member });

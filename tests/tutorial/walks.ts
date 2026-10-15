@@ -393,6 +393,26 @@ WALKS["b-03-jcl-anatomy"] = (c) => {
   c.pf(3);
 };
 
+WALKS["b-04-build-a-job"] = (c) => {
+  openEdit(c, `${HLQ}.JCL(NEWDS)`);
+  const add = (text: string) => {
+    const ed = c.sim.state.editor!;
+    c.enter({ [`prefix:${ed.lines[ed.lines.length - 1].id}`]: "I" });
+    const eds = c.sim.state.editor!;
+    c.enter({ [`line:${eds.lines[eds.lines.length - 1].id}`]: text });
+  };
+  add(`//${HLQ}N  JOB (ACCT),'NEW DATA SET',CLASS=A`);
+  add("//STEP1    EXEC PGM=IEFBR14");
+  add(`//NEWDD    DD  DSN=${HLQ}.BUILD.DATA,DISP=(NEW,CATLG,DELETE),`);
+  add("//             SPACE=(TRK,(1,1)),UNIT=SYSDA,");
+  add("//             DCB=(RECFM=FB,LRECL=80)");
+  add("//");
+  c.enter({ command: "SUBMIT" });
+  c.pf(3);
+  c.cmd("=3.4");
+  c.enter({ level: `${HLQ}.BUILD` });
+};
+
 const E = (ref: string) => entry(ref);
 
 /**

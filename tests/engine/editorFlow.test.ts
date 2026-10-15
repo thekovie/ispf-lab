@@ -109,7 +109,7 @@ describe("editor flow through the reducer", () => {
     const s = Sim.loggedOn().cmd("2").enter({ other: "USER01.JCL(NEWJOB)" });
     expect(s.screenId).toBe("EDIT");
     expect(s.message).toBe("NEW MEMBER");
-    expect(s.state.editor?.lines.length).toBe(0);
+    expect(s.state.editor?.lines.every((l) => l.inserted && l.text.trim() === "")).toBe(true); // empty input lines only
     s.enter({ command: "SAVE" });
     expect(getMember(s.state.catalog, "USER01.JCL", "NEWJOB")).toBeDefined();
     expect(s.has("MEMBER_CREATED")).toBe(true);
@@ -190,5 +190,45 @@ describe("scroll events carry the amount used (M3, lesson a-01)", () => {
     expect(amounts(s)).toEqual(["MAX"]);
     expect(top(s)).toBe(60 - s.state.editor!.pageSize);
     expect(s.state.editor!.scrollAmount).toBe("PAGE");
+  });
+});
+
+describe("a new, empty member offers input lines (M3, lesson b-04; EM: 'several empty lines', quotes in the line command field)", () => {
+  const openNew = () => Sim.loggedOn().cmd("2").enter({ other: "USER01.JCL(FRESH)" });
+  const prefixes = (s: Sim) => s.rendered().fields.filter((f) => f.startsWith("prefix:"));
+  const lineIds = (s: Sim) => s.rendered().fields.filter((f) => f.startsWith("line:")).map((f) => f.slice(5));
+
+  it("shows several empty input lines marked with quotes, and the editor is not dirty", () => {
+    const s = openNew();
+    expect(lineIds(s).length).toBeGreaterThanOrEqual(3);
+    expect(prefixes(s).length).toBe(lineIds(s).length);
+    expect(JSON.stringify(s.rendered().rows)).toContain("''''''");
+    expect(s.state.editor!.dirty).toBe(false);
+  });
+
+  it("SAVE without typing still creates an empty member (lesson 12)", () => {
+    const s = openNew();
+    s.enter({ command: "SAVE" });
+    const m = getMember(s.state.catalog, "USER01.JCL", "FRESH");
+    expect(m).toBeDefined();
+    expect(m!.records).toEqual([]);
+  });
+
+  it("typing on an input line and pressing Enter keeps that record and drops the unused lines", () => {
+    const s = openNew();
+    const first = lineIds(s)[0];
+    s.enter({ [`line:${first}`]: "//FRESH   JOB" });
+    expect(s.state.editor!.lines.map((l) => l.text.trim())).toEqual(["//FRESH   JOB"]);
+  });
+
+  it("SAVE after typing writes only the typed records", () => {
+    const s = openNew();
+    s.enter({ [`line:${lineIds(s)[1]}`]: "//FRESH   JOB", command: "SAVE" });
+    expect(getMember(s.state.catalog, "USER01.JCL", "FRESH")!.records.map((r) => r.trimEnd())).toEqual(["//FRESH   JOB"]);
+  });
+
+  it("an existing member is unchanged: no extra input lines", () => {
+    const s = Sim.loggedOn().cmd("2").enter({ other: "USER01.JCL(HELLO)" });
+    expect(s.state.editor!.lines.every((l) => !l.inserted)).toBe(true);
   });
 });

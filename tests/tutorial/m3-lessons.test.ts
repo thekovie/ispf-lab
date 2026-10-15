@@ -550,3 +550,118 @@ describe("b-03-jcl-anatomy", () => {
     });
   });
 });
+
+describe("b-04-build-a-job", () => {
+  const ID = "b-04-build-a-job";
+  const DSN = `${HLQ}.BUILD.DATA`;
+  const JOB = "//USER01N  JOB (ACCT),'NEW DATA SET',CLASS=A";
+  const EXEC = "//STEP1    EXEC PGM=IEFBR14";
+  const DD = [`//NEWDD    DD  DSN=${DSN},DISP=(NEW,CATLG,DELETE),`, "//             SPACE=(TRK,(1,1)),UNIT=SYSDA,", "//             DCB=(RECFM=FB,LRECL=80)"];
+  /** Type the given records into the new member, one per Enter, using insert-after on the last line. */
+  const typeJcl = (a: Attempt, records: string[]) => {
+    for (const r of records) {
+      const ed = a.sim.state.editor!;
+      const last = ed.lines[ed.lines.length - 1].id;
+      a.enter({ [`prefix:${last}`]: "I" });
+      const blank = a.sim.state.editor!.lines[a.sim.state.editor!.lines.length - 1].id;
+      a.enter({ [`line:${blank}`]: r });
+    }
+  };
+  const openNew = (a: Attempt) => {
+    a.cmd("2");
+    a.enter(entry(`${HLQ}.JCL(NEWDS)`));
+  };
+
+  it("is lesson 33 and advises lesson 32", () => {
+    const l = lessonById(ID)!;
+    expect(l.number).toBe(33);
+    expect(l.requires).toEqual(["b-03-jcl-anatomy"]);
+  });
+
+  it("walks the Learn steps in order", () => {
+    const c = new Attempt(lessonById(ID)!);
+    openNew(c);
+    expect(stepId(c)).toBe("job");
+    typeJcl(c, [JOB]);
+    expect(stepId(c)).toBe("exec");
+    typeJcl(c, [EXEC]);
+    expect(stepId(c)).toBe("dd");
+    typeJcl(c, DD);
+    expect(stepId(c)).toBe("null");
+    typeJcl(c, ["//"]);
+    expect(stepId(c)).toBe("submit");
+    c.enter({ command: "SUBMIT" });
+    expect(stepId(c)).toBe("verify");
+    c.pf(3);
+    c.cmd("=3.4");
+    c.enter({ level: `${HLQ}.BUILD` });
+    expect(c.done).toBe(true);
+    expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("a different job name does not pass the job step", () => {
+    const c = learn(ID, (a) => {
+      openNew(a);
+      typeJcl(a, ["//OTHERJOB  JOB (ACCT),'X',CLASS=A"]);
+    });
+    expect(stepId(c)).toBe("job");
+  });
+
+  it("a DD with the wrong data set name or the wrong record length does not pass the DD step", () => {
+    const wrongDsn = learn(ID, (a) => {
+      openNew(a);
+      typeJcl(a, [JOB, EXEC, `//NEWDD    DD  DSN=${HLQ}.OTHER.DATA,DISP=(NEW,CATLG),SPACE=(TRK,(1,1)),DCB=(RECFM=FB,LRECL=80)`]);
+    });
+    expect(stepId(wrongDsn)).toBe("dd");
+    const wrongLrecl = learn(ID, (a) => {
+      openNew(a);
+      typeJcl(a, [JOB, EXEC, `//NEWDD    DD  DSN=${DSN},DISP=(NEW,CATLG),SPACE=(TRK,(1,1)),DCB=(RECFM=FB,LRECL=133)`]);
+    });
+    expect(stepId(wrongLrecl)).toBe("dd");
+  });
+
+  it("a DD that never creates the data set (DISP=SHR) does not pass the DD step", () => {
+    const c = learn(ID, (a) => {
+      openNew(a);
+      typeJcl(a, [JOB, EXEC, `//NEWDD    DD  DSN=${DSN},DISP=SHR`]);
+    });
+    expect(stepId(c)).toBe("dd");
+  });
+
+  describe("Challenge", () => {
+    const runJob = (a: Attempt, dd: string[]) => {
+      openNew(a);
+      typeJcl(a, [JOB, EXEC, ...dd, "//"]);
+      a.enter({ command: "SUBMIT" });
+      a.pf(3);
+    };
+
+    it("a job that creates the FB 80 data set completes it", () => {
+      expect(challenge(ID, (a) => runJob(a, DD)).done).toBe(true);
+    });
+
+    it("RECFM and LRECL as separate keywords and DISP KEEP are also accepted", () => {
+      const dd = [`//NEWDD    DD  DSN=${DSN},DISP=(NEW,KEEP),SPACE=(TRK,(1,1)),`, "//             RECFM=FB,LRECL=80"];
+      expect(challenge(ID, (a) => runJob(a, dd)).done).toBe(true);
+    });
+
+    it("creating the data set with 3.2 instead of a job does not count", () => {
+      const c = challenge(ID, (a) => {
+        a.cmd("=3.2");
+        a.enter({ option: "A", other: DSN });
+        a.enter({ recfm: "FB", lrecl: "80", dirblocks: "0" });
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("a job that creates the data set with the wrong record length does not count", () => {
+      const c = challenge(ID, (a) => runJob(a, [`//NEWDD    DD  DSN=${DSN},DISP=(NEW,CATLG),SPACE=(TRK,(1,1)),DCB=(RECFM=FB,LRECL=133)`]));
+      expect(c.done).toBe(false);
+    });
+
+    it("a job whose data set is deleted at the end (default disposition) does not count", () => {
+      const c = challenge(ID, (a) => runJob(a, [`//NEWDD    DD  DSN=${DSN},SPACE=(TRK,(1,1)),DCB=(RECFM=FB,LRECL=80)`]));
+      expect(c.done).toBe(false);
+    });
+  });
+});

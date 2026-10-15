@@ -18,10 +18,17 @@ export interface OpenOptions {
   profile?: EditProfile;
 }
 
+/** Empty input lines offered by a new, empty member ("several" in IBM's text). */
+const NEW_MEMBER_INPUT_LINES = 5;
+
 export function openSession(o: OpenOptions): EditorSession {
   const lrecl = o.lrecl > 0 ? o.lrecl : 80;
   const texts = o.records.map((r) => r.padEnd(lrecl).slice(0, lrecl));
   const lines: EditorLine[] = texts.map((text, i) => ({ id: i + 1, text, excluded: false }));
+  // A nonexistent member opens with several empty input lines, which vanish unused (IBM Edit and Edit Macros, "Creating a new data set").
+  if (o.isNew && o.mode === "EDIT" && lines.length === 0) {
+    for (let i = 0; i < NEW_MEMBER_INPUT_LINES; i++) lines.push({ id: i + 1, text: "".padEnd(lrecl), excluded: false, inserted: true });
+  }
   return {
     mode: o.mode,
     dsn: o.dsn,
@@ -51,8 +58,13 @@ export function bufferRecords(s: EditorSession): string[] {
   return s.lines.map((l) => l.text);
 }
 
+/** The records a SAVE or SUBMIT would use: input lines that are still empty (new member, or I not typed on) are not records. */
+export function savedRecords(s: EditorSession): string[] {
+  return s.lines.filter((l) => !(l.inserted && l.text.trim() === "")).map((l) => l.text);
+}
+
 export function isDirty(s: EditorSession): boolean {
-  const cur = bufferRecords(s);
+  const cur = savedRecords(s);
   if (cur.length !== s.original.length) return true;
   return cur.some((t, i) => t !== s.original[i]);
 }
@@ -106,7 +118,7 @@ export function revertToOriginal(s: EditorSession): EditorSession {
 
 /** SAVE boundary: the buffer becomes the original and earlier interactions are no longer undoable. */
 export function commitSaved(s: EditorSession): EditorSession {
-  return { ...s, original: bufferRecords(s), dirty: false, isNew: false, history: [] };
+  return { ...s, original: savedRecords(s), dirty: false, isNew: false, history: [] };
 }
 
 /**

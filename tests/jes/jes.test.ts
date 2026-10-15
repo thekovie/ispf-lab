@@ -177,3 +177,50 @@ describe("statement numbers and the trailing /* (GAP-37, GAP-38; lesson b-03)", 
     expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "HELLO"]).errors[0]).toMatchObject({ id: "IEFC605I" });
   });
 });
+
+describe("DISP=MOD (GAP-36; lesson b-05; EV-B 1.1)", () => {
+  const job = (...dd: string[]) => ["//USER01D  JOB (ACCT),'DISP',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEBGENER", "//SYSPRINT DD  SYSOUT=*", "//SYSIN    DD  DUMMY", ...dd, "//"];
+  const COPY_IN = ["//SYSUT1   DD  *", "FIRST", "/*"];
+  const sysut2 = (disp: string) => [`//SYSUT2   DD  DSN=USER01.DISP.OUT,DISP=${disp},`, "//             SPACE=(TRK,(1,1)),DCB=(RECFM=FB,LRECL=80)"];
+  const run = (cat: ReturnType<typeof buildSeed>, ...dd: string[]) => submitJob(EMPTY_JES, cat, { records: job(...dd), userid: "USER01", today: "2026/10/15" });
+  const text = (cat: ReturnType<typeof buildSeed>) => (getDataset(cat, "USER01.DISP.OUT")?.records ?? []).map((r) => r.trimEnd());
+
+  it("MOD of a data set that does not exist creates it (IBM: assumed created in this step)", () => {
+    const r = run(buildSeed("USER01"), ...COPY_IN, ...sysut2("(MOD,CATLG)"));
+    expect(r.job.status).toBe("OUTPUT");
+    expect(r.job.maxRc).toBe(0);
+    expect(text(r.catalog)).toEqual(["FIRST"]);
+    expect(out(r, "JESYSMSG")).toContain("IEF285I   USER01.DISP.OUT");
+  });
+
+  it("MOD of an existing sequential data set adds the records after the last one", () => {
+    const first = run(buildSeed("USER01"), ...COPY_IN, ...sysut2("(NEW,CATLG)"));
+    const again = run(first.catalog, "//SYSUT1   DD  *", "SECOND", "/*", ...sysut2("MOD"));
+    expect(again.job.maxRc).toBe(0);
+    expect(text(again.catalog)).toEqual(["FIRST", "SECOND"]);
+  });
+
+  it("OLD replaces the records (the pointer is at the start); SHR is not for writing here but behaves the same", () => {
+    const first = run(buildSeed("USER01"), ...COPY_IN, ...sysut2("(NEW,CATLG)"));
+    const again = run(first.catalog, "//SYSUT1   DD  *", "SECOND", "/*", ...sysut2("OLD"));
+    expect(text(again.catalog)).toEqual(["SECOND"]);
+  });
+
+  it("NEW,CATLG then NEW again is a duplicate-name failure and keeps the first", () => {
+    const first = run(buildSeed("USER01"), ...COPY_IN, ...sysut2("(NEW,CATLG)"));
+    const again = run(first.catalog, "//SYSUT1   DD  *", "SECOND", "/*", ...sysut2("(NEW,CATLG)"));
+    expect(again.job.status).toBe("JCL_ERROR");
+    expect(text(again.catalog)).toEqual(["FIRST"]);
+  });
+});
+
+describe("valid DD keywords the simulator ignores are not errors (GAP-33)", () => {
+  it.each(["STORCLAS=USRDATA", "DATACLAS=DC1", "MGMTCLAS=STANDARD", "LABEL=(1,SL)", "FREE=CLOSE", "DSNTYPE=LIBRARY"])("%s", (kw) => {
+    const p = parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", `//D DD DSN=USER01.X.Y,DISP=SHR,${kw}`, "//"]);
+    expect(p.errors).toEqual([]);
+  });
+
+  it("a keyword that is not a DD keyword is still IEFC630I", () => {
+    expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "//D DD DSN=USER01.X.Y,FOO=1", "//"]).errors[0]).toMatchObject({ id: "IEFC630I" });
+  });
+});

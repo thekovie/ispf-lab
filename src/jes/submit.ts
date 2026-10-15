@@ -55,7 +55,7 @@ interface AllocResult {
   error?: string;
 }
 
-/** IEF236I/IEF237I allocation for one step; NEW data sets are created, missing OLD/SHR/MOD ones fail the step. */
+/** IEF236I/IEF237I allocation for one step; NEW data sets (and MOD ones that do not exist yet) are created, missing OLD/SHR ones fail the step. */
 function allocateStep(catalog: Catalog, jobName: string, step: StepStatement, userid: string, today: string): AllocResult {
   const sysmsg = [`IEF236I ALLOC. FOR ${jobName} ${step.name}`];
   let cat = catalog;
@@ -71,7 +71,8 @@ function allocateStep(catalog: Catalog, jobName: string, step: StepStatement, us
     }
     const status = dispStatus(dd.params) || "NEW";
     const existing = getDataset(cat, ref.dsn);
-    if (status === "NEW") {
+    // IBM: MOD of a data set the system cannot find is assumed to be created in this step (EV-B 1.1)
+    if (status === "NEW" || (status === "MOD" && !existing)) {
       if (existing) {
         sysmsg.push(`IGD17101I DATA SET ${ref.dsn}`, "NOT DEFINED BECAUSE DUPLICATE NAME EXISTS IN CATALOG");
         return { catalog: cat, sysmsg, error: "DUPLICATE NAME" };

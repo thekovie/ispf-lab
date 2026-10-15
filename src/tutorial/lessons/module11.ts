@@ -2,7 +2,7 @@
  * Module 11 - Foundations (M3). Lesson specs: docs/curriculum/lessons/<id>.md. Review status of every lesson here: draft
  * (author-checked against the sources named in the spec; independent source, fidelity and expert review pending).
  */
-import { parseJcl } from "@/jes/jcl";
+import { dispStatus, parseJcl, type DdStatement } from "@/jes/jcl";
 import { editorClosed, editorOpen, eventIs, memberSatisfies, onScreen } from "../validators";
 import type { Lesson, LessonContext, Validator } from "../types";
 
@@ -331,6 +331,99 @@ export const lessonB03: Lesson = {
       instruction: "Press PF3 to save the corrected member.",
       hint: "F3.",
       validator: (ctx) => editorClosed(ctx) && memberSatisfies("{HLQ}.JCL", "BROKEN", (records) => parseJcl(records).errors.length === 0)(ctx),
+    },
+  ],
+};
+
+/** A DD parameter, whether coded on its own (RECFM=FB) or inside DCB=(RECFM=FB,...). */
+const ddAttr = (dd: DdStatement, key: string): string | undefined => dd.params[key]?.toUpperCase() ?? new RegExp(`${key}=([A-Z0-9]+)`).exec((dd.params.DCB ?? "").toUpperCase())?.[1];
+
+/** The edited JCL has a DD that creates {HLQ}.BUILD.DATA as FB, LRECL 80 with a space request. */
+export const buildDdIsRight = (jcl: string[], hlq: string): boolean =>
+  parseJcl(jcl).steps.some((st) =>
+    st.dds.some((dd) => dd.params.DSN?.toUpperCase() === `${hlq}.BUILD.DATA` && dispStatus(dd.params) === "NEW" && !!dd.params.SPACE && ddAttr(dd, "RECFM") === "FB" && ddAttr(dd, "LRECL") === "80"),
+  );
+const editorText = (ctx: LessonContext) => ctx.state.editor?.lines.map((l) => l.text) ?? [];
+const newdsOpen = editorOpen("{HLQ}.JCL", "NEWDS", "EDIT");
+const buildState: Validator = ({ state, hlq }) => {
+  const ds = state.catalog.datasets[`${hlq}.BUILD.DATA`];
+  return !!ds && ds.datasetType === "PS" && ds.recfm === "FB" && ds.lrecl === 80;
+};
+export { buildState as buildDatasetIsRight };
+
+export const lessonB04: Lesson = {
+  id: "b-04-build-a-job",
+  number: 33,
+  module: MODULE,
+  title: "Build a job from scratch",
+  description: "Write a JOB, an EXEC for IEFBR14 and a DD that creates a data set, submit it, and confirm the data set exists.",
+  objective: "In a new member {HLQ}.JCL(NEWDS) write a job named {HLQ}N that runs IEFBR14 and creates {HLQ}.BUILD.DATA (FB, LRECL 80), submit it, and find the data set in the data set list.",
+  teaches: [
+    "A job is built statement by statement: JOB, EXEC PGM=, DD",
+    "DSN names the data set; DISP says its status and what happens to it afterwards",
+    "SPACE and UNIT ask for room; DCB (or RECFM and LRECL) describe the records",
+    "IEFBR14 does no work: the allocation does",
+  ],
+  requires: ["b-03-jcl-anatomy"],
+  sources: ["SRC-003", "SRC-018"],
+  startingState: {
+    screen: { id: "PRIMARY_OPTION_MENU" },
+    resetJobs: true,
+    removeDatasets: ["{HLQ}.BUILD.DATA"],
+    removeMembers: [{ dsn: "{HLQ}.JCL", member: "NEWDS" }],
+  },
+  steps: [
+    {
+      id: "open",
+      instruction: "Open the new member {HLQ}.JCL(NEWDS) in Edit (option 2). It does not exist yet, so the editor offers a few empty input lines, marked ''''''. Type on the first one and press Enter: unused input lines disappear. To add more lines later, type I over a line number and press Enter, then type on the new line.",
+      hint: "2, Enter, {HLQ}.JCL(NEWDS), Enter.",
+      validator: newdsOpen,
+    },
+    {
+      id: "job",
+      instruction: "Type the JOB statement on the first input line and press Enter: //{HLQ}N JOB (ACCT),'NEW DATA SET',CLASS=A  (the name starts in column 3).",
+      explanation: "The JOB statement marks the start of a job and tells the system how to process it. The job name starts in column 3 and is 1 to 8 characters; using your userid plus one letter keeps your jobs easy to find in SDSF.",
+      hint: "Type //{HLQ}N JOB (ACCT),'NEW DATA SET',CLASS=A on the first input line, Enter.",
+      validator: (ctx) => newdsOpen(ctx) && parseJcl(editorText(ctx)).jobName === `${ctx.hlq}N`,
+    },
+    {
+      id: "exec",
+      instruction: "Add //STEP1 EXEC PGM=IEFBR14 on the next line.",
+      explanation: "An EXEC statement names the program the step runs and marks the beginning of the step. IEFBR14 does not process any data: the job exists for the allocation work the system does around the step.",
+      hint: "I after the JOB line, Enter, then //STEP1    EXEC PGM=IEFBR14",
+      validator: (ctx) => newdsOpen(ctx) && parseJcl(editorText(ctx)).steps.some((st) => st.program === "IEFBR14"),
+    },
+    {
+      id: "dd",
+      instruction:
+        "Add a DD that creates {HLQ}.BUILD.DATA: DSN={HLQ}.BUILD.DATA, DISP=(NEW,CATLG,DELETE), SPACE=(TRK,(1,1)), UNIT=SYSDA and DCB=(RECFM=FB,LRECL=80). Continue across records: end a record with a comma and start the next one with // and a blank.",
+      explanation:
+        "DSN names the data set. DISP=(NEW,CATLG,DELETE): the data set is new, it is cataloged if the step ends normally, and deleted if it ends abnormally. SPACE requests room on a direct access volume (one track, one more if needed). UNIT picks the device group. DCB completes the record description: fixed blocked records of 80 bytes.",
+      hint: "//NEWDD    DD  DSN={HLQ}.BUILD.DATA,DISP=(NEW,CATLG,DELETE),  then //             SPACE=(TRK,(1,1)),UNIT=SYSDA,  then //             DCB=(RECFM=FB,LRECL=80)",
+      validator: (ctx) => newdsOpen(ctx) && buildDdIsRight(editorText(ctx), ctx.hlq),
+    },
+    {
+      id: "null",
+      instruction: "End the job with the null statement: a line containing only //.",
+      explanation: "The null statement marks the end of the job. Columns 3 to 72 must be blank.",
+      hint: "I after the last line, Enter, then //",
+      validator: (ctx) => {
+        const lines = editorText(ctx).map((l) => l.trimEnd()).filter((l) => l !== "");
+        return newdsOpen(ctx) && lines[lines.length - 1] === "//" && parseJcl(lines).errors.length === 0;
+      },
+    },
+    {
+      id: "submit",
+      instruction: "Type SUBMIT. The job runs and ends CC 0000.",
+      explanation: "Submitting a job whose DD is NEW a second time fails: the data set already exists, and the system reports a duplicate name.",
+      hint: "SUBMIT, Enter.",
+      validator: eventIs("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}N` && e.status === "OUTPUT" && e.maxRc === 0),
+    },
+    {
+      id: "verify",
+      instruction: "Press PF3 to save and leave, then list {HLQ}.BUILD in the Data Set List Utility (=3.4). The new data set is there: PS, FB, 80.",
+      hint: "F3, =3.4, Enter, {HLQ}.BUILD, Enter.",
+      validator: eventIs("DATASET_SEARCHED", (e, ctx) => e.results > 0 && `${ctx.hlq}.BUILD.DATA`.startsWith(e.level.toUpperCase().replace(/[.*%]+$/, ""))),
     },
   ],
 };

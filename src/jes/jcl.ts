@@ -45,7 +45,8 @@ export interface ParsedJcl {
 
 const NAME_RE = /^[A-Z#$@][A-Z0-9#$@]{0,7}$/;
 const EXEC_KEYWORDS = new Set(["PGM", "PROC", "PARM", "COND", "REGION", "TIME"]);
-const DD_KEYWORDS = new Set(["DSN", "DSNAME", "DISP", "SPACE", "UNIT", "DCB", "SYSOUT", "VOL", "DUMMY", "RECFM", "LRECL", "BLKSIZE", "DSORG"]);
+// Valid DD keywords the simulator accepts and ignores (SMS classes, LABEL, FREE, DSNTYPE): flagging them would call a valid job wrong.
+const DD_KEYWORDS = new Set(["DSN", "DSNAME", "DISP", "SPACE", "UNIT", "DCB", "SYSOUT", "VOL", "DUMMY", "RECFM", "LRECL", "BLKSIZE", "DSORG", "STORCLAS", "DATACLAS", "MGMTCLAS", "LABEL", "FREE", "DSNTYPE"]);
 
 /**
  * Split a parameter string on commas, respecting parentheses and quotes:

@@ -4,9 +4,9 @@
  * SYSOUT-class output and system messages. Reference: docs/10-jes-sdsf.md; IBM z/OS DFSMSdfp Utilities,
  * DFSORT Application Programming Guide, DFSMS Access Method Services.
  */
-import { deleteDataset, parseDsnRef, readRecords, saveRecords, searchLevel } from "@/catalog/catalog";
+import { deleteDataset, getDataset, parseDsnRef, readRecords, saveRecords, searchLevel } from "@/catalog/catalog";
 import type { Catalog, DsnRef } from "@/catalog/types";
-import type { DdStatement, StepStatement } from "./jcl";
+import { dispStatus, type DdStatement, type StepStatement } from "./jcl";
 
 export interface ProgramContext {
   catalog: Catalog;
@@ -50,7 +50,10 @@ function writeDd(ctx: ProgramContext, catalog: Catalog, d: DdStatement, records:
   if (d.dummy) return { catalog };
   const r = ref(d);
   if (!r) return { catalog, error: `${d.ddname}: NO DATA SET NAME` };
-  const saved = saveRecords(catalog, r, records, { today: ctx.today, userid: ctx.userid });
+  // DISP=MOD on an existing sequential data set: the records go after the last one (IBM, EV-B 1.1); otherwise they replace.
+  const current = r.member ? undefined : getDataset(catalog, r.dsn);
+  const all = dispStatus(d.params) === "MOD" && current?.datasetType === "PS" ? [...(current.records ?? []), ...records] : records;
+  const saved = saveRecords(catalog, r, all, { today: ctx.today, userid: ctx.userid });
   return saved.error ? { catalog, error: `${d.ddname}: ${saved.error}` } : { catalog: saved.catalog };
 }
 
