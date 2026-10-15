@@ -1,0 +1,9 @@
+member list of USER01.JCL (=2, enter dsn): completes L7, L13, L15, L18, L21, L23, L24
+edit HELLO then CANCEL: completes L10, L13, L15, L18, L20, L21, L24
+edit HELLO then SAVE (no change): completes L9, L13, L15, L18, L21, L24
+edit HELLO then PF3 (no change): completes L13, L15, L18, L21, L24
+3.4 + level + RESET: completes L5, L13, L15, L18, L21, L22, L24
+=3.4 then RETURN: completes L2, L3, L13, L15, L16, L18, L21, L24
+=3.4 then PF4: completes L2, L3, L13, L15, L16, L18, L21, L24
+=S: completes L13, L15, L18, L21, L24, L25
+browse HELLO (=1) then PF3: completes L13, L15, L18, L21, L24

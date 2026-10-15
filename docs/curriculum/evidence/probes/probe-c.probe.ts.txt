@@ -1,0 +1,53 @@
+import { Sim } from "@tests/engine/harness";
+import { lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+import type { AppMode } from "@/tutorial/types";
+class C {
+  sim = Sim.loggedOn();
+  runner: any;
+  constructor(public lesson: any, public mode: AppMode = "learn") {
+    this.runner = startRunner(lesson);
+    const start = lesson.startingState?.screen;
+    if (start) this.sim.state = { ...this.sim.state, screen: start, stack: [] };
+  }
+  feed() { const ev = this.sim.events; this.sim.events = []; const r = feedEvents(this.lesson, this.runner, ev, this.sim.state, this.mode); this.runner = r.runner; return r; }
+  cmd(t: string) { this.sim.cmd(t); return this.feed(); }
+  enter(f: any) { this.sim.enter(f); return this.feed(); }
+  pf(k: number, f: any = {}) { this.sim.pf(k, f); return this.feed(); }
+  get st() { return this.runner.status; }
+}
+it("L17 challenge: just 3.4", () => {
+  const c = new C(lessonById("l17-retrieve-multi")!, "challenge");
+  c.cmd("3.4");
+  console.log("L17 challenge after typing 3.4 only:", c.st, JSON.stringify(c.sim.state.retrieveStack));
+});
+it("L16 challenge: just RETURN from settings", () => {
+  const c = new C(lessonById("l16-jump-return")!, "challenge");
+  c.cmd("0"); c.pf(4);
+  console.log("L16 challenge after 0 then PF4:", c.st);
+});
+it("L19 challenge: fresh profile, open JCL member, CAPS OFF only, PF3", () => {
+  const c = new C(lessonById("l19-profiles")!, "challenge");
+  c.cmd("2"); c.enter({ other: "USER01.JCL(HELLO)" });
+  console.log("L19 after open:", c.st, JSON.stringify(c.sim.state.editProfiles));
+  c.enter({ command: "CAPS OFF" });
+  c.pf(3);
+  console.log("L19 challenge after CAPS OFF + PF3 (never CAPS ON, never PROFILE):", c.st, JSON.stringify(c.sim.state.editProfiles));
+});
+it("L19 challenge: JCL profile exists from earlier (e.g. L20 RECOVERY ON)", () => {
+  const c = new C(lessonById("l19-profiles")!, "challenge");
+  c.sim.state = { ...c.sim.state, editProfiles: { JCL: { name: "JCL", caps: false, number: false, stats: true, recovery: true, setundo: true, autosave: "ON", hex: false, bounds: { left: 1, right: 0 } } } };
+  c.cmd("0");
+  console.log("L19 challenge with existing JCL profile caps false, first irrelevant action:", c.st);
+});
+it("L20 challenge: cancel w/o UNDO", () => {
+  const c = new C(lessonById("l20-undo-recovery")!, "challenge");
+  c.cmd("2"); c.enter({ other: "USER01.COBOL(HELLO)" });
+  c.enter({ command: "CANCEL" });
+  console.log("L20 challenge, opened COBOL(HELLO) then CANCEL only:", c.st);
+});
+it("L18 challenge", () => {
+  const c = new C(lessonById("l18-cols-bounds")!, "challenge");
+  c.cmd("2"); c.enter({ other: "USER01.COBOL(HELLO)" });
+  console.log("L18 challenge while editor is OPEN, no commands:", c.st);
+});

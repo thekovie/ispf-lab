@@ -1,0 +1,14 @@
+import { Sim } from "@tests/engine/harness";
+import { writeFileSync } from "node:fs";
+describe("discover", () => {
+  it("fields", () => {
+    const out: string[] = [];
+    const s = Sim.loggedOn();
+    const dump = (tag: string) => out.push(`${tag}: screen=${s.screenId} fields=${JSON.stringify(s.rendered().fields)} msg=${s.message ?? ""}`);
+    dump("start");
+    s.cmd("2"); dump("after 2");
+    s.cmd("=3.4"); dump("after =3.4");
+    s.cmd("=3.1"); dump("after =3.1");
+    writeFileSync(__dirname + "/m0-discover.out.txt", out.join("\n") + "\n");
+  });
+});

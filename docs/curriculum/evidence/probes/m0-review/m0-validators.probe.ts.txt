@@ -1,0 +1,13 @@
+import { LESSONS } from "@/tutorial/lessons";
+import { writeFileSync } from "node:fs";
+describe("dump", () => {
+  it("dumps", () => {
+    const out: string[] = [];
+    for (const l of LESSONS as any[]) {
+      const v = l.challenge?.validator ?? l.steps[l.steps.length - 1]?.validator;
+      const last = l.steps[l.steps.length - 1];
+      out.push(`#${l.number} ${l.id} start=${l.startingState?.screen?.id ?? "-"} resetMembers=${(l.startingState?.resetMembers ?? []).length} resetJobs=${!!l.startingState?.resetJobs} own=${!!l.challenge} lastStep=${last?.id}\n   ${String(v).replace(/\s+/g, " ").slice(0, 260)}`);
+    }
+    writeFileSync(__dirname + "/m0-validators.out.txt", out.join("\n") + "\n");
+  });
+});

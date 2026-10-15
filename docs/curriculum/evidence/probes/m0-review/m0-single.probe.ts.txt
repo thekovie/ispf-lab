@@ -1,0 +1,57 @@
+// M0 review: for each lesson, which SINGLE action from a fresh start completes the Challenge?
+import { Sim } from "@tests/engine/harness";
+import { LESSONS } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+import { reduce } from "@/engine/reducer";
+import { writeFileSync } from "node:fs";
+
+function start(lesson: any) {
+  const sim = Sim.loggedOn();
+  const scr = lesson.startingState?.screen;
+  if (scr) sim.state = reduce(sim.state, { type: "GOTO", screen: scr, clearStack: true } as any).state;
+  sim.events = [];
+  return sim;
+}
+const v = (l: any) => l.challenge?.validator ?? l.steps[l.steps.length - 1]?.validator;
+const A: [string, (s: Sim) => void][] = [
+  ["Enter", (s) => s.enter({})],
+  ["PF3", (s) => s.pf(3)],
+  ["PF4", (s) => s.pf(4)],
+  ["PF7", (s) => s.pf(7)],
+  ["PF12", (s) => s.pf(12)],
+  ["=S", (s) => s.cmd("=S")],
+  ["=2", (s) => s.cmd("=2")],
+  ["=1", (s) => s.cmd("=1")],
+  ["=3.1", (s) => s.cmd("=3.1")],
+  ["=3.4", (s) => s.cmd("=3.4")],
+  ["3.4", (s) => s.cmd("3.4")],
+  ["2", (s) => s.cmd("2")],
+  ["HELP", (s) => s.cmd("HELP")],
+  ["RESET", (s) => s.cmd("RESET")],
+  ["SPLIT", (s) => s.cmd("SPLIT")],
+  ["CANCEL", (s) => s.cmd("CANCEL")],
+  ["END", (s) => s.cmd("END")],
+  ["SUBMIT", (s) => s.cmd("SUBMIT")],
+  ["0", (s) => s.cmd("0")],
+  ["6", (s) => s.cmd("6")],
+];
+describe("single-action completion", () => {
+  it("lists", () => {
+    const out: string[] = [];
+    for (const l of LESSONS) {
+      const base = start(l);
+      const hlq = base.state.userid;
+      if (v(l)({ state: base.state, hlq })) { out.push(`${String(l.number).padStart(2)} ${l.id.padEnd(26)} ZERO-ACTION (validator true on start state)`); continue; }
+      const hits: string[] = [];
+      for (const [name, act] of A) {
+        const s = start(l);
+        try { act(s); } catch { continue; }
+        const r = feedEvents(l, startRunner(l), s.events, s.state, "challenge");
+        if (r.completed) hits.push(name);
+      }
+      out.push(`${String(l.number).padStart(2)} ${l.id.padEnd(26)} single-action: ${hits.length ? hits.join(", ") : "none of battery"}`);
+    }
+    writeFileSync(__dirname + "/m0-single.out.txt", out.join("\n") + "\n");
+    expect(out.length).toBe(LESSONS.length);
+  });
+});

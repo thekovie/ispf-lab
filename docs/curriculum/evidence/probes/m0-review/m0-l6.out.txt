@@ -1,0 +1,4 @@
+3.2 fields=["option","project","group","type","other"]
+A#1: screen=ALLOCATE_DATASET msg= fields=["units","primary","secondary","dirblocks","recfm","lrecl","blksize","dstype","volume"]
+alloc#1: screen=DATASET_UTILITY msg=DATA SET ALLOCATED events=DATASET_ALLOCATED,MESSAGE_SHOWN,SCREEN_OPENED
+A#2 (replay): screen=DATASET_UTILITY msg=DATA SET ALREADY EXISTS events=MESSAGE_SHOWN

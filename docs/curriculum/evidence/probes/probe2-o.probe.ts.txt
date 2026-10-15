@@ -1,0 +1,14 @@
+import { Sim } from "@tests/engine/harness";
+import { lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+it("L28 data-set route", () => {
+  const lesson: any = lessonById("l28-day-one")!;
+  const sim = Sim.loggedOn(); let runner: any = startRunner(lesson);
+  const feed = () => { const ev = sim.events; sim.events = []; const r = feedEvents(lesson, runner, ev, sim.state, "challenge"); runner = r.runner; };
+  sim.cmd("TSO LISTDS NOTES.TXT"); feed();
+  console.log("unquoted dotted LISTDS:", JSON.stringify(sim.rendered().rows.map((r: any) => r.map((c: any) => c.text ?? "").join("")).filter((t: string) => /NOT FOUND|NOTES/.test(t))));
+  sim.enter({ command: "RENAME 'USER01.NOTES.TXT' 'USER01.PAYROLL.DATA'" }); feed();
+  sim.enter({ command: "SUBMIT JCL(PAYRPT)" }); feed();
+  const j = sim.state.jes.jobs[0];
+  console.log("L28 create-PAYROLL.DATA route: job", j?.status, j?.maxRc, "challenge status", runner.status);
+});

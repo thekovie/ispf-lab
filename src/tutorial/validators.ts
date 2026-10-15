@@ -27,6 +27,54 @@ export const eventIs =
     return match ? match(ctx.event as EventOf<T>, ctx) : true;
   };
 
+/** A predicate over one event, for the history helpers below (Challenge outcome checks). */
+export type EventPred = (e: SimEvent, ctx: LessonContext) => boolean;
+
+/** Event predicate: an event of this type (optionally narrowed by `match`). */
+export const is =
+  <T extends SimEvent["type"]>(type: T, match?: (e: EventOf<T>, ctx: LessonContext) => boolean): EventPred =>
+  (e, ctx) =>
+    e.type === type && (!match || match(e as EventOf<T>, ctx));
+
+/** The events a Challenge check may look at: the history since the Challenge started, else just the current event. */
+const eventsSeen = (ctx: LessonContext): SimEvent[] => ctx.history ?? (ctx.event ? [ctx.event] : []);
+
+/** Every predicate matched by at least one event seen so far, in any order. */
+export const sawAll =
+  (...preds: EventPred[]): Validator =>
+  (ctx) => {
+    const seen = eventsSeen(ctx);
+    return preds.every((p) => seen.some((e) => p(e, ctx)));
+  };
+
+/** Every predicate matched by an event after the one that matched the previous predicate. */
+export const sawInOrder =
+  (...preds: EventPred[]): Validator =>
+  (ctx) => {
+    const seen = eventsSeen(ctx);
+    let next = 0;
+    for (const e of seen) if (next < preds.length && preds[next](e, ctx)) next++;
+    return next === preds.length;
+  };
+
+/** Every predicate matched by some event before the last event matching `final` (the closing action). */
+export const sawAllThen =
+  (preds: EventPred[], final: EventPred): Validator =>
+  (ctx) => {
+    const seen = eventsSeen(ctx);
+    let last = -1;
+    seen.forEach((e, i) => {
+      if (final(e, ctx)) last = i;
+    });
+    return last >= 0 && preds.every((p) => seen.slice(0, last).some((e) => p(e, ctx)));
+  };
+
+/** At least `n` events matched the predicate. */
+export const sawTimes =
+  (n: number, pred: EventPred): Validator =>
+  (ctx) =>
+    eventsSeen(ctx).filter((e) => pred(e, ctx)).length >= n;
+
 export const anyOf =
   (...vs: Validator[]): Validator =>
   (ctx) =>

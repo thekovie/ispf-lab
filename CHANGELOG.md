@@ -5,7 +5,18 @@ Versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Challenge mode could be completed without doing the lesson (18 lessons by a few cheap actions, 7 by none) or on
+  leftover data; it now needs a completion guard plus an outcome check per lesson (ADR 0016).
+- Restarting a lesson, switching mode or starting another lesson silently discarded unsaved editor work; it now asks first,
+  and only when something would be lost.
+- Starting a lesson while another ran in Challenge mode could mark the previous lesson completed in saved progress.
+- Switching mode or restarting now re-applies a lesson's starting state; lessons 3, 6, 12, 13, 17-21, 23 and 25 replay
+  without dead ends; starting a lesson closes split screens and an open editor.
+
 ### Added
+- Phase 0 curriculum audit package in `docs/curriculum/` (audit, lessons audit, verified sources and evidence,
+  curriculum and implementation roadmaps, simulator gap matrix, lesson authoring standards). Documentation only.
 - Lessons 16–28 in four new modules (Navigation mastery, Editor power tools, Lists in depth, Batch jobs and SDSF),
   ending with the Day-One challenge; `resetJobs` lesson start option; coach shows the long ISPF message by mode.
 - Virtual JES and SDSF (SIMULATED): SUBMIT from Edit, `J` on member lists, `TSO SUBMIT`; JCL recogniser with the

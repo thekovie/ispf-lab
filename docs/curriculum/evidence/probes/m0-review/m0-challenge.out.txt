@@ -1,0 +1,28 @@
+ 1 l01-meet-ispf                own=n atStart=false firstDone=-
+ 2 l02-navigating               own=n atStart=TRUE firstDone=(no action: state alone)
+ 3 l03-settings-tso             own=n atStart=TRUE firstDone=(no action: state alone)
+ 4 l04-finding-data-sets        own=n atStart=false firstDone=-
+ 5 l05-data-sets-and-members    own=n atStart=false firstDone=-
+ 6 l06-allocating               own=n atStart=false firstDone=-
+ 7 l07-browse-vs-edit           own=n atStart=false firstDone=-
+ 8 l08-first-edit               own=n atStart=false firstDone=-
+ 9 l09-line-commands            own=n atStart=false firstDone=-
+10 l10-copy-move                own=n atStart=false firstDone=-
+11 l11-find-change              own=n atStart=false firstDone=-
+12 l12-managing-members         own=n atStart=false firstDone=-
+13 l13-copy-across              own=n atStart=TRUE firstDone=(no action: state alone)
+14 l14-final-challenge          own=Y atStart=false firstDone=-
+15 l15-split-screen             own=n atStart=TRUE firstDone=(no action: state alone)
+16 l16-jump-return              own=n atStart=false firstDone=-
+17 l17-retrieve-multi           own=n atStart=false firstDone=-
+18 l18-cols-bounds              own=n atStart=TRUE firstDone=(no action: state alone)
+19 l19-profiles                 own=n atStart=false firstDone=-
+20 l20-undo-recovery            own=n atStart=false firstDone=-
+21 l21-exclude-flip             own=n atStart=TRUE firstDone=(no action: state alone)
+22 l22-dslist-advanced          own=n atStart=false firstDone=-
+23 l23-member-info              own=n atStart=false firstDone=-
+24 l24-submit                   own=n atStart=TRUE firstDone=(no action: state alone)
+25 l25-sdsf-status              own=n atStart=false firstDone=-
+26 l26-job-output               own=n atStart=false firstDone=-
+27 l27-jcl-error                own=n atStart=false firstDone=-
+28 l28-day-one                  own=Y atStart=false firstDone=-

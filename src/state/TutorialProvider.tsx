@@ -3,17 +3,14 @@
  * Tutorial state for the shell: mode, active lesson, runner, progress, Explain drawer.
  * Talks to the simulator only through the store's event stream and semantic actions.
  */
-import { EMPTY_JES } from "@/jes/types";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { getMember } from "@/catalog/catalog";
-import { buildSeed } from "@/catalog/seed";
-import type { Catalog } from "@/catalog/types";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SimEvent, SimulatorState } from "@/engine/types";
 import { STORAGE_PREFIX } from "@/persistence/keys";
 import { lessonProgress, loadProgress, resetProgress as clearProgress, saveProgress, updateLesson, type Progress } from "@/persistence/progressStore";
 import { currentStep, feedEvents, fillHlq, scoreFor, startRunner, useHint as applyHint } from "@/tutorial/engine";
 import { explainTerm, type GlossaryEntry } from "@/tutorial/explain";
 import { LESSONS, lessonById } from "@/tutorial/lessons";
+import { startActions, workAtRisk } from "@/tutorial/scenario";
 import type { AppMode, Lesson, LessonStep, RunnerState } from "@/tutorial/types";
 import { useSimulatorStore } from "./SimulatorProvider";
 
@@ -44,21 +41,16 @@ export interface TutorialApi {
 
 const TutorialContext = createContext<TutorialApi | null>(null);
 
-/** Restore specific members from the seed so a lesson always starts from known data. */
-function restoreMembers(catalog: Catalog, hlq: string, refs: { dsn: string; member: string }[]): Catalog {
-  const seed = buildSeed(hlq);
-  let next = catalog;
-  for (const ref of refs) {
-    const dsn = fillHlq(ref.dsn, hlq);
-    const seeded = getMember(seed, dsn, ref.member);
-    const ds = next.datasets[dsn] ?? seed.datasets[dsn];
-    if (!seeded || !ds) continue;
-    next = { ...next, datasets: { ...next.datasets, [dsn]: { ...ds, members: { ...(ds.members ?? {}), [ref.member]: seeded } } } };
-  }
-  return next;
+export interface TutorialProviderProps {
+  children: ReactNode;
+  /**
+   * Asked before a lesson start, restart or mode switch that would throw away unsaved or learner-made work. Return
+   * false to cancel. Defaults to window.confirm; tests inject a stub. Never called when nothing would be lost.
+   */
+  confirmDiscard?: (message: string) => boolean;
 }
 
-export function TutorialProvider({ children }: { children: ReactNode }) {
+export function TutorialProvider({ children, confirmDiscard }: TutorialProviderProps) {
   const store = useSimulatorStore();
   // This provider only mounts on the client (DesktopGate renders nothing during SSR),
   // so persisted values can be read in the initializers without a hydration mismatch.
@@ -84,6 +76,13 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
   const lesson = lessonId ? lessonById(lessonId) : undefined;
 
+  /**
+   * True while startLesson applies a lesson's starting state. Those dispatches are setup, not learner actions:
+   * the listener below still holds the previous lesson and runner, so without this guard they could complete it
+   * (M0 review F-03, tests/tutorial/provider.test.tsx).
+   */
+  const applyingStart = useRef(false);
+
   const persistProgress = useCallback(
     (p: Progress) => {
       setProgress(p);
@@ -92,36 +91,61 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     [store.storage],
   );
 
+  /**
+   * Put the simulator into a lesson's starting state: logged on, session closed (split screens, open editor),
+   * scenario data and profiles reset, jobs cleared if asked, starting screen opened. Used for start, restart and
+   * mode switch so a lesson always begins from the same known state (ADR 0016).
+   */
+  const applyLessonStart = useCallback(
+    (l: Lesson) => {
+      applyingStart.current = true;
+      try {
+        const start = l.startingState;
+        const state: SimulatorState = store.getState();
+        if (!state.loggedIn && start?.screen?.id !== "LOGIN") {
+          store.dispatch({ type: "ENTER", fields: { userid: state.userid || "USER01" } });
+        }
+        for (const action of startActions(store.getState(), start)) store.dispatch(action);
+      } finally {
+        applyingStart.current = false;
+      }
+    },
+    [store],
+  );
+
+  /** Ask before discarding work (unsaved edits, learner changes the lesson would restore). True means go ahead. */
+  const confirmLoss = useCallback(
+    (l: Lesson, what: string): boolean => {
+      const unsent = store.unsentWork();
+      const items = [...(unsent ? [unsent] : []), ...workAtRisk(store.getState(), l.startingState)];
+      if (items.length === 0) return true;
+      const message = `${what} will discard:\n- ${items.join("\n- ")}\n\nContinue?`;
+      const ask = confirmDiscard ?? ((m: string) => typeof window === "undefined" || window.confirm(m));
+      return ask(message);
+    },
+    [store, confirmDiscard],
+  );
+
   const startLesson = useCallback(
     (id: string) => {
       const l = lessonById(id);
       if (!l) return;
-      const state: SimulatorState = store.getState();
-      if (!state.loggedIn && l.startingState?.screen?.id !== "LOGIN") {
-        store.dispatch({ type: "ENTER", fields: { userid: state.userid || "USER01" } });
-      }
-      const s2 = store.getState();
-      if (l.startingState?.resetMembers?.length) {
-        store.dispatch({ type: "LOAD_CATALOG", catalog: restoreMembers(s2.catalog, s2.userid, l.startingState.resetMembers) });
-      }
-      if (l.startingState?.resetJobs) store.dispatch({ type: "LOAD_JES", jes: EMPTY_JES });
-      if (l.startingState?.screen) {
-        if (l.startingState.screen.id === "LOGIN") store.dispatch({ type: "LOGOFF" });
-        else store.dispatch({ type: "GOTO", screen: l.startingState.screen, clearStack: true });
-      }
+      if (!confirmLoss(l, `Starting lesson ${l.number}`)) return;
+      applyLessonStart(l);
       setLessonId(id);
-      setRunner(startRunner(l));
+      setRunner(startRunner(l, store.getState()));
       store.storage.set(LESSON_KEY, id);
       const p = loadProgress(store.storage);
       const lp = lessonProgress(p, id);
       persistProgress({ ...updateLesson(p, id, { status: lp.status === "completed" ? "completed" : "in-progress", attempts: lp.attempts + 1 }), currentLessonId: id });
     },
-    [store, persistProgress],
+    [store, persistProgress, applyLessonStart, confirmLoss],
   );
 
   // feed simulator events to the runner
   useEffect(() => {
     return store.onEvents((events, state) => {
+      if (applyingStart.current) return;
       setLastEvents(events);
       const explain = events.find((e) => e.type === "EXPLAIN_REQUESTED");
       if (explain && explain.type === "EXPLAIN_REQUESTED") setExplainQuery(explain.term);
@@ -147,11 +171,17 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
   const setMode = useCallback(
     (m: AppMode) => {
+      const restarts = m !== "sandbox" && !!lesson && !!runner;
+      if (restarts && !confirmLoss(lesson, "Switching mode restarts this lesson and")) return;
       setModeState(m);
       store.storage.set(MODE_KEY, m);
-      if (m !== "sandbox" && lesson && runner) setRunner(startRunner(lesson));
+      if (restarts && lesson) {
+        // A new mode is a fresh attempt: same starting state as a restart, so leftovers cannot complete it.
+        applyLessonStart(lesson);
+        setRunner(startRunner(lesson, store.getState()));
+      }
     },
-    [store.storage, lesson, runner],
+    [store, lesson, runner, applyLessonStart, confirmLoss],
   );
 
   const api = useMemo<TutorialApi>(() => {

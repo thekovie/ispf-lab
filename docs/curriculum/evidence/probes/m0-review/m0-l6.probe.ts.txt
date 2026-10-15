@@ -1,0 +1,22 @@
+import { Sim } from "@tests/engine/harness";
+import { writeFileSync } from "node:fs";
+describe("l6 replay", () => {
+  it("alloc twice", () => {
+    const o: string[] = [];
+    const s = Sim.loggedOn();
+    s.cmd("=3.2");
+    o.push(`3.2 fields=${JSON.stringify(s.rendered().fields)}`);
+    s.events = [];
+    s.enter({ option: "A", project: "", group: "", type: "", other: "'USER01.TEST.JCL'" });
+    o.push(`A#1: screen=${s.screenId} msg=${s.message ?? ""} fields=${JSON.stringify(s.rendered().fields)}`);
+    s.events = [];
+    s.enter({ dirblocks: "10" });
+    o.push(`alloc#1: screen=${s.screenId} msg=${s.message ?? ""} events=${s.eventTypes().join(",")}`);
+    // replay: lesson 6 restarts at the Primary Option Menu with the data set still cataloged
+    s.cmd("=3.2");
+    s.events = [];
+    s.enter({ option: "A", project: "", group: "", type: "", other: "'USER01.TEST.JCL'" });
+    o.push(`A#2 (replay): screen=${s.screenId} msg=${s.message ?? ""} events=${s.eventTypes().join(",")}`);
+    writeFileSync(__dirname + "/m0-l6.out.txt", o.join("\n") + "\n");
+  });
+});

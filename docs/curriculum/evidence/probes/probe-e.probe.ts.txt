@@ -1,0 +1,8 @@
+import { buildSeed } from "@/catalog/seed";
+it("seed lowercase", () => {
+  const c: any = buildSeed("USER01");
+  for (const [d, m] of [["USER01.JCL","HELLO"],["USER01.JCL","COPYJOB"],["USER01.COBOL","HELLO"]]) {
+    const recs: string[] = (c.datasets[d].members ?? c.datasets[d].members)[m].records;
+    console.log("SEED", d, m, "has lowercase:", recs.some((r) => /[a-z]/.test(r)));
+  }
+});

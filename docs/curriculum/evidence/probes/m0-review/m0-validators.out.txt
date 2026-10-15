@@ -1,0 +1,56 @@
+#1 l01-meet-ispf start=LOGIN resetMembers=0 resetJobs=false own=false lastStep=tab
+   (ctx) => { if (!ctx.event || ctx.event.type !== type) return false; return match ? match(ctx.event, ctx) : true; }
+#2 l02-navigating start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=home
+   ({ state, event }) => ids.includes(state.screen.id) || event?.type === "SCREEN_OPENED" && ids.includes(event.screen)
+#3 l03-settings-tso start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=back-home
+   ({ state, event }) => ids.includes(state.screen.id) || event?.type === "SCREEN_OPENED" && ids.includes(event.screen)
+#4 l04-finding-data-sets start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=narrow
+   (ctx) => ctx.state.screen.id === "DSLIST_RESULTS" && levelPredicate(ctx.state.screen.level, ctx)
+#5 l05-data-sets-and-members start=DSLIST_SEARCH resetMembers=0 resetJobs=false own=false lastStep=read-members
+   ({ state, event }) => ids.includes(state.screen.id) || event?.type === "SCREEN_OPENED" && ids.includes(event.screen)
+#6 l06-allocating start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=still-there
+   (ctx) => !!ctx.state.catalog.datasets[hlq(ctx, dsn)] === exists
+#7 l07-browse-vs-edit start=DSLIST_SEARCH resetMembers=0 resetJobs=false own=false lastStep=leave
+   (ctx) => ctx.state.screen.id === "MEMBER_LIST" && ctx.state.screen.dsn === hlq(ctx, dsn)
+#8 l08-first-edit start=DSLIST_SEARCH resetMembers=1 resetJobs=false own=false lastStep=pf3
+   (ctx) => vs.every((v) => v(ctx))
+#9 l09-line-commands start=DSLIST_SEARCH resetMembers=1 resetJobs=false own=false lastStep=save
+   (ctx) => { if (!ctx.event || ctx.event.type !== type) return false; return match ? match(ctx.event, ctx) : true; }
+#10 l10-copy-move start=DSLIST_SEARCH resetMembers=1 resetJobs=false own=false lastStep=cancel
+   (ctx) => { if (!ctx.event || ctx.event.type !== type) return false; return match ? match(ctx.event, ctx) : true; }
+#11 l11-find-change start=PRIMARY_OPTION_MENU resetMembers=1 resetJobs=false own=false lastStep=save
+   (ctx) => { if (!ctx.event || ctx.event.type !== type) return false; return match ? match(ctx.event, ctx) : true; }
+#12 l12-managing-members start=DSLIST_SEARCH resetMembers=0 resetJobs=false own=false lastStep=delete
+   (ctx) => vs.every((v) => v(ctx))
+#13 l13-copy-across start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=delete-ds
+   (ctx) => vs.some((v) => v(ctx))
+#14 l14-final-challenge start=PRIMARY_OPTION_MENU resetMembers=1 resetJobs=false own=true lastStep=do-it
+   (ctx) => { const r = (0,__vite_ssr_import_0__.readRecords)(ctx.state.catalog, { dsn: hlq(ctx, dsn), member }); return !!r.records && test(r.records.map((x) => x.trimEnd())); }
+#15 l15-split-screen start=PRIMARY_OPTION_MENU resetMembers=1 resetJobs=false own=false lastStep=leave
+   ({ state }) => !state.editor && state.screens.length <= 1
+#16 l16-jump-return start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=return
+   (ctx) => { if (!ctx.event || ctx.event.type !== type) return false; return match ? match(ctx.event, ctx) : true; }
+#17 l17-retrieve-multi start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=rerun
+   (ctx) => vs.every((v) => v(ctx))
+#18 l18-cols-bounds start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=leave
+   ({ state }) => !state.editor
+#19 l19-profiles start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=caps-off
+   (ctx) => vs.every((v) => v(ctx))
+#20 l20-undo-recovery start=PRIMARY_OPTION_MENU resetMembers=1 resetJobs=false own=false lastStep=cancel
+   (ctx) => { if (!ctx.event || ctx.event.type !== type) return false; return match ? match(ctx.event, ctx) : true; }
+#21 l21-exclude-flip start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=leave
+   ({ state }) => !state.editor
+#22 l22-dslist-advanced start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=reset
+   (ctx) => { if (!ctx.event || ctx.event.type !== type) return false; return match ? match(ctx.event, ctx) : true; }
+#23 l23-member-info start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=false own=false lastStep=leave
+   ({ state, event }) => ids.includes(state.screen.id) || event?.type === "SCREEN_OPENED" && ids.includes(event.screen)
+#24 l24-submit start=PRIMARY_OPTION_MENU resetMembers=1 resetJobs=true own=false lastStep=leave
+   ({ state }) => !state.editor
+#25 l25-sdsf-status start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=true own=false lastStep=leave
+   ({ state, event }) => ids.includes(state.screen.id) || event?.type === "SCREEN_OPENED" && ids.includes(event.screen)
+#26 l26-job-output start=PRIMARY_OPTION_MENU resetMembers=0 resetJobs=true own=false lastStep=leave
+   ({ state, event }) => ids.includes(state.screen.id) || event?.type === "SCREEN_OPENED" && ids.includes(event.screen)
+#27 l27-jcl-error start=PRIMARY_OPTION_MENU resetMembers=1 resetJobs=true own=false lastStep=save
+   (ctx) => vs.every((v) => v(ctx))
+#28 l28-day-one start=PRIMARY_OPTION_MENU resetMembers=1 resetJobs=true own=true lastStep=report
+   (ctx) => vs.every((v) => v(ctx))

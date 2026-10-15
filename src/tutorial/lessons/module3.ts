@@ -61,8 +61,8 @@ export const lesson08: Lesson = {
   steps: [
     {
       id: "open",
-      instruction: "Open {HLQ}.JCL(HELLO) in Edit (3.4 → E on the library → E on HELLO, or option 2 with the full name).",
-      hint: "Fastest: PF3 to the Primary Option Menu, type 2, Enter, then {HLQ}.JCL(HELLO) in Other Data Set Name.",
+      instruction: "Open {HLQ}.JCL(HELLO) in Edit (E on the library, then E on HELLO; or type =2 and give the full name).",
+      hint: "Fastest: type =2 on the Option line, press Enter, then {HLQ}.JCL(HELLO) in Other Data Set Name.",
       validator: editorOpen(HELLO, "HELLO", "EDIT"),
     },
     {
@@ -103,7 +103,7 @@ export const lesson09: Lesson = {
     {
       id: "open",
       instruction: "Open {HLQ}.JCL(HELLO) in Edit.",
-      hint: "Option 2 with {HLQ}.JCL(HELLO), or 3.4 → E → E.",
+      hint: "=2 with {HLQ}.JCL(HELLO), or E on the library then E on HELLO.",
       validator: editorOpen(HELLO, "HELLO", "EDIT"),
     },
     {
@@ -156,7 +156,7 @@ export const lesson10: Lesson = {
     {
       id: "open",
       instruction: "Open {HLQ}.JCL(SORTJOB) in Edit.",
-      hint: "Option 2 with {HLQ}.JCL(SORTJOB).",
+      hint: "=2 with {HLQ}.JCL(SORTJOB), or E on the library then E on SORTJOB.",
       validator: editorOpen(HELLO, "SORTJOB", "EDIT"),
     },
     {

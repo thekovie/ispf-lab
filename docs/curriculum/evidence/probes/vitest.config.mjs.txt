@@ -1,0 +1,8 @@
+const REPO = "/Users/kovie/Documents/GitHubRepos/ispf-lab";
+export default {
+  root: ".",
+  cacheDir: "./.vcache",
+  resolve: { alias: { "@tests": REPO + "/tests", "@": REPO + "/src" } },
+  server: { fs: { strict: false } },
+  test: { environment: "node", globals: true, include: ["*.probe.ts"] },
+};

@@ -88,6 +88,18 @@ export function Terminal({ highlightField, compact }: TerminalProps) {
 
   const onCursor = useCallback((id: string, col: number) => setCursor({ field: id, col }), []);
 
+  // Let the lesson runner ask whether editor text is typed but unsent (see SimulatorStore.setUnsentProbe).
+  useEffect(() => {
+    store.setUnsentProbe(() => {
+      const editor = state.editor;
+      if (!editor) return null;
+      const initial = initialDrafts(screen.rows);
+      const typed = Object.keys(drafts).some((id) => /^(line|prefix):/.test(id) && drafts[id] !== initial[id]);
+      return typed ? `text typed in ${editor.dsn}${editor.member ? `(${editor.member})` : ""} but not yet sent with Enter` : null;
+    });
+    return () => store.setUnsentProbe(null);
+  }, [store, drafts, screen.rows, state.editor]);
+
   const submitEnter = useCallback(() => store.enter(drafts), [store, drafts]);
   const submitPf = useCallback((key: number) => store.pf(key, drafts), [store, drafts]);
 

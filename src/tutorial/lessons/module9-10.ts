@@ -75,7 +75,7 @@ export const lesson23: Lesson = {
   description: "Read the ISPF statistics of a member and reset them.",
   objective: "On the member list of {HLQ}.JCL, show the statistics of HELLO with I, reset them with G, and look again.",
   teaches: ["ISPF statistics live in the PDS directory", "I shows VV.MM, created, changed, size, user", "G resets them to 01.00 / today / you", "STATS OFF in the profile stops the editor updating them"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {
       id: "member-list",
@@ -155,7 +155,7 @@ export const lesson25: Lesson = {
   description: "Submit from a member list with J, open SDSF, read the status panel and browse the job output.",
   objective: "Submit {HLQ}.JCL(HELLO) with J, jump to SDSF with =S, open ST, find the job with CC 0000 and browse its output with S.",
   teaches: ["J on a member list submits it", "SDSF ST lists your jobs: JOBNAME, JobID, Owner, Max-RC", "CC 0000 means every step ended with condition code 0", "S browses all the job's output"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetJobs: true },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetJobs: true, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {
       id: "member-list",

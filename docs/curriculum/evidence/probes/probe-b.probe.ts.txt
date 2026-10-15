@@ -1,0 +1,30 @@
+import { Sim } from "@tests/engine/harness";
+import { lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+import type { AppMode } from "@/tutorial/types";
+
+class C {
+  sim = Sim.loggedOn();
+  runner: any;
+  constructor(public lesson: any, public mode: AppMode = "learn") {
+    this.runner = startRunner(lesson);
+    const start = lesson.startingState?.screen;
+    if (start) this.sim.state = { ...this.sim.state, screen: start, stack: [] };
+  }
+  feed() { const ev = this.sim.events; this.sim.events = []; const r = feedEvents(this.lesson, this.runner, ev, this.sim.state, this.mode); this.runner = r.runner; return r; }
+  cmd(t: string) { this.sim.cmd(t); return this.feed(); }
+  enter(f: any) { this.sim.enter(f); return this.feed(); }
+  pf(k: number, f: any = {}) { this.sim.pf(k, f); return this.feed(); }
+}
+
+for (const id of ["l15-split-screen","l16-jump-return","l17-retrieve-multi","l18-cols-bounds","l19-profiles","l20-undo-recovery","l21-exclude-flip"]) {
+  it("challenge default after first action: " + id, () => {
+    const c = new C(lessonById(id)!, "challenge");
+    const r = c.cmd("0");   // open Settings, an irrelevant action
+    console.log(id, "-> completed after first irrelevant action (Settings '0'):", c.runner.status);
+    // second try: no-op empty enter
+    const c2 = new C(lessonById(id)!, "challenge");
+    c2.enter({option:""});
+    console.log(id, "-> completed after an empty Enter:", c2.runner.status);
+  });
+}

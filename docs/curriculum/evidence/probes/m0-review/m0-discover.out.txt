@@ -1,0 +1,4 @@
+start: screen=PRIMARY_OPTION_MENU fields=["option"] msg=
+after 2: screen=EDIT_ENTRY fields=["project","group","type","member","other"] msg=
+after =3.4: screen=DSLIST_SEARCH fields=["option","level","volume"] msg=
+after =3.1: screen=LIBRARY_UTILITY fields=["option","project","group","type","member","newname","other"] msg=

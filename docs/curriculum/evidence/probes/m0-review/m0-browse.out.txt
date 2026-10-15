@@ -1,0 +1,10 @@
+screen=BROWSE
+keys=title,pfKeys,fields,focus,message,rows
+BROWSE     USER01.JCL(HELLO)                                 Columns 00001 00072
+Command ===> [command]  Scroll ===> [scroll]
+****** ****************************** Top of Data ******************************
+000001 //USER01H   JOB (ACCT),'HELLO WORLD',CLASS=A,MSGCLASS=X,                
+000002 //             NOTIFY=&SYSUID                                           
+000003 //STEP1    EXEC PGM=IEFBR14                                             
+000004 //                                                                      
+****** **************************** Bottom of Data *****************************

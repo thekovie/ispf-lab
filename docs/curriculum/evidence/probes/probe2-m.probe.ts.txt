@@ -1,0 +1,17 @@
+import { Sim } from "@tests/engine/harness";
+import { lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+it("comment passes fix step", () => {
+  const lesson: any = lessonById("l27-jcl-error")!;
+  const sim = Sim.loggedOn(); let runner: any = startRunner(lesson);
+  const feed = () => { const ev = sim.events; sim.events = []; const r = feedEvents(lesson, runner, ev, sim.state, "learn"); runner = r.runner; };
+  sim.cmd("TSO SUBMIT JCL(PAYRPT)"); feed(); sim.cmd("=S"); feed(); sim.cmd("ST"); feed();
+  sim.enter({ "cmd:JOB00001": "?" }); feed(); sim.enter({ "cmd:JESYSMSG": "S" }); feed(); sim.pf(3); feed(); sim.pf(3); feed();
+  sim.enter({ "cmd:JOB00001": "SJ" }); feed();
+  console.log("at SJ step", runner.stepIndex, "editor", sim.state.editor?.member);
+  const e: any = sim.state.editor; const i = e.lines.findIndex((l: any) => l.text.startsWith("//*"));
+  sim.state = { ...sim.state, editor: { ...e, lines: e.lines.map((l: any, k: number) => (k === i ? { ...l, text: "//* DATA(EMPLOYEE)" } : l)) } };
+  feed2();
+  function feed2() { const r = feedEvents(lesson, runner, [], sim.state, "learn"); runner = r.runner; }
+  console.log("after comment-only line: step", runner.stepIndex, lesson.steps[runner.stepIndex].id);
+});

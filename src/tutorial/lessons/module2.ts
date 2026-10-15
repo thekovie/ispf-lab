@@ -107,7 +107,7 @@ export const lesson06: Lesson = {
   description: "Create a brand-new partitioned data set with the 3.2 Data Set Utility.",
   objective: "Allocate {HLQ}.TEST.JCL as a PDS (FB, LRECL 80, 10 directory blocks) and find it in 3.4.",
   teaches: ["3.2 Data Set Utility", "Allocate New Data Set panel", "Directory blocks decide PDS versus PS", "RECFM / LRECL choices"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, removeDatasets: ["{HLQ}.TEST.JCL"] },
   steps: [
     {
       id: "open-32",

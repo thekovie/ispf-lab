@@ -111,6 +111,8 @@ export type SimAction =
   | { type: "LOAD_PROFILES"; profiles: EditProfiles }
   | { type: "LOAD_JES"; jes: JesState }
   | { type: "RESET_ENVIRONMENT" }
+  /** Close split screens and any open editor; optionally empty the retrieve stack. Used when a lesson (re)starts. */
+  | { type: "RESET_SESSION"; retrieve?: boolean }
   | { type: "GOTO"; screen: ScreenFrame; clearStack?: boolean }
   | { type: "LOGOFF" }
   | { type: "CLEAR_MESSAGE" };

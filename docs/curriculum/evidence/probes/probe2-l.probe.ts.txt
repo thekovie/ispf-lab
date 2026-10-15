@@ -1,0 +1,103 @@
+import { Sim } from "@tests/engine/harness";
+import { lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+import { submitJob } from "@/jes/submit";
+import { EMPTY_JES } from "@/jes/types";
+import { buildSeed } from "@/catalog/seed";
+import type { AppMode } from "@/tutorial/types";
+
+class C {
+  sim = Sim.loggedOn();
+  runner: any;
+  constructor(public lesson: any, public mode: AppMode = "learn") {
+    this.runner = startRunner(lesson);
+    const start = lesson.startingState?.screen;
+    if (start) this.sim.state = { ...this.sim.state, screen: start, stack: [] };
+  }
+  feed() { const ev = this.sim.events; this.sim.events = []; const r = feedEvents(this.lesson, this.runner, ev, this.sim.state, this.mode); this.runner = r.runner; return r; }
+  cmd(t: string) { this.sim.cmd(t); return this.feed(); }
+  enter(f: any) { this.sim.enter(f); return this.feed(); }
+  pf(k: number, f: any = {}) { this.sim.pf(k, f); return this.feed(); }
+  get step() { return this.runner.stepIndex; }
+}
+const sub = (recs: string[], cat = buildSeed("USER01")) => submitJob(EMPTY_JES, cat, { records: recs, userid: "USER01", today: "2026/10/15" });
+
+it("A L24 challenge trivial", () => {
+  const c = new C(lessonById("l24-submit")!, "challenge");
+  const r = c.cmd("2");
+  console.log("A L24 challenge after first action:", c.runner.status, "screen", c.sim.screenId);
+});
+it("A2 other challenges", () => {
+  for (const [id, act] of [["l23-member-info", (c: C) => { c.cmd("2"); c.enter({ other: "USER01.JCL" }); }], ["l25-sdsf-status", (c: C) => c.cmd("=S")], ["l26-job-output", (c: C) => c.cmd("=S")], ["l27-jcl-error", (c: C) => c.cmd("2")]] as any) {
+    const c = new C(lessonById(id)!, "challenge"); act(c); console.log("A2", id, c.runner.status, c.sim.screenId);
+  }
+});
+it("B HELLO job", () => {
+  const r = sub(buildSeed("USER01").datasets["USER01.JCL"].members!["HELLO"].records);
+  console.log("B", r.job.status, r.job.maxRc, "\nMSGLG:\n" + r.job.outputs[0].records.join("\n") + "\nSYSMSG:\n" + r.job.outputs[2].records.join("\n") + "\nJCL:\n" + r.job.outputs[1].records.join("\n"));
+});
+it("C HELLO overtyped IEBGENER (L8 state)", () => {
+  const recs = buildSeed("USER01").datasets["USER01.JCL"].members!["HELLO"].records.map((x) => x.replace("IEFBR14", "IEBGENER"));
+  const r = sub(recs); console.log("C", r.job.status, r.job.maxRc, r.job.outputs.map((o) => o.ddname), r.job.outputs[2].records.join("\n"));
+});
+it("D SORTJOB", () => {
+  const cat = buildSeed("USER01");
+  const r = sub(cat.datasets["USER01.JCL"].members!["SORTJOB"].records, cat);
+  console.log("D", r.job.status, r.job.maxRc, r.job.outputs.map((o) => o.ddname));
+  console.log("D SORTOUT", JSON.stringify(r.job.outputs.find((o) => o.ddname === "SORTOUT")?.records.map((x) => x.trimEnd())));
+  console.log("D MSGLG\n" + r.job.outputs[0].records.join("\n"));
+  console.log("D SYSMSG\n" + r.job.outputs[2].records.join("\n"));
+});
+it("E PAYRPT fail + lowercase fix + comment", () => {
+  const cat = buildSeed("USER01");
+  const recs = cat.datasets["USER01.JCL"].members!["PAYRPT"].records;
+  const r = sub(recs, cat);
+  console.log("E fail", r.job.status, maxText(r.job), "\n" + r.job.outputs[2].records.join("\n"));
+  const low = recs.map((x) => x.replace("USER01.PAYROLL.DATA", "user01.data(employee)"));
+  const r2 = sub(low, cat); console.log("E lowercase", r2.job.status, r2.job.maxRc, r2.job.outputs[2].records.slice(0, 6).join("|"));
+  const ok = recs.map((x) => x.replace("USER01.PAYROLL.DATA", "USER01.DATA(EMPLOYEE)"));
+  const r3 = sub(ok, cat); console.log("E ok", r3.job.status, r3.job.maxRc, "SYSUT2", r3.job.outputs.find((o) => o.ddname === "SYSUT2")?.records.length);
+});
+function maxText(j: any) { return j.status === "JCL_ERROR" ? "JCL ERROR" : "CC " + j.maxRc; }
+it("F COND / IF / MOD / PASS", () => {
+  const cat = buildSeed("USER01");
+  const r = sub(["//J JOB (A),'X'", "//S1 EXEC PGM=IEBGENER", "//SYSPRINT DD SYSOUT=*", "//SYSIN DD DUMMY", "//SYSUT1 DD DSN=USER01.NOPE,DISP=SHR", "//SYSUT2 DD SYSOUT=*", "//"], cat);
+  console.log("F0", r.job.status);
+  const c1 = sub(["//J JOB (A),'X'", "//S1 EXEC PGM=IEBGENER", "//SYSPRINT DD SYSOUT=*", "//SYSIN DD DUMMY", "//SYSUT1 DD DSN=USER01.NOTES.TXT,DISP=SHR", "//SYSUT2 DD SYSOUT=*", "//S2 EXEC PGM=IEFBR14,COND=(0,EQ,S1)", "//"], cat);
+  console.log("F COND executed S2?", c1.job.steps.map((s) => [s.name, s.executed, s.rc]));
+  const c2 = sub(["//J JOB (A),'X'", "//S1 EXEC PGM=IEFBR14", "//  IF S1.RC = 0 THEN", "//S2 EXEC PGM=IEFBR14", "//  ENDIF", "//"], cat);
+  console.log("F IF", c2.job.status, c2.job.outputs[2].records.join("|"));
+  const c3 = sub(["//J JOB (A),'X'", "//S1 EXEC PGM=IEFBR14", "//D DD DSN=USER01.NEWMOD,DISP=(MOD,CATLG)", "//"], cat);
+  console.log("F MOD missing", c3.job.status, c3.job.outputs[2].records.join("|"));
+});
+it("G SJ opens current member, source for unsaved buffer", () => {
+  const s = Sim.loggedOn().cmd("2").enter({ other: "USER01.JCL(PAYRPT)" });
+  s.enter({ command: "C PAYROLL.DATA DATA(EMPLOYEE)" }).enter({ command: "SUBMIT" });
+  console.log("G job source", JSON.stringify(s.state.jes.jobs[0].source), "status", s.state.jes.jobs[0].status, "member on disk has PAYROLL?", s.state.catalog.datasets["USER01.JCL"].members!["PAYRPT"].records.some((r) => r.includes("PAYROLL")));
+  s.enter({ command: "CANCEL" });
+  s.cmd("=S").cmd("ST").enter({ "cmd:JOB00001": "SJ" });
+  console.log("G SJ shows (current member, not submitted JCL):", s.texts().filter((t) => t.includes("SYSUT1")));
+  console.log("G jes job.jcl submitted:", s.state.jes.jobs[0].jcl.filter((t) => t.includes("SYSUT1")));
+});
+it("H SDSF PREFIX/OWNER", () => {
+  const s = Sim.loggedOn().cmd("TSO SUBMIT JCL(HELLO)").pf(3).cmd("S").cmd("ST");
+  s.cmd("PREFIX USER01"); console.log("H prefix bare USER01 (exact would match nothing):", JSON.stringify(s.rendered().rows).includes("USER01H"));
+  s.cmd("PREFIX USER"); console.log("H prefix bare USER:", JSON.stringify(s.rendered().rows).includes("USER01H"));
+  s.cmd("O"); console.log("H O panel includes", JSON.stringify(s.rendered().rows).includes("USER01H"));
+});
+it("I L28 learn then challenge stale, skip diagnosis", () => {
+  const c = new C(lessonById("l28-day-one")!);
+  c.cmd("2"); c.enter({ other: "USER01.JCL(PAYRPT)" }); c.enter({ command: "C PAYROLL.DATA DATA(EMPLOYEE)" }); c.enter({ command: "SUBMIT" }); const r = c.pf(3);
+  console.log("I skip-diagnosis: advanced", r.advancedSteps, "step", c.step, c.runner.status);
+  const d = new C(lessonById("l28-day-one")!, "challenge"); d.sim = c.sim; d.cmd("2");
+  console.log("I challenge on stale state after first action:", d.runner.status);
+});
+it("J comment-only passes fix step; PAYROLL.DATA created path", () => {
+  const c = new C(lessonById("l27-jcl-error")!);
+  c.cmd("TSO SUBMIT JCL(PAYRPT)"); c.cmd("=S"); c.cmd("ST"); c.enter({ "cmd:JOB00001": "?" }); c.enter({ "cmd:JESYSMSG": "S" }); c.pf(3); c.pf(3); c.enter({ "cmd:JOB00001": "SJ" });
+  console.log("J step at SJ", c.step);
+  c.enter({ command: "C DISP=SHR DISP=SHR" });
+  // type a comment line containing DATA(EMPLOYEE): use I line command? use CHANGE on the comment line
+  c.enter({ command: "C 'DAY-ONE' 'DATA(EMPLOYEE) DAY-ONE'" });
+  console.log("J step after comment-only edit", c.step);
+});

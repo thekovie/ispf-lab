@@ -1,0 +1,22 @@
+import { Sim } from "@tests/engine/harness";
+it("L18 probes", () => {
+  const s = Sim.loggedOn();
+  s.cmd("2"); s.enter({ other: "USER01.COBOL(HELLO)" });
+  s.enter({ command: "COLS" }); s.enter({ command: "COLS" });
+  console.log("P1 specials after COLS twice:", s.state.editor!.special.map((x) => x.kind).join(","));
+  console.log("P1 render head:", JSON.stringify(s.rendered().rows.slice(2, 6).map((r) => r.map((g: any) => g.text ?? g.value).join(""))));
+  s.sim; 
+  s.events = [];
+  s.enter({ command: "BOUNDS" });
+  console.log("P2 plain BOUNDS events:", s.eventTypes().join(","), "special:", s.state.editor!.special.map((x) => x.kind).join(","));
+  s.events = [];
+  s.enter({ command: "BOUNDS 20 30" });
+  console.log("P3 BOUNDS 20 30 events:", s.eventTypes().join(","), JSON.stringify(s.state.editProfiles.COBOL?.bounds));
+  s.events = [];
+  s.enter({ command: "FIND ZZZZ" });
+  console.log("P4 FIND ZZZZ events:", s.eventTypes().join(","), "msg:", s.message);
+  s.enter({ command: "FIND DIVISION" });
+  console.log("P5 FIND DIVISION with bounds 20 30 msg:", s.message);
+  s.pf(3);
+  console.log("P6 profile persisted after PF3:", JSON.stringify(s.state.editProfiles.COBOL));
+});

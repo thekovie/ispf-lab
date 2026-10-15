@@ -4,12 +4,29 @@
  * Reference: docs/02-architecture.md §Tutorial engine.
  */
 import type { SimEvent, SimulatorState } from "@/engine/types";
-import type { AppMode, Lesson, LessonContext, RunnerState } from "./types";
+import type { AppMode, Lesson, LessonContext, RunnerState, Validator } from "./types";
 
 export const SCORE = { base: 100, perMistake: 10, perHint: 15 } as const;
 
-export function startRunner(lesson: Lesson): RunnerState {
-  return { lessonId: lesson.id, stepIndex: 0, status: lesson.steps.length ? "running" : "completed", hintsUsed: 0, mistakes: 0, completedSteps: [], hintShown: false };
+/** Cap on the Challenge event history kept in the runner (oldest events are dropped). */
+export const HISTORY_CAP = 400;
+
+/** The check that completes a lesson in Challenge mode: its own outcome validator, else the last step's. */
+export function challengeValidator(lesson: Lesson): Validator | undefined {
+  return lesson.challenge?.validator ?? lesson.steps[lesson.steps.length - 1]?.validator;
+}
+
+/**
+ * Create the runner for a (re)started lesson. `baseline` is the simulator state right after the lesson's starting
+ * state was applied; it arms the Challenge guard (ADR 0016): a Challenge whose check is already true there cannot
+ * complete until the check has been seen false.
+ */
+export function startRunner(lesson: Lesson, baseline?: SimulatorState): RunnerState {
+  const runner: RunnerState = { lessonId: lesson.id, stepIndex: 0, status: lesson.steps.length ? "running" : "completed", hintsUsed: 0, mistakes: 0, completedSteps: [], hintShown: false };
+  if (!baseline) return runner;
+  const check = challengeValidator(lesson);
+  const trueAtStart = check ? check({ state: baseline, hlq: baseline.userid, history: [] }) : false;
+  return { ...runner, armed: !trueAtStart };
 }
 
 export function currentStep(lesson: Lesson, runner: RunnerState) {
@@ -39,10 +56,14 @@ export function feedEvents(lesson: Lesson, runner: RunnerState, events: SimEvent
   if (errors > 0) next = { ...next, mistakes: next.mistakes + errors };
 
   if (mode === "challenge") {
-    const validator = lesson.challenge?.validator ?? lesson.steps[lesson.steps.length - 1]?.validator;
-    const ok = validator ? passes(validator, events, state, hlq) : false;
-    if (!ok) return { runner: next, advancedSteps: 0, completed: false };
-    return { runner: { ...next, status: "completed", stepIndex: lesson.steps.length, completedSteps: lesson.steps.map((s) => s.id) }, advancedSteps: 1, completed: true };
+    const validator = challengeValidator(lesson);
+    const history = [...(runner.history ?? []), ...events].slice(-HISTORY_CAP);
+    const ok = validator ? passes(validator, events, state, hlq, history) : false;
+    const tracked: RunnerState = { ...next, history };
+    // Guard (ADR 0016): the outcome check must have been seen false since the Challenge started, then become true.
+    if (!ok) return { runner: { ...tracked, armed: true }, advancedSteps: 0, completed: false };
+    if (!runner.armed) return { runner: tracked, advancedSteps: 0, completed: false };
+    return { runner: { ...tracked, status: "completed", stepIndex: lesson.steps.length, completedSteps: lesson.steps.map((s) => s.id) }, advancedSteps: 1, completed: true };
   }
 
   let advanced = 0;
@@ -67,9 +88,9 @@ export function feedEvents(lesson: Lesson, runner: RunnerState, events: SimEvent
   return { runner: next, advancedSteps: advanced, completed: next.status === "completed" };
 }
 
-function passes(validator: (ctx: LessonContext) => boolean, events: SimEvent[], state: SimulatorState, hlq: string): boolean {
-  for (const event of events) if (validator({ event, state, hlq })) return true;
-  return validator({ state, hlq });
+function passes(validator: (ctx: LessonContext) => boolean, events: SimEvent[], state: SimulatorState, hlq: string, history?: SimEvent[]): boolean {
+  for (const event of events) if (validator({ event, state, hlq, history })) return true;
+  return validator({ state, hlq, history });
 }
 
 /** A valid ISPF action that did not advance the lesson — used for a gentle nudge, never an error. */

@@ -115,7 +115,7 @@ export const lesson03: Lesson = {
   description: "Tune the terminal with option 0 and talk to TSO directly with option 6.",
   objective: "Change a setting in option 0, then run LISTCAT LEVEL({HLQ}) from option 6.",
   teaches: ["ISPF Settings (option 0)", "The TSO command shell (option 6)", "LISTCAT and the catalog", "TSO commands from the Option line"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetSettings: ["scrollDefault"] },
   steps: [
     {
       id: "open-settings",

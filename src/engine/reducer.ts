@@ -102,6 +102,19 @@ function reduceAction(state: SimulatorState, action: SimAction): StepResult {
       };
       return { state: home, events: [{ type: "ENVIRONMENT_RESET" }, { type: "SCREEN_OPENED", screen: home.screen.id, frame: home.screen }] };
     }
+    case "RESET_SESSION":
+      return {
+        state: {
+          ...state,
+          screens: [],
+          activeScreen: 0,
+          editor: undefined,
+          activeDataset: undefined,
+          activeMember: undefined,
+          ...(action.retrieve ? { retrieveStack: [], retrieveIndex: 0 } : {}),
+        },
+        events: [],
+      };
     case "GOTO": {
       const next: SimulatorState = {
         ...state,

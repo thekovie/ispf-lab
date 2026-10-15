@@ -1,0 +1,279 @@
+{
+ "l01-meet-ispf": {
+  "number": 1,
+  "steps": [
+   "logon",
+   "look-around",
+   "pf3-back",
+   "type-something",
+   "tab"
+  ]
+ },
+ "l02-navigating": {
+  "number": 2,
+  "steps": [
+   "open-utilities",
+   "open-dslist",
+   "unwind",
+   "jump",
+   "home"
+  ]
+ },
+ "l03-settings-tso": {
+  "number": 3,
+  "steps": [
+   "open-settings",
+   "change-scroll",
+   "open-tso",
+   "listcat",
+   "back-home"
+  ]
+ },
+ "l04-finding-data-sets": {
+  "number": 4,
+  "steps": [
+   "go-34",
+   "level",
+   "read-columns",
+   "narrow"
+  ]
+ },
+ "l05-data-sets-and-members": {
+  "number": 5,
+  "steps": [
+   "list",
+   "info",
+   "back",
+   "members",
+   "read-members"
+  ]
+ },
+ "l06-allocating": {
+  "number": 6,
+  "steps": [
+   "open-32",
+   "allocate-panel",
+   "fill-attributes",
+   "verify",
+   "still-there"
+  ]
+ },
+ "l07-browse-vs-edit": {
+  "number": 7,
+  "steps": [
+   "browse",
+   "try-typing",
+   "edit",
+   "leave"
+  ]
+ },
+ "l08-first-edit": {
+  "number": 8,
+  "steps": [
+   "open",
+   "overtype",
+   "save",
+   "pf3"
+  ]
+ },
+ "l09-line-commands": {
+  "number": 9,
+  "steps": [
+   "open",
+   "insert",
+   "fill",
+   "delete",
+   "repeat",
+   "save"
+  ]
+ },
+ "l10-copy-move": {
+  "number": 10,
+  "steps": [
+   "open",
+   "copy-after",
+   "copy-before",
+   "move-block",
+   "cancel"
+  ]
+ },
+ "l11-find-change": {
+  "number": 11,
+  "steps": [
+   "open",
+   "find",
+   "rfind",
+   "change-all",
+   "exclude",
+   "save"
+  ]
+ },
+ "l12-managing-members": {
+  "number": 12,
+  "steps": [
+   "member-list",
+   "create",
+   "save-new",
+   "rename",
+   "delete"
+  ]
+ },
+ "l13-copy-across": {
+  "number": 13,
+  "steps": [
+   "ensure-target",
+   "copy-33",
+   "copy-list",
+   "delete-ds"
+  ]
+ },
+ "l14-final-challenge": {
+  "number": 14,
+  "steps": [
+   "do-it"
+  ]
+ },
+ "l15-split-screen": {
+  "number": 15,
+  "steps": [
+   "edit-hello",
+   "split",
+   "browse-copyjob",
+   "swap-back",
+   "end-screen",
+   "leave"
+  ]
+ },
+ "l16-jump-return": {
+  "number": 16,
+  "steps": [
+   "open-dslist",
+   "jump-to-edit",
+   "edit-hello",
+   "jump-from-editor",
+   "return"
+  ]
+ },
+ "l17-retrieve-multi": {
+  "number": 17,
+  "steps": [
+   "open-dslist",
+   "two-commands",
+   "reset",
+   "retrieve",
+   "rerun"
+  ]
+ },
+ "l18-cols-bounds": {
+  "number": 18,
+  "steps": [
+   "open-cobol",
+   "cols",
+   "bounds",
+   "find",
+   "reset",
+   "leave"
+  ]
+ },
+ "l19-profiles": {
+  "number": 19,
+  "steps": [
+   "open-hello",
+   "profile",
+   "caps-on",
+   "reopen",
+   "caps-off"
+  ]
+ },
+ "l20-undo-recovery": {
+  "number": 20,
+  "steps": [
+   "open-hello",
+   "delete",
+   "undo",
+   "recovery",
+   "cancel"
+  ]
+ },
+ "l21-exclude-flip": {
+  "number": 21,
+  "steps": [
+   "open-cobol",
+   "exclude",
+   "flip",
+   "reset",
+   "leave"
+  ]
+ },
+ "l22-dslist-advanced": {
+  "number": 22,
+  "steps": [
+   "open-dslist",
+   "sort",
+   "find",
+   "exclude",
+   "short-info",
+   "reset"
+  ]
+ },
+ "l23-member-info": {
+  "number": 23,
+  "steps": [
+   "member-list",
+   "info",
+   "reset-stats",
+   "info-again",
+   "leave"
+  ]
+ },
+ "l24-submit": {
+  "number": 24,
+  "steps": [
+   "open-hello",
+   "submit",
+   "leave"
+  ]
+ },
+ "l25-sdsf-status": {
+  "number": 25,
+  "steps": [
+   "member-list",
+   "submit-j",
+   "open-sdsf",
+   "browse",
+   "leave"
+  ]
+ },
+ "l26-job-output": {
+  "number": 26,
+  "steps": [
+   "tso-submit",
+   "sdsf",
+   "question",
+   "sortout",
+   "jesmsglg",
+   "leave"
+  ]
+ },
+ "l27-jcl-error": {
+  "number": 27,
+  "steps": [
+   "submit",
+   "status",
+   "jesysmsg",
+   "sj",
+   "fix",
+   "resubmit",
+   "save"
+  ]
+ },
+ "l28-day-one": {
+  "number": 28,
+  "steps": [
+   "run-it",
+   "diagnose",
+   "fix-and-save",
+   "report"
+  ]
+ }
+}

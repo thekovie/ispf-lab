@@ -1,0 +1,24 @@
+import { Sim } from "@tests/engine/harness";
+import { writeFileSync } from "node:fs";
+describe("dbg", () => {
+  it("edit cancel", () => {
+    const o: string[] = [];
+    const s = Sim.loggedOn();
+    const st = (t: string) => o.push(`${t}: screen=${s.screenId} editor=${!!s.state.editor} msg=${s.message ?? ""} events=${s.eventTypes().join(",")}`);
+    s.cmd("2"); st("2");
+    s.events = [];
+    s.enter({ project: "USER01", group: "JCL", type: "", member: "HELLO", other: "" }); st("open HELLO");
+    s.events = [];
+    s.cmd("CANCEL"); st("CANCEL");
+    // retry with DSN in 'other'
+    const t = Sim.loggedOn();
+    t.cmd("2");
+    t.events = [];
+    t.enter({ project: "", group: "", type: "", member: "", other: "'USER01.JCL(HELLO)'" });
+    o.push(`other-dsn: screen=${t.screenId} editor=${!!t.state.editor} msg=${t.message ?? ""} events=${t.eventTypes().join(",")}`);
+    t.events = [];
+    t.cmd("CANCEL");
+    o.push(`CANCEL: screen=${t.screenId} editor=${!!t.state.editor} events=${t.eventTypes().join(",")}`);
+    writeFileSync(__dirname + "/m0-debug.out.txt", o.join("\n") + "\n");
+  });
+});

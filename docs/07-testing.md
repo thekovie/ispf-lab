@@ -13,7 +13,7 @@ pnpm test:coverage   # v8 coverage of src/{engine,catalog,parsers,editor,tutoria
 pnpm check           # typecheck + lint + test
 ```
 
-## Test files (140 tests)
+## Test files (1,658 tests, 5 todo)
 
 | File | Covers |
 |---|---|
@@ -30,12 +30,25 @@ pnpm check           # typecheck + lint + test
 | `tests/editor/advanced.test.ts` | UNDO history and gating, profiles, PROFILE/COLS/BNDS special lines, STATS, NUMBER, AUTOSAVE modes, FLIP, RETRIEVE |
 | `tests/engine/listDepth.test.ts` | DSLIST S/CO/MO/X/NX/Z/=, SORT/FIND/EXCLUDE/RESET, multi-command suspend/resume, member I/G/J/= |
 | `tests/persistence/labBundle.test.ts` | Export/Import Lab round trip, v0.1 migration, rejection reasons, key stripping |
+| `tests/tutorial/challenge.test.ts` | M1a regression suite over all 28 lessons: the legitimate route completes in Learn and Challenge; nothing completes from the start state; 15 cheap shortcuts from the Phase 0 / M0 probes never complete a lesson; every lesson replays, and runs after every other lesson (1,300+ cases) |
+| `tests/tutorial/challenge-routes.test.ts` | D3 validation: legitimate alternative routes are accepted and plausible wrong answers rejected, per lesson; five `it.todo` for M1b |
+| `tests/tutorial/guard.test.ts` | Challenge completion guard (armed / unarmed, baseline, Learn unaffected) and the Challenge event history |
+| `tests/tutorial/scenario.test.ts` | scenario reset: removeDatasets/Members, createDatasets, resetMembers, profiles, settings, `startActions` |
+| `tests/tutorial/provider.test.tsx` | TutorialProvider with React Testing Library: `startLesson` never completes the previous lesson (F-03), mode switch and restart re-apply the starting state, session closes on lesson start, progress untouched by a mode switch |
+| `tests/tutorial/compat.test.tsx` | lesson ids and step ids equal the baseline commit's (`fixtures/baseline-ids.json`), progress key and shape, stored progress survives start / mode switch / restart, local-only storage |
+| `tests/components/terminal-unsent.test.tsx` | the real `Terminal` reports editor text typed but not sent (and not an unsent command) |
+| `tests/tutorial/walks.ts` | shared helper (not a test file): `Attempt`, one `WALKS` route per lesson, `SHORTCUTS` |
 | `tests/jes/jes.test.ts`, `tests/engine/sdsf.test.ts` | JCL parser and errors, programs, allocation failures, S806; SUBMIT/J/TSO SUBMIT, SDSF ST/?/S/P/SJ/LOG, Day-One flow, persistence |
 
 `tests/engine/harness.ts` (`Sim`) drives the reducer the way the UI does: `enter(fields)`, `pf(key, fields)`,
 `cmd(text)`.
 
 ## Browser verification (manual, Chrome DevTools MCP)
+
+M1a acceptance walkthroughs (replay, Learn to Challenge, Challenge completion, cross-lesson navigation, confirmation
+dialogs) are recorded in `docs/curriculum/m1a-acceptance.md` with screenshots under `docs/curriculum/evidence/m1a-browser/`.
+
+Earlier walkthrough:
 
 Logon → Learn lesson 2 → `3.4` → `USER01` → `E` on USER01.JCL → `E` on HELLO → `I2` over `000001` → type on the
 new line → MODIFIED → SAVE → PF3 ×4; refresh keeps catalog and progress; Reset environment restores the seed;
@@ -49,4 +62,8 @@ next step (`e2e/` is not yet created).
 ## Adding tests
 
 Put new engine behaviour in the matching `tests/<layer>/` file; use the harness for anything that crosses screens.
-A lesson change needs a `Coached` walk in `tests/tutorial/lessons.test.ts`.
+A lesson change needs a `Coached` walk in `tests/tutorial/lessons.test.ts` **and** an entry in `tests/tutorial/walks.ts`
+(`WALKS`); `challenge.test.ts` then checks Learn, Challenge, shortcut and replay behaviour for it automatically. A lesson
+without its own `challenge` must still pass the shortcut suite; give it an outcome check in `src/tutorial/challenges.ts`
+if a shortcut completes it (docs/adr/0016-challenge-completion-guard.md). React-level behaviour (provider wiring) is
+tested with React Testing Library in `tests/tutorial/provider.test.tsx`.

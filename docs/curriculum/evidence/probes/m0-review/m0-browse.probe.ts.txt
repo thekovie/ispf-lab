@@ -1,0 +1,12 @@
+import { Sim } from "@tests/engine/harness";
+import { writeFileSync } from "node:fs";
+describe("browse", () => {
+  it("render", () => {
+    const s = Sim.loggedOn();
+    s.cmd("=3.1");
+    s.enter({ option: "B", project: "", group: "", type: "", member: "", newname: "", other: "'USER01.JCL(HELLO)'" });
+    const r: any = s.rendered();
+    const rows = (r.rows ?? r.lines ?? []).slice(0, 8).map((row: any) => (Array.isArray(row) ? row.map((c: any) => (typeof c === "string" ? c : c.text ?? (c.id ? `[${c.id}]` : JSON.stringify(c)))).join("") : JSON.stringify(row)));
+    writeFileSync(__dirname + "/m0-browse.out.txt", `screen=${s.screenId}\nkeys=${Object.keys(r).join(",")}\n` + rows.join("\n") + "\n");
+  });
+});

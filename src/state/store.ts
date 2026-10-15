@@ -23,6 +23,7 @@ export class SimulatorStore {
   private renderListeners = new Set<() => void>();
   private eventListeners = new Set<EventListener>();
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
+  private unsentProbe: (() => string | null) | null = null;
 
   constructor(readonly storage: StorageAdapter, today = todayString()) {
     this.state = createInitialState(DEFAULT_USERID, today);
@@ -45,6 +46,17 @@ export class SimulatorStore {
     this.renderListeners.add(listener);
     return () => this.renderListeners.delete(listener);
   };
+
+  /**
+   * The terminal registers a read-only probe that says whether editor text is typed but not yet sent with Enter
+   * (3270 drafts live in the component, not in the engine). Used only to confirm before a lesson start discards it.
+   */
+  setUnsentProbe = (probe: (() => string | null) | null): void => {
+    this.unsentProbe = probe;
+  };
+
+  /** A description of typed-but-unsent editor text, or null when there is none. */
+  unsentWork = (): string | null => this.unsentProbe?.() ?? null;
 
   onEvents = (listener: EventListener): (() => void) => {
     this.eventListeners.add(listener);

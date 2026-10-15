@@ -1,0 +1,20 @@
+import { Sim } from "@tests/engine/harness";
+import { lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+it("L27 challenge without ever submitting", () => {
+  const lesson: any = lessonById("l27-jcl-error")!;
+  const sim = Sim.loggedOn(); let runner: any = startRunner(lesson);
+  const feed = () => { const ev = sim.events; sim.events = []; const r = feedEvents(lesson, runner, ev, sim.state, "challenge"); runner = r.runner; };
+  sim.cmd("2"); feed(); sim.enter({ other: "USER01.JCL(PAYRPT)" }); feed();
+  sim.enter({ command: "C PAYROLL.DATA DATA(EMPLOYEE)" }); feed(); console.log("L27 challenge after edit (editor open):", runner.status, "jobs", sim.state.jes.jobs.length);
+  sim.pf(3); feed(); console.log("L27 challenge after PF3:", runner.status, "jobs submitted:", sim.state.jes.jobs.length);
+});
+it("L28 existing PAYROLL.DATA path", () => {
+  const lesson: any = lessonById("l28-day-one")!;
+  const sim = Sim.loggedOn(); let runner: any = startRunner(lesson);
+  const feed = () => { const ev = sim.events; sim.events = []; const r = feedEvents(lesson, runner, ev, sim.state, "challenge"); runner = r.runner; };
+  // create PAYROLL.DATA by copying NOTES.TXT via IEBGENER job then submit PAYRPT unchanged
+  sim.cmd("TSO RENAME NOTES.TXT PAYROLL.DATA"); feed();
+  sim.cmd("TSO SUBMIT JCL(PAYRPT)"); feed();
+  console.log("L28 rename route: job", sim.state.jes.jobs[0]?.status, sim.state.jes.jobs[0]?.maxRc, "challenge", runner.status);
+});

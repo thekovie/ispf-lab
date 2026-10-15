@@ -53,10 +53,19 @@ Lesson files: `src/tutorial/lessons/module1.ts` … `module6.ts`, `module7-8.ts`
 - `MESSAGE_SHOWN{severity:error}` counts as a mistake in every mode; hints count when revealed.
 - A valid ISPF action that does not advance the lesson is recorded as a *detour* and shown as a gentle note
   in Learn mode — the simulator is never blocked.
-- Challenge mode ignores steps and checks `lesson.challenge.validator` (or the last step) after every action.
+- Challenge mode ignores the steps and checks the lesson's **outcome** after every action: `lesson.challenge.validator`
+  (outcome checks live in `src/tutorial/challenges.ts`, written from each lesson's objective; L14 and L28 define their
+  own), else the last step's validator. Validators receive `history`, every event since the Challenge started.
+- **Completion guard** (ADR 0016): the outcome check must be seen false after the Challenge starts and then become true,
+  so a check that is already true on the start state or on leftover data can never complete a lesson.
 - Score = max(0, 100 − 10·mistakes − 15·hints). Time is not scored.
-- `startingState.screen` is opened with a cleared stack; `resetMembers` restores those members from the seed so
-  a lesson always starts from known data without touching the learner's other work.
+- Starting a lesson (also **restarting** it or **switching mode**) closes split screens and any open editor, applies
+  `startingState` (`resetMembers`, `removeMembers`, `removeDatasets`, `createDatasets`, `resetProfiles`, `resetSettings`,
+  `resetJobs`, `clearRetrieve`) and opens `screen` with a cleared stack, so a lesson always starts from known data. These
+  setup dispatches are not learner actions: the runner ignores them (M0 review F-03). Switching to Sandbox changes nothing.
+  If the start would throw away unsaved editor changes (including text typed but not sent), a learner change to a member the
+  lesson restores, or leftover members/data sets with content, the learner is asked first (`confirmDiscard`, default
+  `window.confirm`; cancel changes nothing). Harmless resets never prompt.
 
 ## Coaching UI
 

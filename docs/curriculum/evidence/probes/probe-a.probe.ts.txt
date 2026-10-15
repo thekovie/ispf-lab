@@ -1,0 +1,32 @@
+import { Sim } from "@tests/engine/harness";
+import { LESSONS, lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+import type { AppMode } from "@/tutorial/types";
+
+class C {
+  sim = Sim.loggedOn();
+  constructor(public lesson: any, public mode: AppMode = "learn") {
+    this.runner = startRunner(lesson);
+    const start = lesson.startingState?.screen;
+    if (start) this.sim.state = { ...this.sim.state, screen: start, stack: [] };
+  }
+  runner: any;
+  feed() { const ev = this.sim.events; this.sim.events = []; const r = feedEvents(this.lesson, this.runner, ev, this.sim.state, this.mode); this.runner = r.runner; return r; }
+  cmd(t: string) { this.sim.cmd(t); return this.feed(); }
+  enter(f: any) { this.sim.enter(f); return this.feed(); }
+  pf(k: number, f: any = {}) { this.sim.pf(k, f); return this.feed(); }
+  get step() { return this.runner.stepIndex; }
+}
+
+it("L17 step5 early pass", () => {
+  const c = new C(lessonById("l17-retrieve-multi")!);
+  c.cmd("3.4");
+  c.enter({ level: "USER01" });
+  console.log("screen after level", c.sim.screenId, "stack", c.sim.state.stack.map((s: any) => s.id));
+  c.enter({ "cmd:USER01.COBOL": "X", "cmd:USER01.DATA": "X" });
+  c.cmd("RESET");
+  c.pf(12);
+  console.log("step before PF3", c.step, c.sim.state.retrieveStack);
+  c.pf(3);
+  console.log("after 1st PF3 step", c.step, c.runner.status, c.sim.screenId);
+});

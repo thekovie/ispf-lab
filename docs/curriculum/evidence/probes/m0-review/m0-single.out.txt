@@ -1,0 +1,28 @@
+ 1 l01-meet-ispf              single-action: none of battery
+ 2 l02-navigating             ZERO-ACTION (validator true on start state)
+ 3 l03-settings-tso           ZERO-ACTION (validator true on start state)
+ 4 l04-finding-data-sets      single-action: none of battery
+ 5 l05-data-sets-and-members  single-action: none of battery
+ 6 l06-allocating             single-action: none of battery
+ 7 l07-browse-vs-edit         single-action: none of battery
+ 8 l08-first-edit             single-action: none of battery
+ 9 l09-line-commands          single-action: none of battery
+10 l10-copy-move              single-action: none of battery
+11 l11-find-change            single-action: none of battery
+12 l12-managing-members       single-action: none of battery
+13 l13-copy-across            ZERO-ACTION (validator true on start state)
+14 l14-final-challenge        single-action: none of battery
+15 l15-split-screen           ZERO-ACTION (validator true on start state)
+16 l16-jump-return            single-action: none of battery
+17 l17-retrieve-multi         single-action: 3.4
+18 l18-cols-bounds            ZERO-ACTION (validator true on start state)
+19 l19-profiles               single-action: none of battery
+20 l20-undo-recovery          single-action: none of battery
+21 l21-exclude-flip           ZERO-ACTION (validator true on start state)
+22 l22-dslist-advanced        single-action: none of battery
+23 l23-member-info            single-action: none of battery
+24 l24-submit                 ZERO-ACTION (validator true on start state)
+25 l25-sdsf-status            single-action: =S
+26 l26-job-output             single-action: none of battery
+27 l27-jcl-error              single-action: none of battery
+28 l28-day-one                single-action: none of battery

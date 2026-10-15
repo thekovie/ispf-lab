@@ -1,0 +1,28 @@
+import { Sim } from "@tests/engine/harness";
+import { lessonById } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+it("L21 probes", () => {
+  const l = lessonById("l21-exclude-flip")!;
+  const s = Sim.loggedOn();
+  let r = startRunner(l);
+  const feed = () => { const ev = s.events; s.events = []; const u = feedEvents(l, r, ev, s.state, "learn"); r = u.runner; };
+  s.cmd("2"); feed(); s.enter({ other: "USER01.COBOL(HELLO)" }); feed();
+  s.enter({ command: "FLIP" }); feed();
+  console.log("Q1 FLIP alone (no EXCLUDE): stepIndex =", r.stepIndex, "excluded lines =", s.state.editor!.lines.filter((x) => x.excluded).length, "of", s.state.editor!.lines.length);
+  const s2 = Sim.loggedOn();
+  s2.cmd("2"); s2.enter({ other: "USER01.COBOL(HELLO)" });
+  s2.enter({ command: "BOUNDS 1 5" });
+  s2.events = [];
+  s2.enter({ command: "X DIVISION ALL" });
+  console.log("Q2 X DIVISION ALL with leftover BOUNDS 1 5:", s2.message);
+  const s3 = Sim.loggedOn();
+  s3.cmd("2"); s3.enter({ other: "USER01.COBOL(HELLO)" });
+  s3.enter({ command: "X DIVISION WORD ALL" });
+  console.log("Q3 X DIVISION WORD ALL:", s3.message);
+  s3.enter({ command: "X PROGRAM" });
+  console.log("Q4 X PROGRAM (not DIVISION) events:", s3.eventTypes().includes("EDITOR_LINES_EXCLUDED"), s3.message);
+  const s4 = Sim.loggedOn();
+  s4.cmd("2"); s4.enter({ other: "USER01.COBOL(HELLO)" });
+  s4.enter({ command: "X DIVISION ALL" }); s4.enter({ command: "FLIP" });
+  console.log("Q5 after X DIVISION ALL + FLIP shown lines:", JSON.stringify(s4.state.editor!.lines.filter((x) => !x.excluded).map((x) => x.text.trim())));
+});

@@ -1,0 +1,70 @@
+// M0 review: independent, parametrised check of Challenge-mode completion for all lessons.
+// Emulates TutorialProvider.startLesson: login, GOTO startingState.screen (clearStack), new runner.
+import { Sim } from "@tests/engine/harness";
+import { LESSONS } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+import { reduce } from "@/engine/reducer";
+import type { Lesson } from "@/tutorial/types";
+import { writeFileSync } from "node:fs";
+
+function start(lesson: Lesson) {
+  const sim = Sim.loggedOn();
+  const scr = lesson.startingState?.screen;
+  if (scr) {
+    const r = reduce(sim.state, { type: "GOTO", screen: scr, clearStack: true } as any);
+    sim.state = r.state;
+  }
+  sim.events = [];
+  return sim;
+}
+
+function validatorOf(lesson: Lesson) {
+  return lesson.challenge?.validator ?? lesson.steps[lesson.steps.length - 1]?.validator;
+}
+
+type Row = { n: number; id: string; ownChallenge: boolean; atStart: boolean; firstDone: string };
+
+const ACTIONS: [string, (s: Sim) => void][] = [
+  ["Enter(empty)", (s) => s.enter({})],
+  ["PF7", (s) => s.pf(7)],
+  ["PF8", (s) => s.pf(8)],
+  ["PF3", (s) => s.pf(3)],
+  ["cmd(HELP)", (s) => s.cmd("HELP")],
+];
+
+describe("M0 challenge-mode completion on a fresh start", () => {
+  it("reports per lesson", () => {
+    const rows: Row[] = [];
+    for (const lesson of LESSONS) {
+      const sim = start(lesson);
+      const v = validatorOf(lesson)!;
+      const hlq = sim.state.userid;
+      const atStart = !!v({ state: sim.state, hlq });
+      let first = "-";
+      if (atStart) first = "(no action: state alone)";
+      else {
+        const runner0 = startRunner(lesson);
+        let runner = runner0;
+        for (const [name, act] of ACTIONS) {
+          try {
+            act(sim);
+          } catch (e) {
+            first = `ERR ${name}`;
+            break;
+          }
+          const ev = sim.events;
+          sim.events = [];
+          const r = feedEvents(lesson, runner, ev, sim.state, "challenge");
+          runner = r.runner;
+          if (r.completed) {
+            first = name;
+            break;
+          }
+        }
+      }
+      rows.push({ n: lesson.number, id: lesson.id, ownChallenge: !!lesson.challenge, atStart, firstDone: first });
+    }
+    writeFileSync(__dirname + "/m0-challenge.out.txt", rows.map((r) => `${String(r.n).padStart(2)} ${r.id.padEnd(28)} own=${r.ownChallenge ? "Y" : "n"} atStart=${r.atStart ? "TRUE" : "false"} firstDone=${r.firstDone}`).join("\n") + "\n");
+    expect(rows.length).toBe(LESSONS.length);
+  });
+});

@@ -13,7 +13,7 @@ export const lesson12: Lesson = {
   description: "Create, rename and delete members from a member list.",
   objective: "In {HLQ}.REXX: create a member SCRATCH, rename it to DRAFT, then delete it.",
   teaches: ["Creating a member via Edit", "Member statistics", "R rename with confirmation panel", "D delete with confirmation"],
-  startingState: { screen: { id: "DSLIST_SEARCH" } },
+  startingState: { screen: { id: "DSLIST_SEARCH" }, removeMembers: [{ dsn: "{HLQ}.REXX", member: "SCRATCH" }, { dsn: "{HLQ}.REXX", member: "DRAFT" }] },
   steps: [
     {
       id: "member-list",
@@ -62,7 +62,7 @@ export const lesson13: Lesson = {
   description: "Move members between libraries with 3.3 and the member-list C command, then delete a data set.",
   objective: "Copy {HLQ}.JCL(HELLO) into {HLQ}.TEST.JCL two ways, then delete {HLQ}.TEST.JCL with 3.2.",
   teaches: ["3.3 Move/Copy Utility", "Member-list C with a target data set", "3.2 D delete with confirmation", "Allocation prerequisite"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, createDatasets: [{ dsn: "{HLQ}.TEST.JCL", dirBlocks: 10 }] },
   steps: [
     {
       id: "ensure-target",

@@ -407,3 +407,46 @@ focus on the command line unless the command moved the cursor (FIND/CHANGE/LOCAT
 
 **Copy audit** · landing intro mentions jump, profiles, UNDO, SUBMIT/SDSF; key legend adds F4 and F12 retrieve;
 glossary teaser adds JCL and SDSF; docs/07 test map updated.
+
+
+## Phase 19 — Curriculum audit, Phase 0  (2026-10-15, main)
+
+**Documentation only; no product code changed.** Audit of the 28 lessons, the simulator and the learning platform
+against z/OS 3.2 documentation, baseline `e97a91b`. Entry point: `docs/curriculum/phase-0-audit.md`; the package
+holds the lessons audit, the verified-sources registry with claim-level evidence (`docs/curriculum/evidence/`),
+the curriculum and implementation roadmaps, the simulator gap matrix and the lesson authoring standards.
+
+**Headline** · all 28 lessons are CORRECTION REQUIRED: Challenge mode completes on a trivial or stale-state action
+in at least 25 lessons; replay dead-ends (L6, L12, L13) and state leaks; the "Edit SUBMIT submits the disk copy" and
+"SJ saves back the member" statements are not supported by IBM; several job-output message IDs do not exist
+(`IEFC606I`, `ICE026A`). Several suspicions were refuted (top-level `RECFM`/`LRECL` on a DD is valid, DISP defaults
+are right). `pnpm check` passes (231 tests); no fixes were made. Next: review gate (M0), then corrections (M1).
+
+
+## Phase 20 — M1a: assessment integrity and isolation  (2026-10-15, main)
+
+Authorised after the M0 acceptance review; M1b and later are **not** started. Code changes: `src/state/TutorialProvider.tsx`,
+`src/tutorial/{engine,types,validators,scenario,challenges}.ts`, `src/tutorial/lessons/index.ts` and starting states in
+the lesson modules, `src/engine/{types,reducer}.ts` (`RESET_SESSION`), four hints in `module3.ts`.
+
+**Test first.** (1) The suspected `startLesson` race was written as a React Testing Library test and failed on the
+baseline: starting lesson 6 marked lesson 2 completed in saved progress. It is fixed by ignoring the runner events of
+`startLesson`'s own setup dispatches. (2) The completion guard and event history have unit tests (4 of 9 failed first).
+(3) The Challenge suite over all 28 lessons failed 64 cases before the outcome checks and the scenario reset. (4) The
+mode-switch/session tests fail on the baseline commit (5 of 7 provider tests).
+
+**Result.** 22 test files, 1,658 tests (+5 `it.todo` for M1b), `pnpm check` and `pnpm build` green. Challenge: no lesson
+completes from the start state or by any of 15 probe shortcuts; every lesson replays and runs after every other lesson;
+13 alternative routes accepted, 12 wrong answers rejected. See ADR 0016 (Provisional, validated).
+
+**Behaviour changes to know about.** Starting, restarting or switching mode now closes split screens and any open editor
+and re-applies the lesson's starting state (a mode switch used to keep leftovers and could finish a lesson instantly).
+Lesson 3 restores the scroll setting it teaches; lesson 6 removes `{HLQ}.TEST.JCL`; lesson 13 creates it empty.
+
+**Acceptance (same day).** Added a confirmation before a start / restart / mode switch that would discard unsaved or
+learner-made work (`workAtRisk`, `confirmDiscard`, a read-only unsent-text probe from the terminal); compatibility tests for
+lesson/step ids and stored progress; real browser walkthroughs (`docs/curriculum/m1a-acceptance.md`). Final: 22 test files,
+1,658 tests (+5 todo), `pnpm check` and `pnpm build` green. M1b backlog: `docs/curriculum/m1b-backlog.md`.
+
+**Not done (M1b).** Wording/IBM corrections, SUBMIT/SJ text (ADR 0015), message ids, L17/L21/L27/L28 validator fixes,
+stale counts, resource links, CI.

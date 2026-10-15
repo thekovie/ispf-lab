@@ -1,0 +1,48 @@
+// M0: shortest cheap scripted sequences vs Challenge completion (no lesson work done).
+import { Sim } from "@tests/engine/harness";
+import { LESSONS } from "@/tutorial/lessons";
+import { feedEvents, startRunner } from "@/tutorial/engine";
+import { reduce } from "@/engine/reducer";
+import { writeFileSync } from "node:fs";
+
+function start(l: any) {
+  const s = Sim.loggedOn();
+  const scr = l.startingState?.screen;
+  if (scr) s.state = reduce(s.state, { type: "GOTO", screen: scr, clearStack: true } as any).state;
+  s.events = [];
+  return s;
+}
+const E = (m: string) => ({ project: "", group: "", type: "", member: "", other: m });
+const SEQ: Record<string, [string, (s: Sim) => void][]> = {
+  "member list of USER01.JCL (=2, enter dsn)": [["=2", (s) => s.cmd("=2")], ["dsn", (s) => s.enter(E("'USER01.JCL'"))]],
+  "edit HELLO then CANCEL": [["=2", (s) => s.cmd("=2")], ["open HELLO", (s) => s.enter(E("'USER01.JCL(HELLO)'"))], ["CANCEL", (s) => s.cmd("CANCEL")]],
+  "edit HELLO then SAVE (no change)": [["=2", (s) => s.cmd("=2")], ["open HELLO", (s) => s.enter(E("'USER01.JCL(HELLO)'"))], ["SAVE", (s) => s.cmd("SAVE")]],
+  "edit HELLO then PF3 (no change)": [["=2", (s) => s.cmd("=2")], ["open HELLO", (s) => s.enter(E("'USER01.JCL(HELLO)'"))], ["PF3", (s) => s.pf(3)]],
+  "3.4 + level + RESET": [["=3.4", (s) => s.cmd("=3.4")], ["level", (s) => s.enter({ level: "USER01" })], ["RESET", (s) => s.cmd("RESET")]],
+  "=3.4 then RETURN": [["=3.4", (s) => s.cmd("=3.4")], ["RETURN", (s) => s.cmd("RETURN")]],
+  "=3.4 then PF4": [["=3.4", (s) => s.cmd("=3.4")], ["PF4", (s) => s.pf(4)]],
+  "=S": [["=S", (s) => s.cmd("=S")]],
+  "browse HELLO (=1) then PF3": [["=1", (s) => s.cmd("=1")], ["open", (s) => s.enter(E("'USER01.JCL(HELLO)'"))], ["PF3", (s) => s.pf(3)]],
+};
+describe("seq", () => {
+  it("runs", () => {
+    const out: string[] = [];
+    for (const [name, steps] of Object.entries(SEQ)) {
+      const hits: string[] = [];
+      for (const l of LESSONS) {
+        const s = start(l);
+        let runner = startRunner(l);
+        let done = false, err = "";
+        for (const [, act] of steps) {
+          try { act(s); } catch (e: any) { err = String(e.message).slice(0, 40); break; }
+          const ev = s.events; s.events = [];
+          const r = feedEvents(l, runner, ev, s.state, "challenge"); runner = r.runner;
+          if (r.completed) { done = true; break; }
+        }
+        if (done) hits.push(String(l.number));
+      }
+      out.push(`${name}: completes L${hits.join(", L") || "-"}`);
+    }
+    writeFileSync(__dirname + "/m0-seq.out.txt", out.join("\n") + "\n");
+  });
+});

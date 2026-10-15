@@ -16,5 +16,8 @@ Write a new ADR the moment a non-obvious choice is made; never rewrite history â
 | [0009](0009-jump-as-system-command.md) | Jump, RETURN, split-screen and retrieve are system commands processed before the panel |
 | [0010](0010-edit-history-snapshots.md) | UNDO via per-interaction snapshots; edit profiles per data-set type, persisted separately |
 | [0011](0011-special-lines.md) | =COLS>/=BNDS>/=PROF> are session-only rows with negative ids |
+| [0012](0012-virtual-jes.md) | Jobs run to completion inside the reducer; SDSF is a simulated, labelled read model (its "documented deviation" about SUBMIT is corrected by 0015) |
 | [0013](0013-lab-bundle.md) | Export/Import Lab as one versioned, structurally validated bundle |
-| [0012](0012-virtual-jes.md) | Jobs run to completion inside the reducer; SDSF is a simulated, labelled read model |
+| [0014](0014-progress-scope-single-learner.md) | Lesson progress is one record per browser; the app is single-learner |
+| [0015](0015-submit-and-sj-simulation-disclosure.md) | Edit SUBMIT matches IBM's wording; SDSF SJ/SE are disclosed simplifications |
+| [0016](0016-challenge-completion-guard.md) | Challenge completion needs a guard and an outcome check, not a repeat of the Learn steps (*Provisional, validated by the M1a tests*) |

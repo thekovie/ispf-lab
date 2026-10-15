@@ -65,7 +65,7 @@ export const lesson17: Lesson = {
   description: "Recall previous commands with F12 / RETRIEVE, and type more than one line command before pressing Enter.",
   objective: "Exclude two data sets from DSLIST in one Enter, RESET, then bring back and re-run an earlier command with RETRIEVE.",
   teaches: ["ISPF processes every line command on the panel, top to bottom", "RETRIEVE / F12 refills the command line from the stack", "F12 is Cancel in Edit and Retrieve on most other panels"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, clearRetrieve: true },
   steps: [
     {
       id: "open-dslist",
@@ -110,7 +110,7 @@ export const lesson18: Lesson = {
   description: "Show a column ruler, restrict FIND to a column range, and remove the special lines again.",
   objective: "In {HLQ}.COBOL(HELLO) display a =COLS> ruler, set BOUNDS 8 72, FIND DIVISION inside the bounds, then RESET.",
   teaches: ["COLS shows a =COLS> ruler (special line, never saved)", "BOUNDS left right limits FIND/CHANGE/EXCLUDE", "COBOL area A starts in column 8; JCL must not pass column 71", "RESET removes special lines"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetProfiles: ["COBOL"] },
   steps: [
     {
       id: "open-cobol",
@@ -161,7 +161,7 @@ export const lesson19: Lesson = {
   description: "Display the profile, change CAPS, and see that the change is remembered for every member of the same type.",
   objective: "Show =PROF> lines for {HLQ}.JCL(HELLO), turn CAPS ON, leave, reopen {HLQ}.JCL(COPYJOB) and confirm CAPS is still ON; then turn it OFF again.",
   teaches: ["PROFILE shows =PROF> lines", "The profile is named after the last qualifier (JCL, COBOL)", "CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE and BOUNDS live in it", "Profiles persist across sessions"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetProfiles: ["JCL"] },
   steps: [
     {
       id: "open-hello",
@@ -206,7 +206,7 @@ export const lesson20: Lesson = {
   description: "Take back a mistake with UNDO, learn what SETUNDO and RECOVERY control, and leave without saving.",
   objective: "In {HLQ}.JCL(HELLO) delete a line, UNDO it, turn RECOVERY ON, then CANCEL.",
   teaches: ["UNDO reverses one interaction (one Enter) at a time", "SETUNDO ON or RECOVERY ON is required", "SAVE is a boundary: earlier changes cannot be undone", "CANCEL discards everything since the last SAVE"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }], resetProfiles: ["JCL"] },
   steps: [
     {
       id: "open-hello",
@@ -251,7 +251,7 @@ export const lesson21: Lesson = {
   description: "Hide the lines you do not care about, flip the view, and bring everything back.",
   objective: "In {HLQ}.COBOL(HELLO) exclude every line containing DIVISION, FLIP, then RESET.",
   teaches: ["X / EXCLUDE ALL hides matching lines behind a marker", "FLIP reverses which lines are hidden", "RESET (or RESET X) redisplays everything", "Excluded lines are still in the data"],
-  startingState: { screen: { id: "PRIMARY_OPTION_MENU" } },
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetProfiles: ["COBOL"] },
   steps: [
     {
       id: "open-cobol",
