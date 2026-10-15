@@ -1,6 +1,6 @@
 # Course design
 
-Twenty-eight reviewed lessons in ten modules, plus seven **draft** foundation lessons (29-35, module 11) added in M3 that await independent source, fidelity and expert review. Lessons 1–15 follow IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
+Twenty-eight reviewed lessons in ten modules, plus eight **draft** foundation lessons (29-36, module 11) added in M3 that await independent source, fidelity and expert review. Lessons 1–15 follow IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
 data sets → editor) and the Mainframestechhelp topic order (Settings → Utilities 3.1/3.2/3.3/3.4 → member lists →
 editor commands). Lessons 16–28 (added with the expansion spec) cover the jump function, RETRIEVE, the editor's
 power tools (COLS/BOUNDS, profiles, UNDO, exclude/FLIP), DSLIST and member-list depth, and the batch loop
@@ -47,6 +47,7 @@ Lesson files: `src/tutorial/lessons/module1.ts` … `module6.ts`, `module7-8.ts`
 | 33 | Build a job from scratch (**draft**) | new member `{HLQ}.JCL(NEWDS)` → JOB → EXEC IEFBR14 → DD NEW,CATLG + SPACE + DCB → `//` → SUBMIT → 3.4 | parsed editor text (job name, program, DD attributes), `JOB_COMPLETED`, `DATASET_SEARCHED`, catalog state | SRC-003 p.126, 147-148, 164, 251, 278; SRC-018 PDF p.32-33; spec `b-04-build-a-job.md` |
 | 34 | Disposition: what happens to a data set (**draft**) | DISPNEW → IEF285I CATALOGED → DISPMOD (appends) → browse → DISPDEL → KEEPIT deletes its output → fix with DISP=(NEW,CATLG) | `JOB_COMPLETED` per job, `JOB_OUTPUT_OPENED`, `MEMBER_OPENED`, catalog state, parsed DD | SRC-003 p.147-152 (EV-B 1.1); SRC-019 IEF285I; spec `b-05-disp.md` |
 | 35 | Multi-step jobs: return codes and abends (**draft**) | RCJOB (SORT syntax error, RC 16, later step still runs) → JESYSMSG IEF142I → fix control statement → CC 0000 → ABENDJOB (S806, later step not executed) | `JOB_COMPLETED{maxRc,abend}`, `JOB_OUTPUT_OPENED{JESYSMSG}` of the right job, parsed SYSIN | SRC-019 IEF142I/IEF272I/IEF450I/CSV003I; SRC-020 S806; SRC-028 ICE007A; SRC-027 p.63; spec `b-06-multistep-rc.md` |
+| 36 | Batch troubleshooting: classify the failure, then fix it (**draft**) | FIXJCL (IEFC630I), FIXDSN (IEF212I), FIXPGM (S806 abend), FIXRC (RC 16): submit, read JESYSMSG, fix, CC 0000 | `JOB_COMPLETED` per job (failure, then success), `JOB_OUTPUT_OPENED{JESYSMSG}` of the right job | SRC-019 IEFC630I/IEF212I/IEF272I/CSV003I; SRC-020 S806; SRC-027/028; spec `b-10-job-troubleshooting.md` |
 
 ## Step anatomy
 

@@ -12,7 +12,7 @@
 import type { SimEvent } from "@/engine/types";
 import type { Validator } from "./types";
 import { allOf, anyOf, is, noEditSession, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
-import { buildDatasetIsRight, dispKeepExists, outputOfJob, typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
+import { buildDatasetIsRight, dispKeepExists, outputOfJob, trbFailed, typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
 
 export interface Challenge {
   task: string;
@@ -82,7 +82,19 @@ const shown = (tail: "SEQ" | "LIB", anyForm: boolean) =>
     sawAll(is("TSO_COMMAND_ENTERED", (e, ctx) => /^(TSO\s+)?LISTDS\b/i.test(e.command.trim()) && e.command.toUpperCase().includes(`${ctx.hlq}.TYPES.${tail}`))),
   );
 
+/** For {HLQ}<letter>: a failing run, then its JESYSMSG read, then a run that ended CC 0000. */
+const failReadFix = (letter: string): Validator =>
+  sawInOrder(
+    is("JOB_COMPLETED", (e, ctx) => trbFailed(e, ctx.hlq, letter)),
+    is("JOB_OUTPUT_OPENED", (e, ctx) => e.ddname === "JESYSMSG" && outputOfJob(letter)(e, ctx)),
+    is("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}${letter}` && e.status === "OUTPUT" && e.maxRc === 0 && !e.abend),
+  );
+
 export const CHALLENGES: Record<string, Challenge> = {
+  "b-10-job-troubleshooting": {
+    task: "FIXJCL, FIXDSN, FIXPGM and FIXRC each have one fault. For each job: let it fail, read its JESYSMSG, fix it, and run it to CC 0000. Any order.",
+    validator: allOf(failReadFix("J"), failReadFix("Q"), failReadFix("Z"), failReadFix("W"), noEditSession),
+  },
   "b-06-multistep-rc": {
     task: "Find out why RCJOB ends with a high return code although every step ran, and fix it so it ends CC 0000. It has to end CC 0016 first, you have to read its JESYSMSG, and a later run has to end CC 0000.",
     validator: allOf(

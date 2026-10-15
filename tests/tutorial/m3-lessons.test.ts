@@ -910,3 +910,144 @@ describe("b-06-multistep-rc", () => {
     });
   });
 });
+
+describe("b-10-job-troubleshooting", () => {
+  const ID = "b-10-job-troubleshooting";
+  const FIXES: Record<string, { match: RegExp; text: string }> = {
+    FIXJCL: { match: /DIPS/, text: `//OUT      DD  DSN=${HLQ}.TRB.DATA,DISP=(NEW,CATLG),` },
+    FIXDSN: { match: /OUT /, text: `//OUT      DD  DSN=${HLQ}.NOTES.TXT,DISP=SHR` },
+    FIXPGM: { match: /IEFBR41/, text: "//STEP1    EXEC PGM=IEFBR14" },
+    FIXRC: { match: /FIELDZ/, text: "  SORT FIELDS=(1,3,CH,A)" },
+  };
+  const toMenu = (a: Attempt) => {
+    for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(a.sim.state.screen.id); i++) a.pf(3);
+  };
+  const lastJobId = (a: Attempt) => a.sim.state.jes.jobs[a.sim.state.jes.jobs.length - 1].id;
+  const submit = (a: Attempt, member: string) => {
+    toMenu(a);
+    a.cmd(`TSO SUBMIT JCL(${member})`);
+  };
+  const read = (a: Attempt, job = lastJobId(a)) => {
+    a.cmd("=S");
+    a.cmd("ST");
+    a.enter({ [`cmd:${job}`]: "?" });
+    a.enter({ "cmd:JESYSMSG": "S" });
+  };
+  const fix = (a: Attempt, member: string) => {
+    toMenu(a);
+    a.cmd("=2");
+    a.enter(entry(`${HLQ}.JCL(${member})`));
+    a.enter({ [`line:${a.lineId(FIXES[member].match)}`]: FIXES[member].text });
+    a.enter({ command: "SUBMIT" });
+    a.pf(3);
+  };
+  const all = (a: Attempt) => {
+    for (const m of ["FIXJCL", "FIXDSN", "FIXPGM", "FIXRC"]) {
+      submit(a, m);
+      read(a);
+      fix(a, m);
+    }
+  };
+
+  it("is lesson 36 and advises lesson 35", () => {
+    const l = lessonById(ID)!;
+    expect(l.number).toBe(36);
+    expect(l.requires).toEqual(["b-06-multistep-rc"]);
+  });
+
+  it("creates four faulty jobs for this userid", () => {
+    const c = new Attempt(lessonById(ID)!);
+    for (const m of Object.keys(FIXES)) expect(getMember(c.sim.state.catalog, `${HLQ}.JCL`, m), m).toBeDefined();
+    expect(getMember(c.sim.state.catalog, `${HLQ}.JCL`, "FIXJCL")!.records[0].trimEnd()).toMatch(/^\/\/USER01J\s+JOB/);
+  });
+
+  it("each job fails in its own way", () => {
+    const c = new Attempt(lessonById(ID)!);
+    const seen: Record<string, string> = {};
+    for (const m of Object.keys(FIXES)) {
+      submit(c, m);
+      const j = c.sim.state.jes.jobs[c.sim.state.jes.jobs.length - 1];
+      seen[m] = `${j.status}/${j.abend ?? j.maxRc ?? "-"}`;
+      c.pf(3); // back to the menu: a second TSO SUBMIT typed into the shell screen is not the menu path
+    }
+    expect(seen).toEqual({ FIXJCL: "JCL_ERROR/-", FIXDSN: "JCL_ERROR/-", FIXPGM: "OUTPUT/S806", FIXRC: "OUTPUT/16" });
+  });
+
+  it("walks the Learn steps in order and finishes with no mistakes", () => {
+    const c = new Attempt(lessonById(ID)!);
+    const order = ["jcl-read", "jcl-fix", "dsn-read", "dsn-fix", "pgm-read", "pgm-fix", "rc-read", "rc-fix"];
+    expect(stepId(c)).toBe(order[0]);
+    let n = 0;
+    for (const m of ["FIXJCL", "FIXDSN", "FIXPGM", "FIXRC"]) {
+      submit(c, m);
+      read(c);
+      expect(stepId(c)).toBe(order[++n] ?? undefined);
+      fix(c, m);
+      n++;
+      if (n < order.length) expect(stepId(c)).toBe(order[n]);
+    }
+    expect(c.done).toBe(true);
+    expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("reading the log of a different job does not pass a read step", () => {
+    const c = learn(ID, (a) => {
+      submit(a, "FIXDSN");
+      read(a);
+    });
+    expect(stepId(c)).toBe("jcl-read");
+  });
+
+  describe("Challenge", () => {
+    it("failing, reading and fixing all four completes it (in the given order)", () => {
+      expect(challenge(ID, all).done).toBe(true);
+    });
+
+    it("any order works", () => {
+      const c = challenge(ID, (a) => {
+        for (const m of ["FIXRC", "FIXPGM", "FIXDSN", "FIXJCL"]) {
+          submit(a, m);
+          read(a);
+          fix(a, m);
+        }
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("fixing one job less than four does not complete it", () => {
+      const c = challenge(ID, (a) => {
+        for (const m of ["FIXJCL", "FIXDSN", "FIXPGM"]) {
+          submit(a, m);
+          read(a);
+          fix(a, m);
+        }
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("a job fixed without first running and reading it does not count", () => {
+      const c = challenge(ID, (a) => {
+        for (const m of ["FIXJCL", "FIXDSN", "FIXPGM"]) {
+          submit(a, m);
+          read(a);
+          fix(a, m);
+        }
+        fix(a, "FIXRC"); // never run as is, never read
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("a job that failed and was fixed but whose log was never opened does not count", () => {
+      const c = challenge(ID, (a) => {
+        for (const m of ["FIXJCL", "FIXDSN", "FIXPGM"]) {
+          submit(a, m);
+          read(a);
+          fix(a, m);
+        }
+        submit(a, "FIXRC");
+        fix(a, "FIXRC");
+      });
+      expect(c.done).toBe(false);
+    });
+  });
+});

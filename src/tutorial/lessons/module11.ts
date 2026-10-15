@@ -556,8 +556,8 @@ export const lessonB05: Lesson = {
   ],
 };
 
-const RCJOB_JCL = [
-  "//{HLQ}R  JOB (ACCT),'RETURN CODES',CLASS=A,MSGCLASS=X",
+const rcJob = (letter: string, title: string) => [
+  `//{HLQ}${letter}  JOB (ACCT),'${title}',CLASS=A,MSGCLASS=X`,
   "//STEP1    EXEC PGM=IEFBR14",
   "//STEP2    EXEC PGM=SORT",
   "//SYSOUT   DD  SYSOUT=*",
@@ -569,6 +569,7 @@ const RCJOB_JCL = [
   "//STEP3    EXEC PGM=IEFBR14",
   "//",
 ];
+const RCJOB_JCL = rcJob("R", "RETURN CODES");
 const ABENDJOB_JCL = ["//{HLQ}A  JOB (ACCT),'ABEND',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//STEP2    EXEC PGM=NOPROG", "//STEP3    EXEC PGM=IEFBR14", "//"];
 
 /** The in-stream SYSIN of some step holds a well-formed SORT control statement. */
@@ -652,6 +653,109 @@ export const lessonB06: Lesson = {
         "After an abend, a later step that does not specify EVEN or ONLY is not executed: IEF272I STEP WAS NOT EXECUTED. That is the difference from a return code. (The simulator's abend message layout is simulated and differs from IBM's IEF450I template; it models only S806.)",
       hint: "=S, ST, ? on {HLQ}A, S on JESYSMSG.",
       validator: eventIs("JOB_OUTPUT_OPENED", (e, ctx) => e.ddname === "JESYSMSG" && outputOfJob("A")(e, ctx)),
+    },
+  ],
+};
+
+const FIXJCL_JCL = ["//{HLQ}J  JOB (ACCT),'FIX ME 1',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//OUT      DD  DSN={HLQ}.TRB.DATA,DIPS=(NEW,CATLG),", "//             SPACE=(TRK,(1,1)),DCB=(RECFM=FB,LRECL=80)", "//"];
+const FIXDSN_JCL = ["//{HLQ}Q  JOB (ACCT),'FIX ME 2',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//OUT      DD  DSN={HLQ}.NOTES.TXTT,DISP=SHR", "//"];
+const FIXPGM_JCL = ["//{HLQ}Z  JOB (ACCT),'FIX ME 3',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR41", "//STEP2    EXEC PGM=IEFBR14", "//"];
+
+const FAULTY = [
+  { letter: "J", id: "jcl", member: "FIXJCL" },
+  { letter: "Q", id: "dsn", member: "FIXDSN" },
+  { letter: "Z", id: "pgm", member: "FIXPGM" },
+  { letter: "W", id: "rc", member: "FIXRC" },
+] as const;
+
+const trbRead = (letter: string) => eventIs("JOB_OUTPUT_OPENED", (e, ctx: LessonContext) => e.ddname === "JESYSMSG" && outputOfJob(letter)(e, ctx));
+const trbFixed = (letter: string) => eventIs("JOB_COMPLETED", (e, ctx: LessonContext) => e.jobName === `${ctx.hlq}${letter}` && e.status === "OUTPUT" && e.maxRc === 0 && !e.abend);
+/** A run of {HLQ}<letter> that did not end CC 0000 (JCL error, abend or a nonzero code). */
+export const trbFailed = (e: { jobName: string; status: string; maxRc?: number; abend?: string }, hlq: string, letter: string) =>
+  e.jobName === `${hlq}${letter}` && (e.status !== "OUTPUT" || e.maxRc !== 0 || !!e.abend);
+
+export const lessonB10: Lesson = {
+  id: "b-10-job-troubleshooting",
+  number: 36,
+  module: MODULE,
+  title: "Batch troubleshooting: classify the failure, then fix it",
+  description: "Four jobs, four different faults: a JCL error, an allocation failure, an abend and a bad return code. Read the log, say which it is, fix it.",
+  objective: "For FIXJCL, FIXDSN, FIXPGM and FIXRC: let the job fail, read its JESYSMSG to classify the failure, fix the one fault and run it to CC 0000.",
+  teaches: [
+    "Start with the SDSF status (CC, ABEND or JCL ERROR), then JESYSMSG, then the step's own output",
+    "A JCL error is found before any step runs; IEFC630I names a keyword the system does not accept",
+    "IEF212I names the DD that could not be allocated, not the data set",
+    "S806 is a missing program; a nonzero return code is not a failure of the job by itself",
+  ],
+  requires: ["b-06-multistep-rc"],
+  sources: ["SRC-019", "SRC-020", "SRC-018", "SRC-027", "SRC-028"],
+  startingState: {
+    screen: { id: "PRIMARY_OPTION_MENU" },
+    resetJobs: true,
+    removeDatasets: ["{HLQ}.TRB.DATA"],
+    createMembers: [
+      { dsn: "{HLQ}.JCL", member: "FIXJCL", records: FIXJCL_JCL },
+      { dsn: "{HLQ}.JCL", member: "FIXDSN", records: FIXDSN_JCL },
+      { dsn: "{HLQ}.JCL", member: "FIXPGM", records: FIXPGM_JCL },
+      { dsn: "{HLQ}.JCL", member: "FIXRC", records: rcJob("W", "FIX ME 4") },
+    ],
+  },
+  steps: [
+    {
+      id: "jcl-read",
+      instruction: "Submit FIXJCL (TSO SUBMIT JCL(FIXJCL)), open SDSF (=S, ST), look at the status, then open JESYSMSG of {HLQ}J. What kind of failure is it?",
+      explanation:
+        "The status says JCL ERROR and no step ran, so the system found the problem while reading the job. IEFC630I UNIDENTIFIED KEYWORD names the word it did not accept (DIPS) and the statement number points at the DD. A misspelt keyword is a classic.",
+      hint: "TSO SUBMIT JCL(FIXJCL); =S, ST, ? on {HLQ}J, S on JESYSMSG.",
+      validator: trbRead("J"),
+    },
+    {
+      id: "jcl-fix",
+      instruction: "Edit FIXJCL, correct the keyword, and SUBMIT until the job ends CC 0000. PF3 to save.",
+      hint: "DIPS should be DISP. F3 to the menu, =2, {HLQ}.JCL(FIXJCL), overtype, SUBMIT.",
+      validator: trbFixed("J"),
+    },
+    {
+      id: "dsn-read",
+      instruction: "Now FIXDSN: submit it, check the status in SDSF, and open JESYSMSG of {HLQ}Q.",
+      explanation:
+        "This also shows JCL ERROR, but the log is different: the converter had no complaint, and IEF212I says a DD could not be allocated: DATA SET NOT FOUND. It names the job, the step and the DD, not the data set. Read the DD statement to see the name.",
+      hint: "TSO SUBMIT JCL(FIXDSN); =S, ST, ? on {HLQ}Q, S on JESYSMSG.",
+      validator: trbRead("Q"),
+    },
+    {
+      id: "dsn-fix",
+      instruction: "Fix the data set name on the OUT DD (look for the stray character) and run FIXDSN to CC 0000.",
+      hint: "{HLQ}.NOTES.TXTT should be {HLQ}.NOTES.TXT.",
+      validator: trbFixed("Q"),
+    },
+    {
+      id: "pgm-read",
+      instruction: "Next FIXPGM: submit it, look at the SDSF status, and read JESYSMSG of {HLQ}Z.",
+      explanation:
+        "The status shows an ABEND, not a code. The first step abended with S806: the system could not find the program on EXEC (CSV003I REQUESTED MODULE ... NOT FOUND). The second step was not executed (IEF272I). That is the difference from a return code.",
+      hint: "TSO SUBMIT JCL(FIXPGM); =S, ST, ? on {HLQ}Z, S on JESYSMSG.",
+      validator: trbRead("Z"),
+    },
+    {
+      id: "pgm-fix",
+      instruction: "Correct the program name on STEP1 and run FIXPGM to CC 0000.",
+      hint: "IEFBR41 should be IEFBR14.",
+      validator: trbFixed("Z"),
+    },
+    {
+      id: "rc-read",
+      instruction: "Last, FIXRC: submit it, look at the status, and read JESYSMSG of {HLQ}W.",
+      explanation:
+        "All three steps ran and IEF142I gives each step's code; the highest, 0016, is the job's CC. The cause is in the SORT step's own output (ICE007A SYNTAX ERROR), not in JESYSMSG. A nonzero code is not a failure of the job by itself; here it points at a real problem.",
+      hint: "TSO SUBMIT JCL(FIXRC); =S, ST, ? on {HLQ}W, S on JESYSMSG.",
+      validator: trbRead("W"),
+    },
+    {
+      id: "rc-fix",
+      instruction: "Find the SYSOUT of the SORT step (use ? and open SYSOUT), see ICE007A, correct the control statement in FIXRC and run it to CC 0000.",
+      hint: "SORT FIELDZ should be SORT FIELDS=(1,3,CH,A).",
+      validator: trbFixed("W"),
     },
   ],
 };

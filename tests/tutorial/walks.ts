@@ -461,6 +461,33 @@ WALKS["b-06-multistep-rc"] = (c) => {
   read("JOB00003");
 };
 
+WALKS["b-10-job-troubleshooting"] = (c) => {
+  const fixes: Record<string, [RegExp, string]> = {
+    FIXJCL: [/DIPS/, `//OUT      DD  DSN=${HLQ}.TRB.DATA,DISP=(NEW,CATLG),`],
+    FIXDSN: [/OUT /, `//OUT      DD  DSN=${HLQ}.NOTES.TXT,DISP=SHR`],
+    FIXPGM: [/IEFBR41/, "//STEP1    EXEC PGM=IEFBR14"],
+    FIXRC: [/FIELDZ/, "  SORT FIELDS=(1,3,CH,A)"],
+  };
+  const toMenu = () => {
+    for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(c.sim.state.screen.id); i++) c.pf(3);
+  };
+  for (const [member, [match, text]] of Object.entries(fixes)) {
+    toMenu();
+    c.cmd(`TSO SUBMIT JCL(${member})`);
+    const jobs = c.sim.state.jes.jobs;
+    c.cmd("=S");
+    c.cmd("ST");
+    c.enter({ [`cmd:${jobs[jobs.length - 1].id}`]: "?" });
+    c.enter({ "cmd:JESYSMSG": "S" });
+    toMenu();
+    c.cmd("=2");
+    c.enter(entry(`${HLQ}.JCL(${member})`));
+    c.enter({ [`line:${c.lineId(match)}`]: text });
+    c.enter({ command: "SUBMIT" });
+    c.pf(3);
+  }
+};
+
 const E = (ref: string) => entry(ref);
 
 /**
