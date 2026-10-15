@@ -14,6 +14,8 @@ export interface EditorLine {
   excluded: boolean;
   /** created by an I command and not yet typed on; pruned on the next Enter if still blank */
   inserted?: boolean;
+  /** one of the quote lines an empty member opens with: kept while nothing has been typed, dropped once data exists */
+  seed?: boolean;
 }
 
 /** A prefix-area command that could not be completed yet (single CC, C without A/B ...). */
@@ -77,6 +79,8 @@ export interface EditorSession {
   lastFind?: { text: string; direction: FindDirection };
   lastChange?: { from: string; to: string };
   scrollAmount: string;
+  /** the amount the field held before MAX was typed into it; MAX is one-time, so the next scroll puts this back (UG1, Using the scrolling commands) */
+  scrollBeforeMax?: string;
 }
 
 export interface EditorEvent {

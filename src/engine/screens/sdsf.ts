@@ -153,7 +153,8 @@ export const sdsfStatusScreen: ScreenHandler<StatusFrame> = {
     "action column), JOBNAME, JobID, Owner, Prty, Queue, C(lass), Pos, Max-RC",
     "(CC 0000 = ended with condition code 0, JCL ERROR = never ran, ABEND Sxxx =",
     "abnormal end). Actions: S browse all output, ? list the spool data sets,",
-    "P purge, SJ edit the JCL held for the job (changes are not saved in real SDSF), = repeat the last action.",
+    "P purge, SJ edit the JCL held for the job (real SDSF does not save changes),",
+    "= repeat the last action.",
     "Commands: OWNER userid|*, PREFIX name*|*, SORT JOBNAME|JOBID|STATUS, ST, O, LOG.",
   ],
   render(state, frame) {
@@ -350,7 +351,7 @@ export const sdsfJobDsScreen: ScreenHandler<JobDsFrame> = {
 };
 
 export const confirmPurgeScreen: ScreenHandler<PurgeFrame> = {
-  help: ["SDSF asks before purging (P) a job. Enter or Y purges the job and all its output; PF3 or N cancels."],
+  help: ["SDSF asks before purging (P) a job. Enter or Y purges the job and all its", "output; PF3 or N cancels."],
   render(state, frame) {
     const job = findJob(state, frame.jobId);
     const msg = state.message;

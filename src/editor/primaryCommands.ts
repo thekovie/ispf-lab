@@ -171,7 +171,7 @@ function defaultAmount(s: EditorSession): ScrollAmount {
   return { kind: "page" };
 }
 
-function scroll(s: EditorSession, direction: "UP" | "DOWN" | "LEFT" | "RIGHT", amount?: ScrollAmount): EditorResult {
+function scrollOnce(s: EditorSession, direction: "UP" | "DOWN" | "LEFT" | "RIGHT", amount?: ScrollAmount): EditorResult {
   const n = amountLines(s, amount);
   if (direction === "UP") {
     if (s.top === 0) return { session: s, events: [], message: info("*** TOP OF DATA ***") };
@@ -190,6 +190,13 @@ function scroll(s: EditorSession, direction: "UP" | "DOWN" | "LEFT" | "RIGHT", a
       : amount?.kind === "max" ? maxLeft : Math.min(maxLeft, s.leftCol + cols);
   if (leftCol === s.leftCol) return { session: s, events: [], message: info(direction === "LEFT" ? "*** LEFT EDGE ***" : "*** RIGHT EDGE ***") };
   return { session: { ...s, leftCol }, events: [{ type: "EDITOR_SCROLLED", detail: amountLabel(s, amount) }] };
+}
+
+/** A scroll with no explicit amount uses the Scroll field; a MAX typed there applies to this one scroll only. */
+function scroll(s: EditorSession, direction: "UP" | "DOWN" | "LEFT" | "RIGHT", amount?: ScrollAmount): EditorResult {
+  const r = scrollOnce(s, direction, amount);
+  if (amount || s.scrollAmount.toUpperCase() !== "MAX") return r;
+  return { ...r, session: { ...r.session, scrollAmount: s.scrollBeforeMax ?? "PAGE", scrollBeforeMax: undefined } };
 }
 
 interface Hit {

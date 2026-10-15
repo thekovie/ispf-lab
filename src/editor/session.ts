@@ -25,9 +25,11 @@ export function openSession(o: OpenOptions): EditorSession {
   const lrecl = o.lrecl > 0 ? o.lrecl : 80;
   const texts = o.records.map((r) => r.padEnd(lrecl).slice(0, lrecl));
   const lines: EditorLine[] = texts.map((text, i) => ({ id: i + 1, text, excluded: false }));
-  // A nonexistent member opens with several empty input lines, which vanish unused (IBM Edit and Edit Macros, "Creating a new data set").
-  if (o.isNew && o.mode === "EDIT" && lines.length === 0) {
-    for (let i = 0; i < NEW_MEMBER_INPUT_LINES; i++) lines.push({ id: i + 1, text: "".padEnd(lrecl), excluded: false, inserted: true });
+  // An empty data set or member (nonexistent, or existing with no records) opens in Edit with several empty input lines
+  // marked with quotes (IBM Edit and Edit Macros, "Creating a new data set" and "Edit commands"). IBM does not say when
+  // they go away; here they stay until the learner has typed data, then unused ones are dropped like lines from I.
+  if (o.mode === "EDIT" && !o.readOnly && lines.length === 0) {
+    for (let i = 0; i < NEW_MEMBER_INPUT_LINES; i++) lines.push({ id: i + 1, text: "".padEnd(lrecl), excluded: false, inserted: true, seed: true });
   }
   return {
     mode: o.mode,

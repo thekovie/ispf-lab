@@ -282,7 +282,9 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
   absorb(applyLineCommands(session, collectPrefixCommands(session, fields)));
   // 3. scroll amount field
   const scroll = (fields.scroll ?? "").trim().toUpperCase();
-  if (scroll && scroll !== session.scrollAmount) session = { ...session, scrollAmount: scroll };
+  if (scroll && scroll !== session.scrollAmount) {
+    session = { ...session, scrollAmount: scroll, scrollBeforeMax: scroll === "MAX" ? session.scrollAmount : undefined };
+  }
   // 4. primary command (typed, or the PF key equivalent)
   const raw = pfCommand ?? (fields.command ?? "").trim();
   if (raw) events.push({ type: "COMMAND_ENTERED", screen: state.screen.id, command: raw });

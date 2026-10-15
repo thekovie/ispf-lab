@@ -193,6 +193,52 @@ describe("scroll events carry the amount used (M3, lesson a-01)", () => {
   });
 });
 
+describe("MAX typed in the Scroll field is one-time (UG1 'Using the scrolling commands': after a MAX scroll the amount reverts)", () => {
+  const longLines = Array.from({ length: 60 }, (_, i) => `LINE ${String(i + 1).padStart(3, "0")}`);
+  const openLong = () => {
+    const s = Sim.loggedOn();
+    const ds = s.state.catalog.datasets["USER01.DATA"];
+    const members = { ...ds.members, LONG: { name: "LONG", records: longLines.map((l) => l.padEnd(80)) } };
+    s.state = { ...s.state, catalog: { ...s.state.catalog, datasets: { ...s.state.catalog.datasets, "USER01.DATA": { ...ds, members } } } };
+    return s.cmd("2").enter({ other: "USER01.DATA(LONG)" });
+  };
+
+  it("PF8 with MAX in the field goes to the bottom, then the field returns to its previous value", () => {
+    const s = openLong();
+    s.pf(8, { scroll: "HALF" });
+    s.pf(8, { scroll: "MAX" });
+    expect(s.state.editor!.top).toBe(60 - s.state.editor!.pageSize);
+    expect(s.state.editor!.scrollAmount).toBe("HALF");
+  });
+
+  it("with no earlier amount the field returns to PAGE", () => {
+    const s = openLong();
+    s.pf(8, { scroll: "MAX" });
+    expect(s.state.editor!.scrollAmount).toBe("PAGE");
+  });
+
+  it("MAX typed but only a command that does not scroll is sent: the field keeps MAX until a scroll", () => {
+    const s = openLong();
+    s.enter({ scroll: "MAX", command: "LOCATE 5" });
+    expect(s.state.editor!.scrollAmount).toBe("MAX");
+  });
+
+  it("UP with MAX in the field goes to the top and reverts too", () => {
+    const s = openLong();
+    s.enter({ command: "DOWN MAX" });
+    s.pf(7, { scroll: "MAX" });
+    expect(s.state.editor!.top).toBe(0);
+    expect(s.state.editor!.scrollAmount).toBe("PAGE");
+  });
+
+  it("a one-time MAX on the command line leaves the field as it was", () => {
+    const s = openLong();
+    s.pf(8, { scroll: "HALF" });
+    s.enter({ command: "DOWN MAX" });
+    expect(s.state.editor!.scrollAmount).toBe("HALF");
+  });
+});
+
 describe("a new, empty member offers input lines (M3, lesson b-04; EM: 'several empty lines', quotes in the line command field)", () => {
   const openNew = () => Sim.loggedOn().cmd("2").enter({ other: "USER01.JCL(FRESH)" });
   const prefixes = (s: Sim) => s.rendered().fields.filter((f) => f.startsWith("prefix:"));
@@ -225,6 +271,41 @@ describe("a new, empty member offers input lines (M3, lesson b-04; EM: 'several 
     const s = openNew();
     s.enter({ [`line:${lineIds(s)[1]}`]: "//FRESH   JOB", command: "SAVE" });
     expect(getMember(s.state.catalog, "USER01.JCL", "FRESH")!.records.map((r) => r.trimEnd())).toEqual(["//FRESH   JOB"]);
+  });
+
+  it("an Enter with only a primary command keeps the input lines, so the learner is never left without a place to type", () => {
+    const s = openNew();
+    const before = lineIds(s).length;
+    s.enter({ command: "TOP" });
+    expect(lineIds(s).length).toBe(before);
+    s.enter({});
+    expect(lineIds(s).length).toBe(before);
+    expect(s.state.editor!.dirty).toBe(false);
+  });
+
+  it("an existing member that holds no records also opens with input lines (EM: any empty member or data set)", () => {
+    const s = openNew();
+    s.enter({ command: "SAVE" });
+    s.pf(3);
+    s.cmd("2").enter({ other: "USER01.JCL(FRESH)" });
+    expect(lineIds(s).length).toBeGreaterThanOrEqual(3);
+    expect(JSON.stringify(s.rendered().rows)).toContain("''''''");
+  });
+
+  it("Browse and View of an empty member show no input lines", () => {
+    const s = openNew();
+    s.enter({ command: "SAVE" });
+    for (let i = 0; i < 4 && s.state.screen.id !== "PRIMARY_OPTION_MENU"; i++) s.pf(3);
+    s.cmd("1").enter({ other: "USER01.JCL(FRESH)" });
+    expect(s.state.editor?.mode).toBe("VIEW");
+    expect(JSON.stringify(s.rendered().rows)).not.toContain("''''''");
+  });
+
+  it("typing data on one input line drops the others once Enter is pressed, as before", () => {
+    const s = openNew();
+    s.enter({ [`line:${lineIds(s)[0]}`]: "//FRESH   JOB" });
+    s.enter({ command: "TOP" });
+    expect(s.state.editor!.lines.map((l) => l.text.trim())).toEqual(["//FRESH   JOB"]);
   });
 
   it("an existing member is unchanged: no extra input lines", () => {

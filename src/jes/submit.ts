@@ -57,8 +57,10 @@ interface AllocResult {
 
 /** IEF236I/IEF237I allocation for one step; NEW data sets (and MOD ones that do not exist yet) are created, missing OLD/SHR ones fail the step. */
 function allocateStep(catalog: Catalog, jobName: string, step: StepStatement, userid: string, today: string): AllocResult {
-  const sysmsg = [`IEF236I ALLOC. FOR ${jobName} ${step.name}`];
+  const sysmsg: string[] = [];
   let cat = catalog;
+  // IEF236I says the allocation worked, so it is added only when no DD failed (System Messages, IEF236I).
+  const failed = (error: string): AllocResult => ({ catalog: cat, sysmsg, error });
   for (const dd of step.dds) {
     if (dd.sysout !== undefined || dd.instream || dd.dummy || !dd.params.DSN) {
       sysmsg.push(`IEF237I JES2 ALLOCATED TO ${dd.ddname}`);
@@ -67,7 +69,7 @@ function allocateStep(catalog: Catalog, jobName: string, step: StepStatement, us
     const ref = parseDsnRef(dd.params.DSN);
     if (!ref) {
       sysmsg.push(`IEF212I ${jobName} ${step.name} ${dd.ddname} - DATA SET NOT FOUND`);
-      return { catalog: cat, sysmsg, error: "DATA SET NOT FOUND" };
+      return failed("DATA SET NOT FOUND");
     }
     const status = dispStatus(dd.params) || "NEW";
     const existing = getDataset(cat, ref.dsn);
@@ -75,12 +77,12 @@ function allocateStep(catalog: Catalog, jobName: string, step: StepStatement, us
     if (status === "NEW" || (status === "MOD" && !existing)) {
       if (existing) {
         sysmsg.push(`IGD17101I DATA SET ${ref.dsn}`, "NOT DEFINED BECAUSE DUPLICATE NAME EXISTS IN CATALOG");
-        return { catalog: cat, sysmsg, error: "DUPLICATE NAME" };
+        return failed("DUPLICATE NAME");
       }
       const r = allocate(cat, allocationFor(dd, ref.dsn, userid), today);
       if (r.error) {
         sysmsg.push(`IEF212I ${jobName} ${step.name} ${dd.ddname} - ${r.error}`);
-        return { catalog: cat, sysmsg, error: r.error };
+        return failed(r.error);
       }
       cat = r.catalog;
       sysmsg.push(`IGD101I SMS ALLOCATED TO DDNAME (${dd.ddname.padEnd(8)})`, `        DSN (${ref.dsn.padEnd(44)})`, "        STORCLAS (USRDATA) MGMTCLAS (STANDARD) DATACLAS (        )");
@@ -88,11 +90,11 @@ function allocateStep(catalog: Catalog, jobName: string, step: StepStatement, us
     }
     if (!existing) {
       sysmsg.push(`IEF212I ${jobName} ${step.name} ${dd.ddname} - DATA SET NOT FOUND`);
-      return { catalog: cat, sysmsg, error: "DATA SET NOT FOUND" };
+      return failed("DATA SET NOT FOUND");
     }
     sysmsg.push(`IEF237I ${existing.volume} ALLOCATED TO ${dd.ddname}`);
   }
-  return { catalog: cat, sysmsg };
+  return { catalog: cat, sysmsg: [`IEF236I ALLOC. FOR ${jobName} ${step.name}`, ...sysmsg] };
 }
 
 /** IEF285I disposition messages after the step; a DELETE disposition removes the data set. */

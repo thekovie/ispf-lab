@@ -4,7 +4,7 @@
  * SYSOUT-class output and system messages. Reference: docs/10-jes-sdsf.md; IBM z/OS DFSMSdfp Utilities,
  * DFSORT Application Programming Guide, DFSMS Access Method Services.
  */
-import { deleteDataset, getDataset, parseDsnRef, readRecords, saveRecords, searchLevel } from "@/catalog/catalog";
+import { deleteDataset, getDataset, getMember, parseDsnRef, readRecords, saveRecords, searchLevel } from "@/catalog/catalog";
 import type { Catalog, DsnRef } from "@/catalog/types";
 import { dispStatus, type DdStatement, type StepStatement } from "./jcl";
 
@@ -50,6 +50,13 @@ function writeDd(ctx: ProgramContext, catalog: Catalog, d: DdStatement, records:
   if (d.dummy) return { catalog };
   const r = ref(d);
   if (!r) return { catalog, error: `${d.ddname}: NO DATA SET NAME` };
+  // DISP=MOD on a library: IBM terminates the job if the member exists, and appends after the last member (no directory
+  // entry) when no member is named (JCL Reference, DISP MOD, p.154). The simulator fails the step and changes nothing.
+  if (dispStatus(d.params) === "MOD") {
+    const lib = getDataset(catalog, r.dsn);
+    if (r.member && getMember(catalog, r.dsn, r.member)) return { catalog, error: `${d.ddname}: DISP=MOD ON AN EXISTING MEMBER IS NOT ALLOWED` };
+    if (!r.member && lib?.datasetType === "PDS") return { catalog, error: `${d.ddname}: DISP=MOD ON A LIBRARY NEEDS A MEMBER NAME` };
+  }
   // DISP=MOD on an existing sequential data set: the records go after the last one (IBM, EV-B 1.1); otherwise they replace.
   const current = r.member ? undefined : getDataset(catalog, r.dsn);
   const all = dispStatus(d.params) === "MOD" && current?.datasetType === "PS" ? [...(current.records ?? []), ...records] : records;
@@ -96,18 +103,23 @@ interface SortField {
   desc: boolean;
 }
 
+/** Format types DFSORT accepts in FIELDS=(p,m,f,s) that the simulator recognises; it sorts all of them as characters. */
+const SORT_FORMATS = new Set(["CH", "ZD", "PD", "BI", "FI", "FL", "AC", "CSF", "FS", "ASL", "ASR", "CSL", "CTO", "CLO", "PD0", "UFF", "SFF"]);
+
 function parseSortFields(control: string[]): { fields?: SortField[]; copy?: boolean; error?: string } {
   const text = control.map((l) => l.trim()).join(" ");
   const m = text.match(/SORT\s+FIELDS=(COPY|\(([^)]*)\))/i);
   if (!m) return { error: "ICE007A SYNTAX ERROR" };
   if (m[1].toUpperCase() === "COPY") return { copy: true };
   const items = m[2].split(",").map((s) => s.trim());
+  // p,m,f,s groups only; a missing comma, a missing sequence or an unknown format type is a syntax error (ICE007A causes in the DFSORT messages book)
+  if (items.length % 4 !== 0) return { error: "ICE007A SYNTAX ERROR" };
   const fields: SortField[] = [];
-  for (let i = 0; i + 3 < items.length + 1; i += 4) {
-    const pos = parseInt(items[i], 10);
-    const len = parseInt(items[i + 1], 10);
-    const order = (items[i + 3] ?? "A").toUpperCase();
-    if (!pos || !len || !["A", "D"].includes(order)) return { error: "ICE007A SYNTAX ERROR" };
+  for (let i = 0; i < items.length; i += 4) {
+    const pos = /^\d+$/.test(items[i]) ? parseInt(items[i], 10) : 0;
+    const len = /^\d+$/.test(items[i + 1]) ? parseInt(items[i + 1], 10) : 0;
+    const order = items[i + 3].toUpperCase();
+    if (!pos || !len || !SORT_FORMATS.has(items[i + 2].toUpperCase()) || !["A", "D"].includes(order)) return { error: "ICE007A SYNTAX ERROR" };
     fields.push({ pos, len, desc: order === "D" });
   }
   return fields.length ? { fields } : { error: "ICE007A SYNTAX ERROR" };

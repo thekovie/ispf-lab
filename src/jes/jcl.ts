@@ -136,16 +136,18 @@ function collect(records: string[]): { statements: RawStatement[]; instream: Map
       i++;
       continue;
     }
-    if (text === "/*" && records.slice(i + 1).every((r) => r.trim() === "")) {
-      // IBM's own sample job ends with an optional /* (JCL User's Guide); accepted when nothing follows
-      listing.push("         /*");
+    if (text.startsWith("/*") && records.slice(i + 1).every((r) => r.trim() === "" || r.trim() === "//")) {
+      // IBM's own sample job ends with an optional delimiter, which may carry a comment and may precede the null statement
+      // (JCL User's Guide; JCL Reference, Delimiter statement and Null statement). Accepted when only that can follow.
+      listing.push(`         ${text}`);
       i++;
       continue;
     }
     if (!text.startsWith("//")) {
       // data outside an in-stream DD: the converter cannot identify the statement
+      // The listing numbers it (IBM is silent), so the message that points at it matches the number printed beside it.
       errors.push({ line: lineNo, id: "IEFC605I", text: "UNIDENTIFIED OPERATION FIELD" });
-      listing.push(`         ${text}`);
+      listing.push(numbered(text, lineNo));
       i++;
       continue;
     }
@@ -184,13 +186,13 @@ function collect(records: string[]): { statements: RawStatement[]; instream: Map
     i++;
     if (operation === "DD" && /^(\*|DATA)(,|$)/.test(operands)) {
       const data: string[] = [];
-      while (i < records.length && !records[i].startsWith("//") && records[i].trimEnd() !== "/*") {
+      while (i < records.length && !records[i].startsWith("//") && !records[i].startsWith("/*")) {
         data.push(records[i].trimEnd());
         listing.push(`         ${records[i].trimEnd()}`);
         i++;
       }
-      if (i < records.length && records[i].trimEnd() === "/*") {
-        listing.push("         /*");
+      if (i < records.length && records[i].startsWith("/*")) {
+        listing.push(`         ${records[i].trimEnd()}`);
         i++;
       }
       instream.set(lineNo, data);

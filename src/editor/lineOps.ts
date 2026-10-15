@@ -106,7 +106,8 @@ export function textSplit(s: EditorSession, id: number, col: number): EditorSess
 
 /** Lines inserted by I that are still blank vanish on the next Enter, as in ISPF. */
 export function pruneUnusedInserts(s: EditorSession, keepIds: Set<number>): EditorSession {
-  const lines = s.lines.filter((l) => !(l.inserted && l.text.trim() === "" && !keepIds.has(l.id)));
+  const hasData = s.lines.some((l) => l.text.trim() !== "");
+  const lines = s.lines.filter((l) => !(l.inserted && l.text.trim() === "" && !keepIds.has(l.id) && !(l.seed && !hasData)));
   return lines.length === s.lines.length ? s : { ...s, lines };
 }
 

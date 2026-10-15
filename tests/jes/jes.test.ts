@@ -250,3 +250,90 @@ describe("DFSORT critical syntax error (EV-B ICE007A; lesson b-06)", () => {
     expect(out(r, "JESYSMSG")).toContain("IEF272I USER01A STEP3 - STEP WAS NOT EXECUTED");
   });
 });
+
+describe("delimiter statement and statement numbers (M3 fidelity review; JCL Reference 'Delimiter statement' p.309-310, null statement p.459)", () => {
+  it("/* with a comment ends in-stream data (IBM example 1) and later JCL still runs", () => {
+    const p = parseJcl(["//J JOB", "//S EXEC PGM=SORT", "//SYSIN DD *", "  SORT FIELDS=(1,3,CH,A)", "/*        END OF DATA", "//SORTOUT DD SYSOUT=*", "//"]);
+    expect(p.errors).toEqual([]);
+    expect(p.steps[0].dds[0].instream).toEqual(["  SORT FIELDS=(1,3,CH,A)"]);
+    expect(p.steps[0].dds.map((d) => d.ddname)).toEqual(["SYSIN", "SORTOUT"]);
+  });
+
+  it("a trailing /* with a comment is accepted", () => {
+    expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "/* END"]).errors).toEqual([]);
+  });
+
+  it("a trailing /* followed by the null statement is accepted (IBM's own null-statement example)", () => {
+    expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "/*", "//"]).errors).toEqual([]);
+  });
+
+  it("/* in the middle of a job is still an error", () => {
+    expect(parseJcl(["//J JOB", "/*", "//S EXEC PGM=IEFBR14", "//"]).errors[0]).toMatchObject({ id: "IEFC605I" });
+  });
+
+  it("STMT NO. never decreases and a stray text line is numbered in the listing, so it points at itself", () => {
+    const r = submit(["//USER01X  JOB (ACCT),'X',CLASS=A", "//* c", "STRAY", "//S EXEC PGM=IEFBR14,FOO=1", "//"]);
+    const jcl = out(r, "JESJCL").split("\n");
+    const numbers = out(r, "JESYSMSG")
+      .split("\n")
+      .filter((l) => /IEFC\d+I/.test(l))
+      .map((l) => Number(l.trim().split(/\s+/)[0]));
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+    const stray = jcl.find((l) => l.includes("STRAY"))!.trim().split(/\s+/)[0];
+    const msg = out(r, "JESYSMSG").split("\n").find((l) => l.includes("IEFC605I"))!;
+    expect(msg.trim().split(/\s+/)[0]).toBe(stray);
+  });
+});
+
+describe("DISP=MOD on libraries (JCL Reference DISP MOD p.154)", () => {
+  const job = (dsn: string) => ["//USER01D  JOB (ACCT),'MOD',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEBGENER", "//SYSPRINT DD  SYSOUT=*", "//SYSIN    DD  DUMMY", "//SYSUT1   DD  *", "NEW TEXT", "/*", `//SYSUT2   DD  DSN=${dsn},DISP=MOD`, "//"];
+  const run = (dsn: string) => submit(job(dsn));
+
+  it("MOD on an existing member does not overwrite it (IBM terminates the job)", () => {
+    const before = readRecords(buildSeed("USER01"), { dsn: "USER01.JCL", member: "HELLO" } as never).records;
+    const r = run("USER01.JCL(HELLO)");
+    expect(r.job.maxRc).not.toBe(0);
+    expect(readRecords(r.catalog, { dsn: "USER01.JCL", member: "HELLO" } as never).records).toEqual(before);
+    expect(out(r, "SYSPRINT")).toMatch(/MOD/);
+  });
+
+  it("MOD on a member that does not exist creates it", () => {
+    const r = run("USER01.JCL(NEWM)");
+    expect(r.job.maxRc).toBe(0);
+    expect(readRecords(r.catalog, { dsn: "USER01.JCL", member: "NEWM" } as never).records?.[0].trimEnd()).toBe("NEW TEXT");
+  });
+
+  it("MOD on a library with no member name fails with a clear message and leaves the library alone", () => {
+    const r = run("USER01.JCL");
+    expect(r.job.maxRc).not.toBe(0);
+    expect(out(r, "SYSPRINT")).toMatch(/MEMBER/);
+  });
+});
+
+describe("DFSORT control statements the simulator now rejects (ICE007A causes listed by IBM: missing comma, unbalanced parenthesis, invalid format type)", () => {
+  const sortJob = (control: string) => ["//USER01R  JOB (ACCT),'RC',CLASS=A,MSGCLASS=X", "//S EXEC PGM=SORT", "//SYSOUT DD SYSOUT=*", "//SORTIN DD DUMMY", "//SORTOUT DD SYSOUT=*", "//SYSIN DD *", control, "/*", "//"];
+
+  it.each(["  SORT FIELDS=(1,3,CH A)", "  SORT FIELDS=(1,3,CH,A", "  SORT FIELDS=(1,3,XX,A)", "  SORT FIELDS=(1,3,CH)", "  SORT FIELDS=(1 3,CH,A)"])("%s ends RC 16 with ICE007A", (control) => {
+    const r = submit(sortJob(control));
+    expect(out(r, "SYSOUT")).toContain("ICE007A SYNTAX ERROR");
+    expect(r.job.maxRc).toBe(16);
+  });
+
+  it.each(["  SORT FIELDS=(1,3,CH,A)", "  SORT FIELDS=(1,3,CH,D)", "  SORT FIELDS=COPY", "  SORT FIELDS=(1,3,CH,A,10,4,ZD,D)"])("%s still runs with RC 0", (control) => {
+    const r = submit(sortJob(control));
+    expect(r.job.maxRc).toBe(0);
+  });
+});
+
+describe("IEF236I means the allocation succeeded (System Messages Vol 8, IEF236I)", () => {
+  it("a step whose allocation fails prints IEF212I and no IEF236I", () => {
+    const r = submit(["//USER01Q  JOB (ACCT),'X',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//OUT      DD  DSN=USER01.NOTES.TXTT,DISP=SHR", "//"]);
+    const msg = out(r, "JESYSMSG");
+    expect(msg).toContain("IEF212I USER01Q STEP1 OUT - DATA SET NOT FOUND");
+    expect(msg).not.toContain("IEF236I");
+  });
+
+  it("a step whose allocation works still prints IEF236I", () => {
+    expect(out(submit(HELLO), "JESYSMSG")).toContain("IEF236I");
+  });
+});

@@ -4,14 +4,14 @@
  * z/OS MVS System Messages (IEF212I, IEFC452I). SDSF here is simulated; see docs/10-jes-sdsf.md.
  */
 import { getMember, readRecords } from "@/catalog/catalog";
-import { allOf, anyOf, dslistShowing, editorClosed, editorOpen, eventIs, is, memberListOpen, onScreen, sawInOrder } from "../validators";
+import { allOf, anyOf, dslistShowing, editorClosed, editorOpen, eventIs, is, memberListOpen, noEditSession, onScreen, sawInOrder } from "../validators";
 import type { Lesson, LessonContext, Validator } from "../types";
 
 /** The learner's PAYRPT job ran successfully (state only, so Challenge mode can check it). */
 const payrptSucceeded: Validator = ({ state }) => state.jes.jobs.some((j) => j.jobName === `${state.userid}P` && j.status === "OUTPUT" && j.maxRc === 0 && !j.abend);
 
 /** The SYSUT1 DD statement of some JCL: comment lines ignored, continuation lines joined, upper-cased ("" if absent). */
-export function sysut1Statement(lines: string[]): string {
+function sysut1Statement(lines: string[]): string {
   const jcl = lines.map((l) => l.trimEnd()).filter((l) => !l.startsWith("//*"));
   const at = jcl.findIndex((l) => /^\/\/SYSUT1\s/i.test(l));
   if (at < 0) return "";
@@ -30,7 +30,6 @@ const payrptFixed: Validator = (ctx: LessonContext) => {
 };
 
 /** No Edit session is open (a Browse of job output is allowed: it is an editor session of the simulator too). */
-const notEditing: Validator = ({ state }) => !state.editor || state.editor.mode !== "EDIT";
 
 /** Some PAYRPT-named job of the learner failed with a JCL error (A2: a JCL error in another job does not count). */
 const payrptJclError = is("JCL_ERROR_GENERATED", (e, ctx) => e.jobName === `${ctx.hlq}P`);
@@ -327,7 +326,7 @@ export const lesson27: Lesson = {
   ],
   challenge: {
     task: "Submit {HLQ}.JCL(PAYRPT) and see it fail, read the reason in JESYSMSG, then make a resubmission end CC 0000.",
-    validator: allOf(sawInOrder(payrptJclError, is("JOB_OUTPUT_OPENED", (e) => e.ddname === "JESYSMSG"), payrptCompleted), notEditing),
+    validator: allOf(sawInOrder(payrptJclError, is("JOB_OUTPUT_OPENED", (e) => e.ddname === "JESYSMSG"), payrptCompleted), noEditSession),
   },
 };
 
@@ -368,6 +367,6 @@ export const lesson28: Lesson = {
   ],
   challenge: {
     task: "Make {HLQ}.JCL(PAYRPT) run to CC 0000 by whatever route you choose, then open that job's report (SYSUT2) in SDSF.",
-    validator: allOf(payrptReportRead, notEditing),
+    validator: allOf(payrptReportRead, noEditSession),
   },
 };
