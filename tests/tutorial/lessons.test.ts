@@ -39,9 +39,9 @@ class Coached {
 }
 
 describe("lesson catalogue", () => {
-  it("has 28 lessons, numbered in order, with unique ids and at least one step each", () => {
-    expect(LESSONS.length).toBe(28);
-    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(28);
+  it("has the 28 original lessons first, then the M3 lessons, numbered in order, with unique ids and at least one step each", () => {
+    expect(LESSONS.length).toBeGreaterThanOrEqual(28);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(LESSONS.length);
     expect(LESSONS.map((l) => l.number)).toEqual(LESSONS.map((_, i) => i + 1));
     for (const l of LESSONS) expect(l.steps.length).toBeGreaterThan(0);
   });

@@ -135,10 +135,16 @@ function reset(s: EditorSession, what: "ALL" | "EXCLUDED" | "SPECIAL" | "COMMAND
   return { session, events };
 }
 
-function scrollTo(s: EditorSession, top: number): EditorResult {
+function scrollTo(s: EditorSession, top: number, amount?: string): EditorResult {
   const t = clampTop(s, top);
-  const ev: EditorEvent[] = t !== s.top ? [{ type: "EDITOR_SCROLLED" }] : [];
+  const ev: EditorEvent[] = t !== s.top ? [{ type: "EDITOR_SCROLLED", detail: amount }] : [];
   return { session: { ...s, top: t }, events: ev };
+}
+
+/** The scroll amount actually used, as the learner would name it: PAGE, HALF, DATA, CSR, MAX or a number of lines. */
+function amountLabel(s: EditorSession, amount?: ScrollAmount): string {
+  const a = amount ?? defaultAmount(s);
+  return a.kind === "lines" ? String(a.n) : a.kind.toUpperCase();
 }
 
 function amountLines(s: EditorSession, amount?: ScrollAmount): number {
@@ -169,12 +175,12 @@ function scroll(s: EditorSession, direction: "UP" | "DOWN" | "LEFT" | "RIGHT", a
   const n = amountLines(s, amount);
   if (direction === "UP") {
     if (s.top === 0) return { session: s, events: [], message: info("*** TOP OF DATA ***") };
-    return scrollTo(s, n === Number.MAX_SAFE_INTEGER ? 0 : s.top - n);
+    return scrollTo(s, n === Number.MAX_SAFE_INTEGER ? 0 : s.top - n, amountLabel(s, amount));
   }
   if (direction === "DOWN") {
     const maxTop = Math.max(0, s.lines.length - s.pageSize);
     if (s.top >= maxTop) return { session: s, events: [], message: info("*** BOTTOM OF DATA ***") };
-    return scrollTo(s, n === Number.MAX_SAFE_INTEGER ? maxTop : Math.min(maxTop, s.top + n));
+    return scrollTo(s, n === Number.MAX_SAFE_INTEGER ? maxTop : Math.min(maxTop, s.top + n), amountLabel(s, amount));
   }
   const cols = amount?.kind === "lines" ? amount.n : amount?.kind === "half" ? Math.floor(s.pageCols / 2) : s.pageCols;
   const maxLeft = Math.max(0, s.lrecl - s.pageCols);
@@ -183,7 +189,7 @@ function scroll(s: EditorSession, direction: "UP" | "DOWN" | "LEFT" | "RIGHT", a
       ? amount?.kind === "max" ? 0 : Math.max(0, s.leftCol - cols)
       : amount?.kind === "max" ? maxLeft : Math.min(maxLeft, s.leftCol + cols);
   if (leftCol === s.leftCol) return { session: s, events: [], message: info(direction === "LEFT" ? "*** LEFT EDGE ***" : "*** RIGHT EDGE ***") };
-  return { session: { ...s, leftCol }, events: [{ type: "EDITOR_SCROLLED" }] };
+  return { session: { ...s, leftCol }, events: [{ type: "EDITOR_SCROLLED", detail: amountLabel(s, amount) }] };
 }
 
 interface Hit {

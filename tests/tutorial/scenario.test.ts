@@ -175,3 +175,40 @@ describe("scenarioProfiles", () => {
     expect(scenarioProfiles(profiles, {})).toBe(profiles);
   });
 });
+
+describe("createMembers (M3): a lesson that needs its own practice text", () => {
+  const spec = { dsn: "{HLQ}.DATA", member: "PRACTICE", records: ["LINE 1", "LINE 2", "LINE 3"] };
+
+  it("creates the member with the given records", () => {
+    const next = applyScenario(buildSeed(HLQ), HLQ, { createMembers: [spec] }, TODAY);
+    const m = getMember(next, `${HLQ}.DATA`, "PRACTICE");
+    expect(m?.records.map((r) => r.trimEnd())).toEqual(["LINE 1", "LINE 2", "LINE 3"]);
+  });
+
+  it("replaces text the learner changed", () => {
+    const once = applyScenario(buildSeed(HLQ), HLQ, { createMembers: [spec] }, TODAY);
+    const edited = saveRecords(once, { dsn: `${HLQ}.DATA`, member: "PRACTICE" }, ["CHANGED"], { today: TODAY, userid: HLQ }).catalog;
+    const again = applyScenario(edited, HLQ, { createMembers: [spec] }, TODAY);
+    expect(getMember(again, `${HLQ}.DATA`, "PRACTICE")?.records.map((r) => r.trimEnd())).toEqual(["LINE 1", "LINE 2", "LINE 3"]);
+  });
+
+  it("returns the same catalog when the member is already as specified", () => {
+    const once = applyScenario(buildSeed(HLQ), HLQ, { createMembers: [spec] }, TODAY);
+    expect(applyScenario(once, HLQ, { createMembers: [spec] }, TODAY)).toBe(once);
+  });
+
+  it("does nothing when the data set is missing", () => {
+    const seed = buildSeed(HLQ);
+    const next = applyScenario(seed, HLQ, { createMembers: [{ ...spec, dsn: "{HLQ}.NOSUCH" }] }, TODAY);
+    expect(next).toBe(seed);
+  });
+
+  it("workAtRisk reports a saved change to the created member, and nothing for a fresh start", () => {
+    const state = Sim.loggedOn().state;
+    expect(workAtRisk(state, { createMembers: [spec] })).toEqual([]);
+    const once = applyScenario(state.catalog, HLQ, { createMembers: [spec] }, state.today);
+    const edited = saveRecords(once, { dsn: `${HLQ}.DATA`, member: "PRACTICE" }, ["CHANGED"], { today: TODAY, userid: HLQ }).catalog;
+    const risk = workAtRisk({ ...state, catalog: edited }, { createMembers: [spec] });
+    expect(risk).toEqual([`${HLQ}.DATA(PRACTICE) would be restored to its original text`]);
+  });
+});

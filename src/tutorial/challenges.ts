@@ -65,6 +65,13 @@ const helloJobBrowsed: Validator = ({ history = [], hlq }) => {
 };
 
 export const CHALLENGES: Record<string, Challenge> = {
+  "a-01-panel-fields-scroll": {
+    task: "Open {HLQ}.DATA(SCROLL) in Edit. Set the Scroll field to HALF and scroll down with it, then jump to the last page with a one-time MAX, leaving the field at HALF.",
+    validator: allOf(
+      sawInOrder(opened("DATA", "SCROLL", ["EDIT"]), is("EDITOR_SCROLLED", (e) => e.amount === "HALF"), is("EDITOR_SCROLLED", (e) => e.amount === "MAX")),
+      ({ state }) => state.editor?.scrollAmount.toUpperCase() === "HALF",
+    ),
+  },
   "l02-navigating": {
     task: "Open the Data Set List Utility (3.4) by two different routes, then return to the Primary Option Menu.",
     validator: allOf(dslistByTwoRoutes, onScreen("PRIMARY_OPTION_MENU")),

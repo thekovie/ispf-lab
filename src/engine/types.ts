@@ -164,7 +164,7 @@ export type SimEvent =
   | { type: "EDITOR_TEXT_CHANGED"; count: number }
   | { type: "EDITOR_FIND"; text: string }
   | { type: "EDITOR_CHANGE"; detail: string }
-  | { type: "EDITOR_SCROLLED" }
+  | { type: "EDITOR_SCROLLED"; amount?: string }
   | { type: "TSO_COMMAND_ENTERED"; command: string }
   | { type: "SETTING_CHANGED"; setting: string; value: string }
   | { type: "ENVIRONMENT_RESET" }

@@ -4,7 +4,7 @@
  * known data whatever the learner did before (ADR 0016, M1a-5).
  * Reference: docs/05-course-design.md §Runner rules.
  */
-import { allocate, deleteDataset, deleteMember, getDataset, getMember } from "@/catalog/catalog";
+import { allocate, deleteDataset, deleteMember, getDataset, getMember, saveRecords } from "@/catalog/catalog";
 import { EMPTY_JES } from "@/jes/types";
 import { buildSeed } from "@/catalog/seed";
 import type { Catalog } from "@/catalog/types";
@@ -30,7 +30,7 @@ export function restoreMembers(catalog: Catalog, hlq: string, refs: { dsn: strin
 }
 
 /**
- * The catalog a lesson starts with. Order: remove leftovers, (re)create scenario data sets, restore seed members.
+ * The catalog a lesson starts with. Order: remove leftovers, (re)create scenario data sets and members, restore seed members.
  * Returns the same object when the lesson asks for nothing.
  */
 export function applyScenario(catalog: Catalog, hlq: string, start: LessonStart, today: string): Catalog {
@@ -47,6 +47,13 @@ export function applyScenario(catalog: Catalog, hlq: string, start: LessonStart,
     const name = fillHlq(spec.dsn, hlq).toUpperCase();
     if (getDataset(next, name)) next = deleteDataset(next, name).catalog;
     next = allocate(next, { name, spaceUnits: "TRKS", primary: 1, secondary: 1, dirBlocks: spec.dirBlocks, recfm: "FB", lrecl: 80, owner: hlq }, today).catalog;
+  }
+  for (const spec of start.createMembers ?? []) {
+    const dsn = fillHlq(spec.dsn, hlq).toUpperCase();
+    const current = getMember(next, dsn, spec.member);
+    if (current && current.records.map((r) => r.trimEnd()).join("\n") === spec.records.join("\n")) continue;
+    const saved = saveRecords(next, { dsn, member: spec.member }, spec.records, { today, userid: hlq });
+    if (!saved.error) next = saved.catalog;
   }
   if (start.resetMembers?.length) next = restoreMembers(next, hlq, start.resetMembers);
   return next;

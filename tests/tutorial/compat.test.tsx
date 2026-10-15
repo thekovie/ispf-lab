@@ -20,12 +20,17 @@ describe("lesson and step ids", () => {
   });
 
   it("every baseline step id is unchanged and in the same order", () => {
-    for (const lesson of LESSONS) expect(lesson.steps.map((s) => s.id), lesson.id).toEqual(ids[lesson.id].steps);
+    for (const [id, expected] of Object.entries(ids)) {
+      const lesson = LESSONS.find((l) => l.id === id)!;
+      expect(lesson.steps.map((s) => s.id), id).toEqual(expected.steps);
+    }
   });
 
-  it("the 28 lessons and 137 steps are exactly the baseline set", () => {
-    expect(LESSONS).toHaveLength(28);
-    expect(LESSONS.reduce((n, l) => n + l.steps.length, 0)).toBe(137);
+  it("the 28 baseline lessons and 137 steps are all still there; new lessons come after them", () => {
+    const baseline = LESSONS.filter((l) => ids[l.id]);
+    expect(baseline).toHaveLength(28);
+    expect(baseline.reduce((n, l) => n + l.steps.length, 0)).toBe(137);
+    expect(LESSONS.slice(0, 28).map((l) => l.id)).toEqual(baseline.map((l) => l.id));
   });
 });
 

@@ -185,6 +185,8 @@ function toSimEvents(events: EditorEvent[]): SimEvent[] {
         return { type: "EDITOR_FIND", text: e.detail ?? "" };
       case "EDITOR_CHANGE":
         return { type: "EDITOR_CHANGE", detail: e.detail ?? "" };
+      case "EDITOR_SCROLLED":
+        return { type: "EDITOR_SCROLLED", amount: e.detail };
       case "EDITOR_UNDO":
         return { type: "UNDO_EXECUTED" };
       case "EDITOR_COLS":

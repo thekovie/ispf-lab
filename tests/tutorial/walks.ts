@@ -332,6 +332,15 @@ export const WALKS: Record<string, Script> = {
   },
 };
 
+WALKS["a-01-panel-fields-scroll"] = (c) => {
+  openEdit(c, `${HLQ}.DATA(SCROLL)`);
+  c.pf(8);
+  c.pf(8, { scroll: "HALF" });
+  c.enter({ command: "DOWN 3" });
+  c.enter({ command: "DOWN MAX" });
+  c.pf(3);
+};
+
 const E = (ref: string) => entry(ref);
 
 /**

@@ -140,3 +140,55 @@ describe("editor flow through the reducer", () => {
     expect(s.message).toBe("*** BOTTOM OF DATA ***");
   });
 });
+
+describe("scroll events carry the amount used (M3, lesson a-01)", () => {
+  const longLines = Array.from({ length: 60 }, (_, i) => `LINE ${String(i + 1).padStart(3, "0")}`);
+  const openLong = () => {
+    const s = Sim.loggedOn();
+    const ds = s.state.catalog.datasets["USER01.DATA"];
+    const members = { ...ds.members, LONG: { name: "LONG", records: longLines.map((l) => l.padEnd(80)) } };
+    s.state = { ...s.state, catalog: { ...s.state.catalog, datasets: { ...s.state.catalog.datasets, "USER01.DATA": { ...ds, members } } } };
+    return s.cmd("2").enter({ other: "USER01.DATA(LONG)" });
+  };
+  const amounts = (s: Sim) => s.events.filter((e) => e.type === "EDITOR_SCROLLED").map((e) => (e as { amount?: string }).amount);
+  const top = (s: Sim) => s.state.editor!.top;
+
+  it("PF8 with the Scroll field at PAGE scrolls a page and reports PAGE", () => {
+    const s = openLong();
+    const page = s.state.editor!.pageSize;
+    s.events = [];
+    s.pf(8);
+    expect(amounts(s)).toEqual(["PAGE"]);
+    expect(top(s)).toBe(page);
+  });
+
+  it("HALF typed in the Scroll field scrolls half a page and reports HALF", () => {
+    const s = openLong();
+    const half = Math.floor(s.state.editor!.pageSize / 2);
+    s.events = [];
+    s.pf(8, { scroll: "HALF" });
+    expect(amounts(s)).toEqual(["HALF"]);
+    expect(top(s)).toBe(half);
+    expect(s.state.editor!.scrollAmount).toBe("HALF");
+  });
+
+  it("DOWN 3 on the command line is a one-time amount: it moves 3 lines and the field keeps HALF", () => {
+    const s = openLong();
+    s.pf(8, { scroll: "HALF" });
+    const before = top(s);
+    s.events = [];
+    s.enter({ command: "DOWN 3" });
+    expect(amounts(s)).toEqual(["3"]);
+    expect(top(s)).toBe(before + 3);
+    expect(s.state.editor!.scrollAmount).toBe("HALF");
+  });
+
+  it("DOWN MAX goes to the bottom, reports MAX and leaves the field alone", () => {
+    const s = openLong();
+    s.events = [];
+    s.enter({ command: "DOWN MAX" });
+    expect(amounts(s)).toEqual(["MAX"]);
+    expect(top(s)).toBe(60 - s.state.editor!.pageSize);
+    expect(s.state.editor!.scrollAmount).toBe("PAGE");
+  });
+});
