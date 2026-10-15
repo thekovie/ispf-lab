@@ -302,10 +302,5 @@ describe("plausible wrong answers are rejected", () => {
   });
 });
 
-describe("known gaps deferred to M1b (not Challenge-completion defects)", () => {
-  it.todo("L17 Learn step 5 completes after the first PF3, before the re-run (audit probe a)");
-  it.todo("L21 Learn: FLIP alone skips the EXCLUDE step (audit probe f Q1)");
-  it.todo("L27 Learn: a comment line containing DATA(EMPLOYEE) passes the fix step (audit probe m)");
-  it.todo("L28 Challenge: creating PAYROLL.DATA is a valid repair that is rejected (audit probe o)");
-  it.todo("L27 Challenge: completes with zero jobs submitted (audit probe n)");
-});
+// The five defects deferred from M1a (L17, L21, L27 x2, L28) are fixed and asserted in m1b-validators.test.ts (M1b-3).
+

@@ -174,9 +174,10 @@ function toSimEvents(events: EditorEvent[]): SimEvent[] {
       case "EDITOR_LINE_INSERTED":
       case "EDITOR_LINE_DELETED":
       case "EDITOR_LINE_REPEATED":
-      case "EDITOR_LINES_EXCLUDED":
       case "EDITOR_TEXT_CHANGED":
         return { type: e.type, count: e.count ?? 1 };
+      case "EDITOR_LINES_EXCLUDED":
+        return { type: e.type, count: e.count ?? 1, flip: e.detail === "FLIP" };
       case "EDITOR_LINES_COPIED":
       case "EDITOR_LINES_MOVED":
         return { type: e.type, count: e.count ?? 1, dest: e.detail ?? "A" };

@@ -143,6 +143,7 @@ export type SimEvent =
   | { type: "JOB_STATUS_OPENED"; queue: string }
   | { type: "JOB_OUTPUT_OPENED"; jobId: string; ddname?: string }
   | { type: "JOB_PURGED"; jobId: string }
+  | { type: "JOB_JCL_OPENED"; jobId: string }
   | { type: "DATASET_ALLOCATED"; dsn: string; datasetType: "PDS" | "PS" }
   | { type: "DATASET_DELETED"; dsn: string }
   | { type: "DATASET_RENAMED"; from: string; to: string }
@@ -159,7 +160,7 @@ export type SimEvent =
   | { type: "EDITOR_LINE_REPEATED"; count: number }
   | { type: "EDITOR_LINES_COPIED"; count: number; dest: string }
   | { type: "EDITOR_LINES_MOVED"; count: number; dest: string }
-  | { type: "EDITOR_LINES_EXCLUDED"; count: number }
+  | { type: "EDITOR_LINES_EXCLUDED"; count: number; flip?: boolean }
   | { type: "EDITOR_TEXT_CHANGED"; count: number }
   | { type: "EDITOR_FIND"; text: string }
   | { type: "EDITOR_CHANGE"; detail: string }

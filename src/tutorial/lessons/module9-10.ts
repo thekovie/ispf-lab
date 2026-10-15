@@ -4,19 +4,48 @@
  * z/OS MVS System Messages (IEF212I, IEFC452I). SDSF here is simulated; see docs/10-jes-sdsf.md.
  */
 import { getMember, readRecords } from "@/catalog/catalog";
-import { allOf, anyOf, dslistShowing, editorClosed, editorHasLine, editorOpen, eventIs, memberListOpen, onScreen } from "../validators";
+import { allOf, anyOf, dslistShowing, editorClosed, editorOpen, eventIs, is, memberListOpen, onScreen, sawInOrder } from "../validators";
 import type { Lesson, LessonContext, Validator } from "../types";
 
 /** The learner's PAYRPT job ran successfully (state only, so Challenge mode can check it). */
 const payrptSucceeded: Validator = ({ state }) => state.jes.jobs.some((j) => j.jobName === `${state.userid}P` && j.status === "OUTPUT" && j.maxRc === 0 && !j.abend);
 
-/** PAYRPT in the catalog reads EMPLOYEE data instead of the uncataloged payroll data set. */
+/** The SYSUT1 DD statement of some JCL: comment lines ignored, continuation lines joined, upper-cased ("" if absent). */
+export function sysut1Statement(lines: string[]): string {
+  const jcl = lines.map((l) => l.trimEnd()).filter((l) => !l.startsWith("//*"));
+  const at = jcl.findIndex((l) => /^\/\/SYSUT1\s/i.test(l));
+  if (at < 0) return "";
+  let statement = jcl[at];
+  for (let i = at + 1; statement.endsWith(",") && i < jcl.length && jcl[i].startsWith("//"); i++) statement += jcl[i].slice(2).trim();
+  return statement.toUpperCase();
+}
+
+/** SYSUT1 names the EMPLOYEE member of a DATA library, whatever the case or the high-level qualifier. */
+const readsEmployee = (lines: string[]) => /\bDSN(?:AME)?=[^,\s]*\.DATA\(EMPLOYEE\)/.test(sysut1Statement(lines));
+
+/** PAYRPT in the catalog reads EMPLOYEE data instead of the data set that does not exist. */
 const payrptFixed: Validator = (ctx: LessonContext) => {
   const r = readRecords(ctx.state.catalog, { dsn: `${ctx.hlq}.JCL`, member: "PAYRPT" });
-  if (!r.records) return false;
-  const text = r.records.join("\n");
-  return !text.includes("PAYROLL.DATA") && /DATA\(EMPLOYEE\)/.test(text);
+  return !!r.records && readsEmployee(r.records);
 };
+
+/** No Edit session is open (a Browse of job output is allowed: it is an editor session of the simulator too). */
+const notEditing: Validator = ({ state }) => !state.editor || state.editor.mode !== "EDIT";
+
+/** Some PAYRPT-named job of the learner failed with a JCL error (A2: a JCL error in another job does not count). */
+const payrptJclError = is("JCL_ERROR_GENERATED", (e, ctx) => e.jobName === `${ctx.hlq}P`);
+
+/** A PAYRPT-named job of the learner ended CC 0000. */
+const payrptCompleted = is("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}P` && e.status === "OUTPUT" && e.maxRc === 0 && !e.abend);
+
+/** SYSUT2 of a job that really ended CC 0000 was opened in SDSF (A6, A7: the report of the run that worked). */
+const payrptReportRead: Validator = ({ history = [], state, hlq }) =>
+  history.some(
+    (e) =>
+      e.type === "JOB_OUTPUT_OPENED" &&
+      e.ddname === "SYSUT2" &&
+      state.jes.jobs.some((j) => j.id === e.jobId && j.jobName === `${hlq}P` && j.status === "OUTPUT" && j.maxRc === 0 && !j.abend),
+  );
 
 export const lesson22: Lesson = {
   id: "l22-dslist-advanced",
@@ -256,7 +285,7 @@ export const lesson27: Lesson = {
       id: "submit",
       instruction: "Submit {HLQ}.JCL(PAYRPT) any way you like (J on the member list, SUBMIT in Edit, or TSO SUBMIT JCL(PAYRPT)).",
       hint: "TSO SUBMIT JCL(PAYRPT) on the Option line is quickest.",
-      validator: eventIs("JCL_ERROR_GENERATED"),
+      validator: (ctx) => !!ctx.event && payrptJclError(ctx.event, ctx),
     },
     {
       id: "status",
@@ -275,13 +304,13 @@ export const lesson27: Lesson = {
       id: "sj",
       instruction: "Press PF3 twice back to ST and type SJ next to the job. The JCL that was submitted opens in Edit.",
       hint: "F3, F3, then SJ on the job, Enter.",
-      validator: editorOpen("{HLQ}.JCL", "PAYRPT", "EDIT"),
+      validator: allOf(eventIs("JOB_JCL_OPENED"), editorOpen("{HLQ}.JCL", "PAYRPT", "EDIT")),
     },
     {
       id: "fix",
       instruction: "Change the SYSUT1 data set name from {HLQ}.PAYROLL.DATA to {HLQ}.DATA(EMPLOYEE) - overtype it, or use C PAYROLL.DATA DATA(EMPLOYEE).",
       hint: "C PAYROLL.DATA DATA(EMPLOYEE), Enter.",
-      validator: allOf(editorHasLine((t) => /DATA\(EMPLOYEE\)/.test(t)), editorOpen("{HLQ}.JCL", "PAYRPT")),
+      validator: allOf(({ state }) => !!state.editor && readsEmployee(state.editor.lines.map((l) => l.text)), editorOpen("{HLQ}.JCL", "PAYRPT")),
     },
     {
       id: "resubmit",
@@ -296,6 +325,10 @@ export const lesson27: Lesson = {
       validator: allOf(editorClosed, payrptFixed),
     },
   ],
+  challenge: {
+    task: "Submit {HLQ}.JCL(PAYRPT) and see it fail, read the reason in JESYSMSG, then make a resubmission end CC 0000.",
+    validator: allOf(sawInOrder(payrptJclError, is("JOB_OUTPUT_OPENED", (e) => e.ddname === "JESYSMSG"), payrptCompleted), notEditing),
+  },
 };
 
 export const lesson28: Lesson = {
@@ -334,7 +367,7 @@ export const lesson28: Lesson = {
     },
   ],
   challenge: {
-    task: "Make {HLQ}.JCL(PAYRPT) run to CC 0000 (fix the SYSUT1 data set name, save the member, resubmit). Only the result counts.",
-    validator: allOf(payrptFixed, payrptSucceeded, editorClosed),
+    task: "Make {HLQ}.JCL(PAYRPT) run to CC 0000 by whatever route you choose, then open that job's report (SYSUT2) in SDSF.",
+    validator: allOf(payrptReportRead, notEditing),
   },
 };

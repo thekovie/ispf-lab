@@ -3,7 +3,7 @@
  * Modelled on z/OS ISPF Edit and Edit Macros (line/primary commands) and the SHARE
  * "ISPF Editor - Beyond the Basics" hands-on lab. See docs/04-editor-commands.md.
  */
-import { allOf, anyOf, editorClosed, editorHasLine, editorLineCount, editorOpen, eventIs, memberListOpen, memberSatisfies, onScreen, savedMember } from "../validators";
+import { allOf, editorClosed, editorHasLine, editorOpen, eventIs, memberListOpen, memberSatisfies, onScreen, savedMember } from "../validators";
 import type { Lesson } from "../types";
 
 const HELLO = "{HLQ}.JCL";
@@ -138,7 +138,7 @@ export const lesson09: Lesson = {
       id: "save",
       instruction: "Press PF3 to save and end.",
       hint: "F3.",
-      validator: savedMember(HELLO, "HELLO"),
+      validator: allOf(savedMember(HELLO, "HELLO"), memberSatisfies(HELLO, "HELLO", (records) => records.some((r) => /^\/\/\*.*COMMENT/i.test(r)))),
     },
   ],
 };
@@ -235,13 +235,13 @@ export const lesson11: Lesson = {
       instruction: "Type X DISPLAY ALL and press Enter to hide the DISPLAY lines, then RESET to show them again.",
       explanation: "Excluded lines collapse into a dashed marker so you can focus. RESET clears exclusions, pending line commands and messages.",
       hint: "X DISPLAY ALL, Enter, then RESET, Enter.",
-      validator: anyOf(eventIs("EDITOR_LINES_EXCLUDED"), editorLineCount((n) => n > 0)),
+      validator: eventIs("EDITOR_LINES_EXCLUDED"),
     },
     {
       id: "save",
       instruction: "Press PF3 to save and end.",
       hint: "F3.",
-      validator: savedMember("{HLQ}.COBOL", "CUSTOMER"),
+      validator: allOf(savedMember("{HLQ}.COBOL", "CUSTOMER"), memberSatisfies("{HLQ}.COBOL", "CUSTOMER", (records) => records.some((r) => /WS-CLIENT-ID/.test(r)))),
     },
   ],
 };

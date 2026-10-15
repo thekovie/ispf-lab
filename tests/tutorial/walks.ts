@@ -65,6 +65,11 @@ const openEdit = (c: Attempt, ref: string) => {
   c.enter(entry(ref));
 };
 
+/** PF3 until the Primary Option Menu shows (how many presses depends on how the learner got there). */
+export function backToMenu(c: Attempt) {
+  for (let i = 0; i < 6 && c.sim.state.screen.id !== "PRIMARY_OPTION_MENU"; i++) c.pf(3);
+}
+
 /** One legitimate full route per lesson (the Learn path). */
 export const WALKS: Record<string, Script> = {
   "l01-meet-ispf": (c) => {
@@ -216,8 +221,7 @@ export const WALKS: Record<string, Script> = {
     c.enter({ [`cmd:${HLQ}.COBOL`]: "X", [`cmd:${HLQ}.DATA`]: "X" });
     c.cmd("RESET");
     c.pf(12);
-    c.pf(3);
-    c.pf(3);
+    backToMenu(c);
     c.pf(12);
     c.pf(12);
     c.pf(12);

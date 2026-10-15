@@ -2,7 +2,7 @@
  * Module 2 - Data sets. Lessons 4-6.
  * Modelled on IBM Redbook SG24-6366 ch. 5 (data sets) and Mainframe Master "ISPF Data Set Utility (3.2)".
  */
-import { anyOf, datasetExists, dslistShowing, editorOpen, eventIs, memberListOpen, onScreen } from "../validators";
+import { allOf, anyOf, datasetExists, dslistShowing, editorOpen, eventIs, memberListOpen, onScreen } from "../validators";
 import type { Lesson } from "../types";
 
 export const lesson04: Lesson = {
@@ -72,7 +72,7 @@ export const lesson05: Lesson = {
       instruction: "Type I in the command column next to {HLQ}.JCL and press Enter to see its Data Set Information.",
       explanation: "The I line command shows the attributes the system keeps: organization PO, record format FB, record length 80, block size, space and directory blocks.",
       hint: "Tab to the {HLQ}.JCL row, type I, Enter.",
-      validator: onScreen("DATASET_INFO"),
+      validator: eventIs("DATASET_INFO_VIEWED", (e, ctx) => e.dsn === `${ctx.hlq}.JCL`),
       highlightField: "cmd:{HLQ}.JCL",
     },
     {
@@ -129,8 +129,14 @@ export const lesson06: Lesson = {
       id: "fill-attributes",
       instruction: "Set Directory blocks to 10 (Tab to the field and overtype), keep Record format FB and Record length 80, then press Enter.",
       explanation: "Directory blocks greater than zero make a partitioned data set. Each block holds a handful of member entries; 10 is plenty for a training library.",
-      hint: "Tab to Directory blocks, type 10, press Enter.",
-      validator: eventIs("DATASET_ALLOCATED", (e, ctx) => e.dsn === `${ctx.hlq}.TEST.JCL`),
+      hint: "Tab to Directory blocks, type 10, press Enter. If the data set came out wrong, delete it with 3.2 option D (or RESTART LESSON) and allocate it again.",
+      validator: allOf(
+        eventIs("DATASET_ALLOCATED", (e, ctx) => e.dsn === `${ctx.hlq}.TEST.JCL`),
+        ({ state, hlq }) => {
+          const ds = state.catalog.datasets[`${hlq}.TEST.JCL`];
+          return !!ds && ds.datasetType === "PDS" && ds.recfm === "FB" && ds.lrecl === 80 && ds.dirBlocks >= 10;
+        },
+      ),
       highlightField: "dirblocks",
     },
     {
@@ -139,7 +145,7 @@ export const lesson06: Lesson = {
       explanation: "Every allocation is visible in DSLIST right away because the catalog was updated.",
       hint: "=3.4, Dsname Level {HLQ}.TEST, Enter.",
       validator: anyOf(
-        dslistShowing((level, ctx) => level.startsWith(`${ctx.hlq}.TEST`) || level === ctx.hlq),
+        eventIs("DATASET_SEARCHED", (e, ctx) => e.results > 0 && `${ctx.hlq}.TEST.JCL`.startsWith(e.level.toUpperCase().replace(/\*+$/, ""))),
         editorOpen("{HLQ}.TEST.JCL"),
         memberListOpen("{HLQ}.TEST.JCL"),
       ),

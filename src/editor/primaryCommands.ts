@@ -52,7 +52,7 @@ export function applyPrimaryCommand(s: EditorSession, cmd: EditorPrimaryCommand)
     }
     case "flip": {
       const lines = s.lines.map((l) => ({ ...l, excluded: !l.excluded }));
-      return { session: { ...s, lines }, events: [{ type: "EDITOR_LINES_EXCLUDED", count: lines.filter((l) => l.excluded).length }], message: info("EXCLUDED STATUS FLIPPED") };
+      return { session: { ...s, lines }, events: [{ type: "EDITOR_LINES_EXCLUDED", count: lines.filter((l) => l.excluded).length, detail: "FLIP" }], message: info("EXCLUDED STATUS FLIPPED") };
     }
     case "top":
       return scrollTo(s, 0);

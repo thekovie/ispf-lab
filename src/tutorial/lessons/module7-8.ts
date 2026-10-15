@@ -95,9 +95,9 @@ export const lesson17: Lesson = {
     },
     {
       id: "rerun",
-      instruction: "Press PF3 twice, then use F12 until 3.4 is on the Option line and press Enter to run it again.",
-      hint: "F3, F3, then F12 until you see 3.4, then Enter.",
-      validator: allOf(onScreen("DSLIST_SEARCH"), ({ state }) => state.retrieveStack.length > 0),
+      instruction: "Press PF3 until the Primary Option Menu shows, then use F12 until 3.4 is on the Option line and press Enter to run it again.",
+      hint: "F3 until you are on the menu, then F12 until you see 3.4, then Enter.",
+      validator: allOf(onScreen("DSLIST_SEARCH"), eventIs("COMMAND_ENTERED", (e) => /^=?3\.4$/.test(e.command.trim()))),
     },
   ],
 };
@@ -264,7 +264,7 @@ export const lesson21: Lesson = {
       instruction: "Type X DIVISION ALL on the command line. Every line with DIVISION collapses into '- - - n Line(s) not Displayed'.",
       explanation: "EXCLUDE (X) is how you read a large member: hide what you know, look at what is left. The lines are still saved.",
       hint: "X DIVISION ALL, Enter.",
-      validator: allOf(eventIs("EDITOR_LINES_EXCLUDED"), editorOpen("{HLQ}.COBOL", "HELLO")),
+      validator: allOf(eventIs("EDITOR_LINES_EXCLUDED", (e) => !e.flip), editorOpen("{HLQ}.COBOL", "HELLO")),
     },
     {
       id: "flip",

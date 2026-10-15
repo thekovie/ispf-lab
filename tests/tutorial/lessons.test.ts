@@ -211,8 +211,8 @@ describe("lessons 16-21 - navigation mastery and editor power tools", () => {
     expect(c.step).toBe(3);
     c.pf(12);
     expect(c.step).toBe(4);
-    c.pf(3);
-    c.pf(3);
+    while (c.sim.state.screen.id !== "PRIMARY_OPTION_MENU") c.pf(3); // the number of presses depends on the route taken
+    expect(c.step).toBe(4);
     c.pf(12);
     c.pf(12);
     c.pf(12);
@@ -368,14 +368,19 @@ describe("lessons 22-28 - lists in depth, batch jobs and SDSF", () => {
     c.pf(3);
     expect(c.runner.status).toBe("completed");
   });
-  it("28 Day-One challenge validates from state alone in Challenge mode", () => {
+  it("28 Day-One challenge checks the outcome and the report in Challenge mode", () => {
     const c = new Coached(lessonById("l28-day-one")!, "challenge");
     c.cmd("2");
     c.enter({ other: "USER01.JCL(PAYRPT)" });
     c.enter({ command: "C PAYROLL.DATA DATA(EMPLOYEE)" });
     c.enter({ command: "SUBMIT" });
-    expect(c.runner.status).toBe("running"); // editor still open
     c.pf(3);
+    c.pf(3);
+    expect(c.runner.status).toBe("running"); // CC 0000, but the report has not been read
+    c.cmd("=S");
+    c.cmd("ST");
+    c.enter({ "cmd:JOB00001": "?" });
+    c.enter({ "cmd:SYSUT2": "S" });
     expect(c.runner.status).toBe("completed");
   });
   it("28 Day-One learn path", () => {

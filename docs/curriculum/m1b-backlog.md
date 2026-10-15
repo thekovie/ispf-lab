@@ -1,10 +1,20 @@
-# M1b backlog (tracked, not started)
+# M1b backlog (M1b in progress)
 
-Everything here is **outside M1a** and waits for your approval of M1b. Sources: the lesson audit
+Everything here is **outside M1a**. M1b was approved on 2026-10-15; status per item is in the **Status** notes below. Sources: the lesson audit
 ([existing-lessons-audit.md](existing-lessons-audit.md)), the M0 review ([m0-acceptance-review.md](m0-acceptance-review.md)
 section F, M1b-1 to M1b-5), the probes ([evidence/probes/](evidence/probes/README.md)) and the M1a acceptance work.
 Test ids below are the `it.todo` titles in `tests/tutorial/challenge-routes.test.ts`; when each item is fixed, replace its
 todo with an asserting test that cites the same finding.
+
+## 0. Status (updated as M1b proceeds)
+
+| Item | Status |
+|---|---|
+| T1-T5, A1, A2, A6, A7 | **Fixed** (M1b-3), asserted in `tests/tutorial/m1b-validators.test.ts` |
+| A3 | **No change needed**: SUBMIT from Edit submits the buffer (ADR 0015), so `resubmit` passes on an unsaved fix and `save` still requires the saved member; asserted |
+| A8 | **Accepted as designed**: L28's objective says "by whatever route you choose", so Learn steps 1-2 also accept a run that already succeeded |
+| B5 (L5 step 2, L6 steps 3-4, L9 and L11 step 6) | **Fixed** (M1b-3); L11 step 5 (exclude) also fixed: its alternative `editorLineCount > 0` was always true |
+| A4, A5, A9, B1-B4, B6 | Open (wording, message ids, housekeeping) |
 
 ## 1. The five deferred test cases
 

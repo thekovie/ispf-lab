@@ -228,7 +228,10 @@ function runJobCommand(state: SimulatorState, jobId: string, raw: string): StepR
     case "SJ":
     case "SE":
       if (!job.source) return wrap(fail(remembered, "SOURCE NOT AVAILABLE", "The JCL was submitted from an unsaved editor buffer; SJ needs a member."));
-      return wrap(openRef(remembered, job.source, "E"));
+      {
+        const opened = openRef(remembered, job.source, "E");
+        return wrap({ state: opened.state, events: [...opened.events, { type: "JOB_JCL_OPENED", jobId: job.id }] });
+      }
     default:
       return wrap(fail(remembered, "INVALID ACTION CHARACTER"));
   }
