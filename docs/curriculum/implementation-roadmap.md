@@ -15,7 +15,7 @@ Complexity: S ≈ under a day, M ≈ a few days, L ≈ one to two weeks (single 
 | M0 | Review gate | **Closed** (conditionally accepted 2026-10-15) | Conditions C1-C6 applied; D1 and D2 approved; D3 accepted 2026-10-15 (ADR 0016) |
 | **M1a** | Assessment integrity and isolation | **Implemented 2026-10-15; awaiting review** | Challenge cannot complete without the learner doing the work; every lesson replays and survives a mode switch; the `startLesson` race is resolved either way; probes are asserting tests |
 | M1b | Content and fidelity corrections | **Implemented** ([m1b-report.md](m1b-report.md)); M1 **closed** with conditions ([m1-closure-report.md](m1-closure-report.md)) | IBM-contradicted statements corrected with evidence; confirmed validator defects fixed; listed message IDs corrected |
-| M2 (reduced) | Optional `requires` / `sources` lesson fields | Not authorised | Only if M3 is approved |
+| M2 (reduced) | Optional `requires` / `sources` lesson fields, start-stack option (GAP-73) | **Implemented** ([m2-report.md](m2-report.md)) | Approved after the M1 closure |
 | M3 | First Track B batch | Not authorised | b-01 to b-06, b-10 and a-01 approved |
 | M4 | Simulator extensions for approved lessons | Backlog | Only as an approved lesson needs them |
 | M5 | Learning-experience improvements | Backlog | Individual items, not the whole list |
@@ -70,7 +70,7 @@ Explicitly out of M1a: every M1b item (wording, message IDs, validator fixes unr
 
 Scope as in the M0 review section F (M1b-1 to M1b-5): contradicted lesson statements; SUBMIT and SJ wording per ADR 0015; `IEF374I` and the two non-existent message IDs; L22 `S`/`I` and SORT default; L23 STATS/modification level; L27/L28 validators and the IEF212I wording; stale counts; resource links; optional CI. Tracked item by item in [m1b-backlog.md](m1b-backlog.md) (the five deferred tests, the L27/L28 defects, and the M0 list). Needs your approval to start.
 
-## 5. M2 — reduced (not yet authorised)
+## 5. M2 — reduced (implemented 2026-10-15: [m2-report.md](m2-report.md))
 
 Only `requires` and `sources` (both optional) on the `Lesson` type, if and when M3 is approved. Dropped from the earlier plan: `difficulty`, `estimatedMinutes`, `reviewStatus`, a code-side source registry, a fidelity-fixture helper, per-userid progress (ADR 0014). CI and link fixes moved to M1b.
 

@@ -57,7 +57,7 @@ export const lesson05: Lesson = {
   description: "Open a partitioned data set and inspect its members and attributes.",
   objective: "Open {HLQ}.JCL, display its member list, and view its data-set information.",
   teaches: ["PDS versus member: {HLQ}.JCL versus {HLQ}.JCL(HELLO)", "Member list line commands", "The I (information) line command"],
-  startingState: { screen: { id: "DSLIST_SEARCH" } },
+  startingState: { screen: { id: "DSLIST_SEARCH" }, underMenu: true },
   steps: [
     {
       id: "list",

@@ -5,7 +5,11 @@ Versioning: [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Optional `requires` and `sources` on lessons. Lesson 13 shows a non-blocking "Before you start" note until lesson 6 is completed.
+
 ### Changed
+- PF3 on the first panel of lessons 5, 7-10 and 12 now returns to the Primary Option Menu (the menu is kept under the starting screen).
 - Errors a lesson tells the learner to provoke (lesson 1 invalid option, lesson 7 `SAVE` in Browse) no longer count as mistakes.
 - Lesson 28's Day-One data set is described as nonexistent, not uncataloged; the PAYRPT seed comment no longer rules out creating it.
 - Editor `SUBMIT` refuses operands (`SUBMIT OPERANDS NOT SUPPORTED`) instead of ignoring them; the Progress-page environment reset also clears the JES.

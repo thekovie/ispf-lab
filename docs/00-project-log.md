@@ -490,3 +490,13 @@ Branch `feat/m1-closure`. Full report: `docs/curriculum/m1-closure-report.md`. V
   the retired-claims test scans the reference docs.
 - Findings for L4, L10, L12, L13, L14, L24, L26 classified, not all implemented. Browser walkthroughs: L1, L7 (Learn and Challenge), L17, L26, L27.
 - CI: workflow exists, **never pushed or executed**. Final: 28 test files, 1,784 tests, `pnpm check` and `pnpm build` green.
+
+## Phase 23 - M2 lesson metadata and start stack (2026-10-15)
+
+Approved by the project owner after the M1 closure. Branch `feat/m2-lesson-metadata`. Report: `docs/curriculum/m2-report.md`; ADR 0017.
+
+- `Lesson.requires` (advice, never a lock; coach note "Before you start") and `Lesson.sources` (SRC ids, format checked only). Only L13 declares
+  `requires`; no sources backfilled (no evidence for a mapping).
+- `LessonStart.underMenu`: L5, L7-L10, L12 start with the Primary Option Menu underneath, so PF3 returns to the menu (GAP-73). A test requires it.
+- Not done: any hard lock, a "References" panel, `difficulty`/`estimatedMinutes`/`reviewStatus` (dropped by the M0 review). M3 not started.
+- Final: 30 test files, 1,803 tests, `pnpm check` and `pnpm build` green. CI still never run.

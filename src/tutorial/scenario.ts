@@ -85,7 +85,11 @@ export function startActions(state: SimulatorState, start: LessonStart | undefin
     if (settings !== state.settings) actions.push({ type: "LOAD_SETTINGS", settings });
   }
   actions.push({ type: "RESET_SESSION", retrieve: !!start?.clearRetrieve });
-  if (start?.screen) actions.push(start.screen.id === "LOGIN" ? { type: "LOGOFF" } : { type: "GOTO", screen: start.screen, clearStack: true });
+  if (start?.screen) {
+    if (start.screen.id === "LOGIN") actions.push({ type: "LOGOFF" });
+    else if (start.underMenu) actions.push({ type: "GOTO", screen: { id: "PRIMARY_OPTION_MENU" }, clearStack: true }, { type: "GOTO", screen: start.screen });
+    else actions.push({ type: "GOTO", screen: start.screen, clearStack: true });
+  }
   return actions;
 }
 

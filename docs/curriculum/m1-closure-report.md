@@ -41,7 +41,7 @@ Status: **RESOLVED**, **DEFERRED** (reason and milestone given), **OPEN** (not a
 | Reset consistency (GAP-64) | P1 | **RESOLVED** here | Progress-page reset now clears the JES; test |
 | `SUBMIT` operands ignored (GAP-76) | P1 | **RESOLVED** here | Refused with `SUBMIT OPERANDS NOT SUPPORTED`; tests |
 | Test strategy (GAP-70) | P0 tests / P1 CI | tests **RESOLVED**; CI **OPEN** | 231 to 1,784 tests. The workflow exists but has not run (section 6) |
-| Lesson start screens (GAP-73) | P1 | **DEFERRED** (M2) | PF3 on a lesson's first DSLIST panel does nothing (real ISPF returns to the menu). No lesson is blocked (hints were corrected in M1a). The fix needs a start-stack option on `LessonStart`; new lessons should start at the menu |
+| Lesson start screens (GAP-73) | P1 | **RESOLVED in M2** (ADR 0017; was deferred at closure) | PF3 on a lesson's first DSLIST panel does nothing (real ISPF returns to the menu). No lesson is blocked (hints were corrected in M1a). The fix needs a start-stack option on `LessonStart`; new lessons should start at the menu |
 | Name qualification, TSO messages (GAP-20, 23, 24) | P1 | **DEFERRED** (M4, lesson c-01) | Lessons only use the `JCL(member)` form, which qualifies correctly |
 | COND, IF, DISP, PROC, DD keywords, programs, abends, SORT collation (GAP-30 to 33, 36, 40, 41, 45) | P1 to P2 | **DEFERRED** (M4) | No current lesson exercises them; each is built only when an approved lesson needs it (roadmap rule) |
 | Statement-number consistency (GAP-37) | P1 | **DEFERRED** (prerequisite of lesson b-03) | Affects converter-error listings only; no current lesson shows one |
@@ -120,7 +120,7 @@ them (the text avoids asserting them); (3) keep the allow-list in `scoring.test.
 | Existing catalogs keep old seed text until a lesson restores a member | Cosmetic inconsistency | Acceptable; lesson members are restored on lesson start |
 | Hand-written outcome checks scale with lesson count | Authoring cost, possible false positives | Gates in tests; the shortcut battery grows with each find |
 | Simulator features for Track B (COND, IF, DISP, PROC, abends, EBCDIC sort) are absent | New batch lessons cannot be built yet | Roadmap rule: build each extension only for an approved lesson |
-| GAP-73 (PF3 on the first panel) | Minor navigation mismatch | New lessons start at the Primary Option Menu |
+| GAP-73 (PF3 on the first panel) | Resolved in M2 | A test requires the menu under any lesson that starts below it |
 
 ## 9. Recommendation
 

@@ -38,19 +38,19 @@ Review status:            draft | source-reviewed | fidelity-reviewed | approved
 ## Starting state and reset       (data created, data to remove on replay)
 ```
 
-Machine-readable metadata added to the `Lesson` type in the first infrastructure milestone (see the implementation roadmap):
+Machine-readable metadata on the `Lesson` type (M2, [ADR 0017](../adr/0017-lesson-metadata-and-start-stack.md)). Both fields are optional:
 
 ```ts
 {
   id: "b-jcl-010-disp-defaults",   // stable, kebab-case, never reused
-  requires: ["l06-allocating"],     // prerequisites (IDs)
-  leaves: ["data set X exists"],    // state left behind, for reset logic
-  difficulty: "intermediate",
-  estimatedMinutes: 15,
-  sources: ["SRC-003#disp-defaults", "SRC-019#IEF285I"],
-  reviewStatus: "approved",
+  requires: ["l06-allocating"],     // earlier lessons worth finishing first: advice shown as a note, never a lock
+  sources: ["SRC-003#disp-defaults", "SRC-019#IEF285I"],  // evidence ids (verified-sources.md); format checked, not looked up
 }
 ```
+
+A lesson's starting state must stand on its own whatever `requires` says. A lesson that starts below the Primary Option Menu sets
+`startingState.underMenu: true` so PF3 returns to the menu (`tests/tutorial/metadata.test.ts` enforces it). New lessons fill in `sources`
+from their spec. `leaves`, `difficulty`, `estimatedMinutes` and `reviewStatus` were dropped by the M0 review.
 
 ## 2. Required source evidence
 

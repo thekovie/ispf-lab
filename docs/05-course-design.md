@@ -67,6 +67,8 @@ Lesson files: `src/tutorial/lessons/module1.ts` … `module6.ts`, `module7-8.ts`
   lesson restores, or leftover members/data sets with content, the learner is asked first (`confirmDiscard`, default
   `window.confirm`; cancel changes nothing). Harmless resets never prompt.
   A step that asks the learner to provoke an error sets `expectsError` (Learn mode): that error is not scored as a mistake.
+  A lesson may declare `requires` (earlier lessons worth finishing first; the coach shows a non-blocking note) and `sources` (evidence ids);
+  a lesson that starts below the Primary Option Menu sets `startingState.underMenu` (ADR 0017).
 
 ## Coaching UI
 

@@ -36,6 +36,8 @@ export interface LessonStep {
 export interface LessonStart {
   /** screen to open when the lesson starts (stack is cleared) */
   screen?: ScreenFrame;
+  /** put the Primary Option Menu under `screen`, as when the learner navigated there, so PF3 goes back to the menu */
+  underMenu?: boolean;
   /** members to restore from the seed before starting */
   resetMembers?: { dsn: string; member: string }[];
   /** clear the virtual JES (jobs and log) before starting */
@@ -63,6 +65,10 @@ export interface Lesson {
   objective: string;
   /** what the learner should know afterwards */
   teaches: string[];
+  /** ids of earlier lessons worth finishing first. Advice shown as a note, never a lock; the starting state must stand on its own. */
+  requires?: string[];
+  /** evidence ids for the claims this lesson makes, e.g. "SRC-003#disp-defaults" (docs/curriculum/verified-sources.md). Format only; not enforced against the doc. */
+  sources?: string[];
   startingState?: LessonStart;
   steps: LessonStep[];
   /** Challenge mode: the final-state check (defaults to the last step's validator) */

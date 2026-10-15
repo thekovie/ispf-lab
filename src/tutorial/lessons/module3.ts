@@ -16,7 +16,7 @@ export const lesson07: Lesson = {
   description: "Look at a member safely with Browse, then reopen it in Edit.",
   objective: "Browse {HLQ}.JCL(HELLO), leave, then open the same member in Edit.",
   teaches: ["Browse is read-only", "View is editable but cannot save", "Edit changes data", "The editor frame: Top/Bottom of Data, columns, prefix area"],
-  startingState: { screen: { id: "DSLIST_SEARCH" } },
+  startingState: { screen: { id: "DSLIST_SEARCH" }, underMenu: true },
   steps: [
     {
       id: "browse",
@@ -58,7 +58,7 @@ export const lesson08: Lesson = {
   description: "Overtype a record, watch the status line (the lab shows MODIFIED there as a trainer aid), and SAVE.",
   objective: "Change the STEP1 line of {HLQ}.JCL(HELLO) to run IEBGENER instead of IEFBR14, then SAVE it.",
   teaches: ["Overtype editing", "Dirty (modified) state", "SAVE keeps you in the editor", "PF3 ends and, with AUTOSAVE ON (typical, set in your edit profile), saves; CANCEL discards"],
-  startingState: { screen: { id: "DSLIST_SEARCH" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
+  startingState: { screen: { id: "DSLIST_SEARCH" }, underMenu: true, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {
       id: "open",
@@ -99,7 +99,7 @@ export const lesson09: Lesson = {
   description: "Insert, delete and repeat records from the prefix area.",
   objective: "In {HLQ}.JCL(HELLO): insert a comment record, delete a record, repeat a record, then save.",
   teaches: ["The prefix area", "I / In insert", "D / Dn and DD...DD delete", "R repeat", "Unused inserted lines disappear"],
-  startingState: { screen: { id: "DSLIST_SEARCH" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
+  startingState: { screen: { id: "DSLIST_SEARCH" }, underMenu: true, resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }] },
   steps: [
     {
       id: "open",
@@ -152,7 +152,7 @@ export const lesson10: Lesson = {
   description: "Two-part line commands: mark the source with C or M, mark the target with A or B.",
   objective: "In {HLQ}.JCL(SORTJOB): copy a record after another (C + A), copy one before another (C + B), and move a block (MM...MM + A).",
   teaches: ["C / M sources", "A (after) and B (before) destinations", "Block form CC...CC and MM...MM", "Pending commands and RESET"],
-  startingState: { screen: { id: "DSLIST_SEARCH" }, resetMembers: [{ dsn: "{HLQ}.JCL", member: "SORTJOB" }] },
+  startingState: { screen: { id: "DSLIST_SEARCH" }, underMenu: true, resetMembers: [{ dsn: "{HLQ}.JCL", member: "SORTJOB" }] },
   steps: [
     {
       id: "open",

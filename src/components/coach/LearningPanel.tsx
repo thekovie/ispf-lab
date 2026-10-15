@@ -8,6 +8,7 @@ import { useSimulator } from "@/state/SimulatorProvider";
 import { useTutorial } from "@/state/TutorialProvider";
 import type { AppMode } from "@/tutorial/types";
 import { LESSONS } from "@/tutorial/lessons";
+import { missingPrerequisites } from "@/tutorial/prerequisites";
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -32,6 +33,21 @@ function MessageNote({ mode }: { mode: AppMode }) {
     <Section label={msg.severity === "error" ? "Message" : "Note"}>
       <p className={msg.severity === "error" ? "coach__error" : "coach__body"}>{msg.short}</p>
       {showLong ? <p className="coach__body">{msg.long}</p> : mode === "practice" && msg.severity === "error" ? <p className="coach__dim">Read the panel message, then PF1 or EXPLAIN if you need more.</p> : null}
+    </Section>
+  );
+}
+
+/** Advice only (ADR 0017): lessons named in `requires` that are not completed yet. The lesson is never locked. */
+function PrerequisiteNote() {
+  const { lesson, progress } = useTutorial();
+  if (!lesson) return null;
+  const missing = missingPrerequisites(lesson, LESSONS, progress);
+  if (missing.length === 0) return null;
+  return (
+    <Section label="Before you start">
+      <p className="coach__dim">
+        This lesson builds on {missing.map((l) => `lesson ${l.number} (${l.title})`).join(" and ")}. You can carry on without it.
+      </p>
     </Section>
   );
 }
@@ -74,6 +90,7 @@ export function LearningPanel() {
       <div className="coach__module">{lesson.module}</div>
 
       <Section label="Objective">{t.text(mode === "challenge" && lesson.challenge ? lesson.challenge.task : lesson.objective)}</Section>
+      {!completed && <PrerequisiteNote />}
       <MessageNote mode={mode} />
 
       {completed ? (
