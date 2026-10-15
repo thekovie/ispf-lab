@@ -505,4 +505,4 @@ Approved by the project owner after the M1 closure. Branch `feat/m2-lesson-metad
 
 Branch `feat/m3-foundations`. Lessons 29-31 (a-01, b-01, b-02) added as **drafts** (author-checked against the sources in their specs; independent
 source, fidelity and expert review pending). Specs: `docs/curriculum/lessons/`. New: `LessonStart.createMembers`, `EDITOR_SCROLLED{amount}`.
-Not done: b-03 to b-06 and b-10 (each needs a small simulator prerequisite), an M3 report, public copy still says 28 lessons. Do not merge or publish before review.
+Update: b-03 to b-06 and b-10 were added (lessons 32-36) with their simulator prerequisites (new-member input lines, statement numbers, trailing `/*`, DD keywords, DISP=MOD, ICE007A text); report `docs/curriculum/m3-report.md`. Final: 31 test files, 2,599 tests, `pnpm check` and `pnpm build` green. Public copy still says 28 lessons. Do not merge or publish before review.

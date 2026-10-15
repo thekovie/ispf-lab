@@ -74,7 +74,7 @@ Scope as in the M0 review section F (M1b-1 to M1b-5): contradicted lesson statem
 
 Only `requires` and `sources` (both optional) on the `Lesson` type, if and when M3 is approved. Dropped from the earlier plan: `difficulty`, `estimatedMinutes`, `reviewStatus`, a code-side source registry, a fidelity-fixture helper, per-userid progress (ADR 0014). CI and link fixes moved to M1b.
 
-## 6. M3 — Foundational batch (Track B first set) — Phase 1 curriculum
+## 6. M3 — Foundational batch (Track B first set) — Phase 1 curriculum (implemented as drafts 2026-10-15: [m3-report.md](m3-report.md); awaiting independent review)
 
 Order and dependencies (each lesson at `approved`, spec first): a-01 → b-01 → b-02 → b-03 → b-04 → b-05 → b-06 → b-10.
 
