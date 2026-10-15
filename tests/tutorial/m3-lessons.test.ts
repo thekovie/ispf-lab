@@ -293,3 +293,137 @@ describe("b-01-zos-big-picture", () => {
     });
   });
 });
+
+describe("b-02-dataset-types", () => {
+  const ID = "b-02-dataset-types";
+  const SEQ = `${HLQ}.TYPES.SEQ`;
+  const LIB = `${HLQ}.TYPES.LIB`;
+  const allocate = (a: Attempt, dsn: string, f: Record<string, string>) => {
+    a.cmd("=3.2");
+    a.enter({ option: "A", other: dsn });
+    a.enter({ recfm: "FB", lrecl: "80", dirblocks: "0", ...f });
+  };
+  const both = (a: Attempt) => {
+    allocate(a, SEQ, { dirblocks: "0" });
+    allocate(a, LIB, { dirblocks: "5" });
+  };
+  const infoOf = (a: Attempt, dsn: string, option = "I") => {
+    a.cmd("=3.4");
+    a.enter({ level: `${HLQ}.TYPES` });
+    a.enter({ [`cmd:${dsn}`]: option });
+  };
+
+  it("is lesson 31 and declares the allocation lesson as advice", () => {
+    const l = lessonById(ID)!;
+    expect(l.number).toBe(31);
+    expect(l.requires).toEqual(["l06-allocating"]);
+  });
+
+  it("walks the Learn steps in order", () => {
+    const c = new Attempt(lessonById(ID)!);
+    c.cmd("3.2");
+    expect(stepId(c)).toBe("seq");
+    c.enter({ option: "A", other: SEQ });
+    c.enter({ recfm: "FB", lrecl: "80", dirblocks: "0" });
+    expect(stepId(c)).toBe("lib");
+    allocate(c, LIB, { dirblocks: "5" });
+    expect(stepId(c)).toBe("compare");
+    c.cmd("=3.4");
+    c.enter({ level: `${HLQ}.TYPES` });
+    expect(stepId(c)).toBe("info-lib");
+    c.enter({ [`cmd:${LIB}`]: "I" });
+    expect(stepId(c)).toBe("info-seq");
+    c.pf(3);
+    c.enter({ [`cmd:${SEQ}`]: "I" });
+    expect(stepId(c)).toBe("listds");
+    c.cmd("=6");
+    c.enter({ command: `LISTDS '${LIB}'` });
+    expect(stepId(c)).toBe("member");
+    c.cmd("=2");
+    c.enter(entry(`${SEQ}(ONE)`));
+    expect(c.done).toBe(true);
+    expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("a sequential data set allocated with directory blocks does not pass the first step", () => {
+    const c = learn(ID, (a) => allocate(a, SEQ, { dirblocks: "5" }));
+    expect(stepId(c)).toBe("seq");
+  });
+
+  it("a library allocated with no directory blocks does not pass the second step", () => {
+    const c = learn(ID, (a) => {
+      allocate(a, SEQ, { dirblocks: "0" });
+      allocate(a, LIB, { dirblocks: "0" });
+    });
+    expect(stepId(c)).toBe("lib");
+  });
+
+  it("the wrong record length does not pass", () => {
+    const c = learn(ID, (a) => allocate(a, SEQ, { lrecl: "133" }));
+    expect(stepId(c)).toBe("seq");
+  });
+
+  it("short information for the library does not pass the library information step", () => {
+    const c = learn(ID, (a) => {
+      both(a);
+      infoOf(a, LIB, "S");
+    });
+    expect(stepId(c)).toBe("info-lib");
+  });
+
+  describe("Challenge", () => {
+    it("allocating both and showing the information for each completes it", () => {
+      const c = challenge(ID, (a) => {
+        both(a);
+        infoOf(a, LIB);
+        a.pf(3);
+        a.enter({ [`cmd:${SEQ}`]: "I" });
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("LISTDS with the full name is an accepted way to show the information", () => {
+      const c = challenge(ID, (a) => {
+        both(a);
+        a.cmd("=6");
+        a.enter({ command: `LISTDS '${SEQ}'` });
+        a.enter({ command: `LISTDS ${LIB}` });
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("showing the information before anything is false when the data sets are wrong", () => {
+      const c = challenge(ID, (a) => {
+        allocate(a, SEQ, { dirblocks: "5" }); // not sequential
+        allocate(a, LIB, { dirblocks: "5" });
+        infoOf(a, LIB);
+        a.pf(3);
+        a.enter({ [`cmd:${SEQ}`]: "I" });
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("allocating without showing the information is not enough", () => {
+      const c = challenge(ID, (a) => both(a));
+      expect(c.done).toBe(false);
+    });
+
+    it("information for the sequential data set only is not enough", () => {
+      const c = challenge(ID, (a) => {
+        both(a);
+        infoOf(a, SEQ);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("short information on the library does not count", () => {
+      const c = challenge(ID, (a) => {
+        both(a);
+        infoOf(a, LIB, "S");
+        a.pf(3);
+        a.enter({ [`cmd:${SEQ}`]: "I" });
+      });
+      expect(c.done).toBe(false);
+    });
+  });
+});

@@ -3,7 +3,7 @@
  * (author-checked against the sources named in the spec; independent source, fidelity and expert review pending).
  */
 import { editorClosed, editorOpen, eventIs, onScreen } from "../validators";
-import type { Lesson, Validator } from "../types";
+import type { Lesson, LessonContext, Validator } from "../types";
 
 const MODULE = "Foundations";
 
@@ -147,6 +147,101 @@ export const lessonB01: Lesson = {
       instruction: "Press PF3 to return to the status panel.",
       hint: "F3.",
       validator: onScreen("SDSF_STATUS"),
+    },
+  ],
+};
+
+/** Attributes of {HLQ}.TYPES.<tail> as the catalog holds them now (state, so a stale data set cannot pass by accident). */
+const typesDataset = (ctx: LessonContext, tail: "SEQ" | "LIB") => ctx.state.catalog.datasets[`${ctx.hlq}.TYPES.${tail}`];
+const isFb80 = (ds: { recfm: string; lrecl: number }) => ds.recfm === "FB" && ds.lrecl === 80;
+export const typesSeqIsRight: Validator = (ctx) => {
+  const ds = typesDataset(ctx, "SEQ");
+  return !!ds && ds.datasetType === "PS" && isFb80(ds);
+};
+export const typesLibIsRight: Validator = (ctx) => {
+  const ds = typesDataset(ctx, "LIB");
+  return !!ds && ds.datasetType === "PDS" && isFb80(ds) && ds.dirBlocks >= 1;
+};
+
+export const lessonB02: Lesson = {
+  id: "b-02-dataset-types",
+  number: 31,
+  module: MODULE,
+  title: "Sequential data sets, PDS and PDSE",
+  description: "Create a sequential data set and a library, see how the directory makes the difference, and read the attributes.",
+  objective:
+    "Allocate {HLQ}.TYPES.SEQ (sequential, FB, LRECL 80) and {HLQ}.TYPES.LIB (a library, FB, LRECL 80, with directory blocks), compare them in the data set list and in Data Set Information, and see that only the library has members.",
+  teaches: [
+    "A sequential data set (DSORG PS) is one stream of records",
+    "A PDS (DSORG PO) is a library of named members with a directory",
+    "A PDSE is a library with a different internal format and a directory that grows by itself",
+    "RECFM FB and LRECL 80 are the usual choice for source and JCL",
+  ],
+  requires: ["l06-allocating"],
+  sources: ["SRC-001", "SRC-014"],
+  startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, removeDatasets: ["{HLQ}.TYPES.SEQ", "{HLQ}.TYPES.LIB"] },
+  steps: [
+    {
+      id: "seq",
+      instruction: "Open the Data Set Utility (3.2) and allocate {HLQ}.TYPES.SEQ with option A: Record format FB, Record length 80 and Directory blocks 0.",
+      explanation:
+        "Traditional z/OS data sets are made of records, not a stream of bytes: every record is fixed or variable length, and in the editor each line is a record. FB means fixed-length records grouped in blocks, the usual choice for fixed-length text such as source and JCL. A directory block count of zero means a sequential data set: records in order, one after another (organization PS).",
+      hint: "3.2, A, Other Data Set Name {HLQ}.TYPES.SEQ, Enter; FB, 80, directory blocks 0, Enter.",
+      validator: (ctx) => eventIs("DATASET_ALLOCATED", (e, c) => e.dsn === `${c.hlq}.TYPES.SEQ`)(ctx) && typesSeqIsRight(ctx),
+      highlightField: "dirblocks",
+    },
+    {
+      id: "lib",
+      instruction: "Allocate {HLQ}.TYPES.LIB the same way, but with Directory blocks 5. FB, LRECL 80.",
+      explanation:
+        "A partitioned data set (PDS) is a collection of sequential data sets called members, each with a name of up to eight characters. It also has a directory with one entry per member, which is what the directory blocks reserve. Its organization is PO. Most of what you edit in ISPF lives in libraries like this.",
+      hint: "3.2, A, {HLQ}.TYPES.LIB, Enter; FB, 80, directory blocks 5, Enter.",
+      validator: (ctx) => eventIs("DATASET_ALLOCATED", (e, c) => e.dsn === `${c.hlq}.TYPES.LIB`)(ctx) && typesLibIsRight(ctx),
+      highlightField: "dirblocks",
+    },
+    {
+      id: "compare",
+      instruction: "List {HLQ}.TYPES in the Data Set List Utility (3.4). Compare the two rows: PS for one, PO for the other.",
+      explanation:
+        "The list shows organization (PS or PO), record format and record length for each data set. A PDSE would look like a PDS here: it has a directory and members too, but a different internal format. Its directory grows automatically and it reuses the space of deleted members, so it never needs compressing. (This simulator cannot create a PDSE: the Data set name type field gives an ordinary PDS for LIBRARY and for PDS.)",
+      hint: "=3.4, {HLQ}.TYPES, Enter.",
+      validator: eventIs("DATASET_SEARCHED", (e, ctx) => {
+        const level = e.level.toUpperCase().replace(/[.*%]+$/, "");
+        return e.results >= 2 && `${ctx.hlq}.TYPES.SEQ`.startsWith(level) && `${ctx.hlq}.TYPES.LIB`.startsWith(level);
+      }),
+      highlightField: "level",
+    },
+    {
+      id: "info-lib",
+      instruction: "Type I next to {HLQ}.TYPES.LIB and press Enter. Read Organization, Data set name type, and the directory blocks and number of members.",
+      explanation:
+        "Data Set Information shows organization PO and name type PDS for a library, with its directory blocks and member count. A real PDSE shows the name type LIBRARY and NOLIMIT for the directory blocks, because its directory has no fixed size. (S, the short form, leaves the directory blocks and member count out, so use I.)",
+      hint: "I in the command column of {HLQ}.TYPES.LIB, Enter.",
+      validator: eventIs("DATASET_INFO_VIEWED", (e, ctx) => e.dsn === `${ctx.hlq}.TYPES.LIB` && !e.short),
+      highlightField: "cmd:{HLQ}.TYPES.LIB",
+    },
+    {
+      id: "info-seq",
+      instruction: "Press PF3, then type I next to {HLQ}.TYPES.SEQ. Organization is PS and there is no directory.",
+      hint: "F3, then I on {HLQ}.TYPES.SEQ, Enter.",
+      validator: eventIs("DATASET_INFO_VIEWED", (e, ctx) => e.dsn === `${ctx.hlq}.TYPES.SEQ`),
+      highlightField: "cmd:{HLQ}.TYPES.SEQ",
+    },
+    {
+      id: "listds",
+      instruction: "Jump to the ISPF Command Shell (=6) and enter LISTDS '{HLQ}.TYPES.LIB'. The DSORG column reads PO.",
+      explanation: "LISTDS is a TSO command (lesson 30). It prints the record format, record length, block size and organization of a data set, so you can check attributes without leaving the command prompt.",
+      hint: "=6, Enter, then LISTDS '{HLQ}.TYPES.LIB', Enter.",
+      validator: eventIs("TSO_COMMAND_ENTERED", (e, ctx) => /^(TSO\s+)?LISTDS\b/i.test(e.command.trim()) && e.command.toUpperCase().includes(`${ctx.hlq}.TYPES.LIB`)),
+    },
+    {
+      id: "member",
+      instruction: "Now try to open {HLQ}.TYPES.SEQ(ONE) in Edit (=2). Only a library has members, so the simulator refuses.",
+      explanation:
+        "A member name only makes sense for a partitioned data set. The refusal is on purpose and is not counted against you. (The message wording, DATA SET IS NOT PARTITIONED, is the simulator's own; it is not a verified ISPF message.)",
+      hint: "=2, then {HLQ}.TYPES.SEQ(ONE) in Other Data Set Name, Enter.",
+      validator: eventIs("MESSAGE_SHOWN", (e) => e.text === "DATA SET IS NOT PARTITIONED"),
+      expectsError: true,
     },
   ],
 };

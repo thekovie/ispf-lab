@@ -41,6 +41,7 @@ Run `pnpm test` for the current count (at the M1 closure: 28 files, 1,784 tests)
 | `tests/components/terminal-unsent.test.tsx` | the real `Terminal` reports editor text typed but not sent (and not an unsent command) |
 | `tests/tutorial/metadata.test.ts` | `requires` ids exist, are earlier and unique; `sources` format; `missingPrerequisites`; lessons that start below the menu keep it underneath (PF3 returns to the menu) |
 | `tests/components/prerequisites-note.test.tsx` | the coach panel shows the non-blocking "Before you start" note only while a required lesson is not completed |
+| `tests/tutorial/m3-lessons.test.ts` | M3 lessons 29-31: Learn order, rejected shortcuts and accepted alternatives per lesson; the generic gates in `challenge.test.ts` and `scoring.test.ts` cover them too |
 | `tests/tutorial/scoring.test.ts` | instructed errors (L1 `99`, L7 `SAVE` in Browse) are not mistakes, other errors still are, Challenge counts all; every lesson's legitimate route scores 100; new lessons must define a Challenge |
 | `tests/components/progress-reset.test.tsx` | the Progress-page environment reset also clears the virtual JES |
 | `tests/tutorial/m1b-validators.test.ts` | M1b-3: each confirmed Learn-step or Challenge defect (L5, L6, L9, L11, L17, L21, L27, L28) has a negative test and a test that the legitimate route still passes |

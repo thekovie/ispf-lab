@@ -354,6 +354,25 @@ WALKS["b-01-zos-big-picture"] = (c) => {
   c.pf(3);
 };
 
+WALKS["b-02-dataset-types"] = (c) => {
+  const alloc = (dsn: string, dirblocks: string) => {
+    c.cmd("=3.2");
+    c.enter({ option: "A", other: dsn });
+    c.enter({ recfm: "FB", lrecl: "80", dirblocks });
+  };
+  alloc(`${HLQ}.TYPES.SEQ`, "0");
+  alloc(`${HLQ}.TYPES.LIB`, "5");
+  c.cmd("=3.4");
+  c.enter({ level: `${HLQ}.TYPES` });
+  c.enter({ [`cmd:${HLQ}.TYPES.LIB`]: "I" });
+  c.pf(3);
+  c.enter({ [`cmd:${HLQ}.TYPES.SEQ`]: "I" });
+  c.cmd("=6");
+  c.enter({ command: `LISTDS '${HLQ}.TYPES.LIB'` });
+  c.cmd("=2");
+  c.enter(entry(`${HLQ}.TYPES.SEQ(ONE)`));
+};
+
 const E = (ref: string) => entry(ref);
 
 /**

@@ -11,7 +11,8 @@
  */
 import type { SimEvent } from "@/engine/types";
 import type { Validator } from "./types";
-import { allOf, is, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
+import { allOf, anyOf, is, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
+import { typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
 
 export interface Challenge {
   task: string;
@@ -74,7 +75,18 @@ const traceHelloJob: Validator = ({ history = [], hlq }) => {
   return history.slice(at).some((e) => e.type === "JOB_OUTPUT_OPENED" && e.jobId === jobId);
 };
 
+/** Information was shown for this data set: Data Set Information (any form when `anyForm`, else the full panel) or LISTDS. */
+const shown = (tail: "SEQ" | "LIB", anyForm: boolean) =>
+  anyOf(
+    sawAll(is("DATASET_INFO_VIEWED", (e, ctx) => e.dsn === `${ctx.hlq}.TYPES.${tail}` && (anyForm || !e.short))),
+    sawAll(is("TSO_COMMAND_ENTERED", (e, ctx) => /^(TSO\s+)?LISTDS\b/i.test(e.command.trim()) && e.command.toUpperCase().includes(`${ctx.hlq}.TYPES.${tail}`))),
+  );
+
 export const CHALLENGES: Record<string, Challenge> = {
+  "b-02-dataset-types": {
+    task: "Create {HLQ}.TYPES.SEQ as a sequential data set and {HLQ}.TYPES.LIB as a library with directory blocks, both FB and LRECL 80, then show the information for each (option I in the data set list, or LISTDS).",
+    validator: allOf(typesSeqIsRight, typesLibIsRight, shown("SEQ", true), shown("LIB", false)),
+  },
   "b-01-zos-big-picture": {
     task: "Run any TSO command at the ISPF Command Shell, submit {HLQ}.JCL(HELLO) from ISPF, and open that job's output in SDSF.",
     validator: traceHelloJob,

@@ -6,6 +6,7 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Draft lessons 29-31 (Scroll amount; TSO/E, ISPF, JES and SDSF; sequential data sets, PDS and PDSE), awaiting review.
 - Optional `requires` and `sources` on lessons. Lesson 13 shows a non-blocking "Before you start" note until lesson 6 is completed.
 
 ### Changed

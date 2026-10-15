@@ -500,3 +500,9 @@ Approved by the project owner after the M1 closure. Branch `feat/m2-lesson-metad
 - `LessonStart.underMenu`: L5, L7-L10, L12 start with the Primary Option Menu underneath, so PF3 returns to the menu (GAP-73). A test requires it.
 - Not done: any hard lock, a "References" panel, `difficulty`/`estimatedMinutes`/`reviewStatus` (dropped by the M0 review). M3 not started.
 - Final: 30 test files, 1,803 tests, `pnpm check` and `pnpm build` green. CI still never run.
+
+## Phase 24 - M3 first tranche (2026-10-15, in progress)
+
+Branch `feat/m3-foundations`. Lessons 29-31 (a-01, b-01, b-02) added as **drafts** (author-checked against the sources in their specs; independent
+source, fidelity and expert review pending). Specs: `docs/curriculum/lessons/`. New: `LessonStart.createMembers`, `EDITOR_SCROLLED{amount}`.
+Not done: b-03 to b-06 and b-10 (each needs a small simulator prerequisite), an M3 report, public copy still says 28 lessons. Do not merge or publish before review.
