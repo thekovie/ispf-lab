@@ -50,9 +50,10 @@ export function applyScenario(catalog: Catalog, hlq: string, start: LessonStart,
   }
   for (const spec of start.createMembers ?? []) {
     const dsn = fillHlq(spec.dsn, hlq).toUpperCase();
+    const records = spec.records.map((r) => fillHlq(r, hlq));
     const current = getMember(next, dsn, spec.member);
-    if (current && current.records.map((r) => r.trimEnd()).join("\n") === spec.records.join("\n")) continue;
-    const saved = saveRecords(next, { dsn, member: spec.member }, spec.records, { today, userid: hlq });
+    if (current && current.records.map((r) => r.trimEnd()).join("\n") === records.join("\n")) continue;
+    const saved = saveRecords(next, { dsn, member: spec.member }, records, { today, userid: hlq });
     if (!saved.error) next = saved.catalog;
   }
   if (start.resetMembers?.length) next = restoreMembers(next, hlq, start.resetMembers);

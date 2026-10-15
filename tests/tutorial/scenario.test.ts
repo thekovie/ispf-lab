@@ -212,3 +212,10 @@ describe("createMembers (M3): a lesson that needs its own practice text", () => 
     expect(risk).toEqual([`${HLQ}.DATA(PRACTICE) would be restored to its original text`]);
   });
 });
+
+describe("createMembers fills {HLQ} in the records (M3, lesson b-03)", () => {
+  it("replaces the placeholder with the userid", () => {
+    const next = applyScenario(buildSeed("ABC"), "ABC", { createMembers: [{ dsn: "{HLQ}.DATA", member: "JOBX", records: ["//{HLQ}X   JOB (ACCT)"] }] }, TODAY);
+    expect(getMember(next, "ABC.DATA", "JOBX")?.records[0].trimEnd()).toBe("//ABCX   JOB (ACCT)");
+  });
+});

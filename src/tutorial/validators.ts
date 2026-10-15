@@ -16,6 +16,9 @@ export const onScreen =
   ({ state, event }) =>
     ids.includes(state.screen.id) || (event?.type === "SCREEN_OPENED" && ids.includes(event.screen));
 
+/** No Edit session is open. A Browse (for example of job output) is allowed: it is an editor session in the simulator too. */
+export const noEditSession: Validator = ({ state }) => !state.editor || state.editor.mode !== "EDIT";
+
 /** No editor session is open (the learner has left the editor). */
 export const editorClosed: Validator = ({ state }) => !state.editor;
 

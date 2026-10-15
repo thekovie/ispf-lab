@@ -11,7 +11,7 @@
  */
 import type { SimEvent } from "@/engine/types";
 import type { Validator } from "./types";
-import { allOf, anyOf, is, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
+import { allOf, anyOf, is, noEditSession, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
 import { typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
 
 export interface Challenge {
@@ -83,6 +83,16 @@ const shown = (tail: "SEQ" | "LIB", anyForm: boolean) =>
   );
 
 export const CHALLENGES: Record<string, Challenge> = {
+  "b-03-jcl-anatomy": {
+    task: "Make {HLQ}.JCL(BROKEN) run to CC 0000. It has to fail with a JCL error first, then a later run of the same job has to end CC 0000.",
+    validator: allOf(
+      sawInOrder(
+        is("JCL_ERROR_GENERATED", (e, ctx) => e.jobName === `${ctx.hlq}B`),
+        is("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}B` && e.status === "OUTPUT" && e.maxRc === 0),
+      ),
+      noEditSession,
+    ),
+  },
   "b-02-dataset-types": {
     task: "Create {HLQ}.TYPES.SEQ as a sequential data set and {HLQ}.TYPES.LIB as a library with directory blocks, both FB and LRECL 80, then show the information for each (option I in the data set list, or LISTDS).",
     validator: allOf(typesSeqIsRight, typesLibIsRight, shown("SEQ", true), shown("LIB", false)),

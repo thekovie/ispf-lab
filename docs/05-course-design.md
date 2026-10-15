@@ -1,6 +1,6 @@
 # Course design
 
-Twenty-eight reviewed lessons in ten modules, plus three **draft** foundation lessons (29-31, module 11) added in M3 that await independent source, fidelity and expert review. Lessons 1–15 follow IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
+Twenty-eight reviewed lessons in ten modules, plus four **draft** foundation lessons (29-32, module 11) added in M3 that await independent source, fidelity and expert review. Lessons 1–15 follow IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
 data sets → editor) and the Mainframestechhelp topic order (Settings → Utilities 3.1/3.2/3.3/3.4 → member lists →
 editor commands). Lessons 16–28 (added with the expansion spec) cover the jump function, RETRIEVE, the editor's
 power tools (COLS/BOUNDS, profiles, UNDO, exclude/FLIP), DSLIST and member-list depth, and the batch loop
@@ -43,6 +43,7 @@ Lesson files: `src/tutorial/lessons/module1.ts` … `module6.ts`, `module7-8.ts`
 | 29 | Panel fields and the Scroll amount (**draft**) | open `{HLQ}.DATA(SCROLL)` → PF8 at PAGE → HALF in the field → `DOWN 3` → `DOWN MAX` → PF3 | `EDITOR_SCROLLED{amount}`, `editor.scrollAmount` | SRC-013 UG1 p.17, 59-60; spec `docs/curriculum/lessons/a-01-panel-fields-scroll.md` |
 | 30 | The big picture: TSO/E, ISPF, JES, SDSF (**draft**) | option 6 `LISTDS` → Edit HELLO → SUBMIT → SDSF ST → S | `TSO_COMMAND_ENTERED`, `JOB_SUBMITTED{EDIT}`, `JOB_STATUS_OPENED`, `JOB_OUTPUT_OPENED` | SRC-001 p.92, 166, 169, 172, 257, 275; spec `b-01-zos-big-picture.md` |
 | 31 | Sequential data sets, PDS and PDSE (**draft**) | allocate PS and PDS → 3.4 compare → `I` on each → `LISTDS` → member on a PS refused | `DATASET_ALLOCATED` + catalog state, `DATASET_SEARCHED`, `DATASET_INFO_VIEWED`, `MESSAGE_SHOWN` (instructed error) | SRC-001 p.172, 211-218; SRC-014 UG2 p.94; spec `b-02-dataset-types.md` |
+| 32 | Reading a job: JOB, EXEC, DD and continuation (**draft**) | HELLO + COLS → `TSO SUBMIT JCL(BROKEN)` → JESYSMSG IEFC621I → remove the trailing comma → SUBMIT → PF3 | `COLS_DISPLAYED`, `JCL_ERROR_GENERATED`, `JOB_OUTPUT_OPENED`, `JOB_COMPLETED`, JCL parser on the edited text | SRC-003 p.13-17, 75, 313, 389, 459; SRC-019 IEFC621I; spec `b-03-jcl-anatomy.md` |
 
 ## Step anatomy
 

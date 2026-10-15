@@ -48,7 +48,7 @@ export interface LessonStart {
   removeMembers?: { dsn: string; member: string }[];
   /** empty PDS data sets to (re)create before starting, replacing any existing one; {HLQ} allowed */
   createDatasets?: { dsn: string; dirBlocks: number }[];
-  /** members to (re)create with these records before starting, replacing any existing text; {HLQ} allowed in dsn. The data set must exist. */
+  /** members to (re)create with these records before starting, replacing any existing text; {HLQ} allowed in dsn and records. The data set must exist. */
   createMembers?: { dsn: string; member: string; records: string[] }[];
   /** edit profiles to reset to their defaults, by profile name (e.g. "JCL") */
   resetProfiles?: string[];

@@ -132,3 +132,48 @@ describe("message ids that IBM documents (M1b-4, EV-B)", () => {
     expect(ids).toEqual(["IEFC019I", "IEFC019I", "IEFC019I"]);
   });
 });
+
+describe("statement numbers and the trailing /* (GAP-37, GAP-38; lesson b-03)", () => {
+  // IBM numbers the JESJCL listing by statement; comments and continuation records are not numbered (EV-B 1.4).
+  const JCL = [
+    "//USER01X  JOB (ACCT),'X',CLASS=A,",
+    "//             MSGCLASS=X",
+    "//* A COMMENT",
+    "//STEP1    EXEC PGM=IEFBR14",
+    "//BAD      DD  FOO=1",
+    "//",
+  ];
+
+  it("JESYSMSG reports the statement number that JESJCL prints, not the record number", () => {
+    const r = submit(JCL);
+    const jcl = out(r, "JESJCL").split("\n");
+    const badNo = jcl.find((l) => l.includes("//BAD"))!.trim().split(/\s+/)[0];
+    expect(badNo).toBe("3");
+    const msg = out(r, "JESYSMSG").split("\n");
+    const line = msg.find((l) => l.includes("IEFC630I"))!;
+    expect(line.trim().split(/\s+/)[0]).toBe(badNo);
+  });
+
+  it("a continuation error points at the statement that was being continued", () => {
+    const r = submit(["//USER01X  JOB (ACCT),'X',CLASS=A,", "//* NOT A CONTINUATION", "//S EXEC PGM=IEFBR14", "//"]);
+    const msg = out(r, "JESYSMSG").split("\n").find((l) => l.includes("IEFC621I"))!;
+    expect(msg.trim().split(/\s+/)[0]).toBe("1");
+  });
+
+  it("a trailing /* after the last step is accepted", () => {
+    expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "/*"]).errors).toEqual([]);
+    const r = submit(["//USER01X JOB (ACCT),'X',CLASS=A", "//S EXEC PGM=IEFBR14", "/*"]);
+    expect(r.job.status).toBe("OUTPUT");
+    expect(r.job.maxRc).toBe(0);
+  });
+
+  it("in-stream data still ends at /* and later JCL still runs", () => {
+    const p = parseJcl(["//J JOB", "//S EXEC PGM=SORT", "//SYSIN DD *", "  SORT FIELDS=(1,3,CH,A)", "/*", "//SORTOUT DD SYSOUT=*", "//"]);
+    expect(p.errors).toEqual([]);
+    expect(p.steps[0].dds.map((d) => d.ddname)).toEqual(["SYSIN", "SORTOUT"]);
+  });
+
+  it("text that is not JCL and not /* is still IEFC605I", () => {
+    expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "HELLO"]).errors[0]).toMatchObject({ id: "IEFC605I" });
+  });
+});

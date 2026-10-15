@@ -2,7 +2,8 @@
  * Module 11 - Foundations (M3). Lesson specs: docs/curriculum/lessons/<id>.md. Review status of every lesson here: draft
  * (author-checked against the sources named in the spec; independent source, fidelity and expert review pending).
  */
-import { editorClosed, editorOpen, eventIs, onScreen } from "../validators";
+import { parseJcl } from "@/jes/jcl";
+import { editorClosed, editorOpen, eventIs, memberSatisfies, onScreen } from "../validators";
 import type { Lesson, LessonContext, Validator } from "../types";
 
 const MODULE = "Foundations";
@@ -242,6 +243,94 @@ export const lessonB02: Lesson = {
       hint: "=2, then {HLQ}.TYPES.SEQ(ONE) in Other Data Set Name, Enter.",
       validator: eventIs("MESSAGE_SHOWN", (e) => e.text === "DATA SET IS NOT PARTITIONED"),
       expectsError: true,
+    },
+  ],
+};
+
+/** The JOB statement ends with a comma, so the next statement is not the continuation the system waits for (IEFC621I). */
+const BROKEN_JCL = ["//{HLQ}B  JOB (ACCT),'FIX ME',CLASS=A,", "//STEP1    EXEC PGM=IEFBR14", "//"];
+
+/** The text now in the editor parses as JCL with no converter errors (the parser is the checker, not a text match). */
+const editorJclIsClean: Validator = ({ state }) => !!state.editor && parseJcl(state.editor.lines.map((l) => l.text)).errors.length === 0;
+const brokenJob = (e: { jobName: string }, ctx: LessonContext) => e.jobName === `${ctx.hlq}B`;
+
+export const lessonB03: Lesson = {
+  id: "b-03-jcl-anatomy",
+  number: 32,
+  module: MODULE,
+  title: "Reading a job: JOB, EXEC, DD and continuation",
+  description: "Read a small job statement by statement, learn where the fields go, then find and fix a missing continuation.",
+  objective: "Read {HLQ}.JCL(HELLO), show the column ruler, then find out why {HLQ}.JCL(BROKEN) ends with a JCL error and fix it so it runs to CC 0000.",
+  teaches: [
+    "A job is JOB, EXEC and DD statements; a null statement (//) ends it",
+    "Columns 1-2 hold //, the name starts in column 3, nothing is coded past column 71",
+    "A trailing comma means the next record must continue the statement (// then a blank)",
+    "IEFC621I names a missing continuation; STMT NO. is the statement number in the JESJCL listing",
+  ],
+  requires: ["b-02-dataset-types"],
+  sources: ["SRC-003", "SRC-019"],
+  startingState: {
+    screen: { id: "PRIMARY_OPTION_MENU" },
+    resetJobs: true,
+    resetMembers: [{ dsn: "{HLQ}.JCL", member: "HELLO" }],
+    createMembers: [{ dsn: "{HLQ}.JCL", member: "BROKEN", records: BROKEN_JCL }],
+  },
+  steps: [
+    {
+      id: "open",
+      instruction: "Open {HLQ}.JCL(HELLO) in Edit (option 2) and read it: a JOB statement, an EXEC statement, and a lone // at the end.",
+      explanation:
+        "A JCL statement is made of 80-byte records, like punched-card images, with up to five fields: identifier, name, operation, parameters and comments. The JOB statement marks the start of a job. An EXEC statement names the program a step runs and marks the beginning of each step. A DD statement (HELLO has none; IEFBR14 needs no data) describes a data set a step uses. A null statement, just //, marks the end of the job.",
+      hint: "2, Enter, {HLQ}.JCL(HELLO), Enter.",
+      validator: editorOpen("{HLQ}.JCL", "HELLO", "EDIT"),
+    },
+    {
+      id: "cols",
+      instruction: "Type COLS on the command line. The ruler shows the columns: // sits in columns 1-2.",
+      explanation:
+        "The identifier field is // in columns 1 and 2. A name, if there is one, starts in column 3 (1 to 8 characters, the first one a letter or national character) and is followed by a blank; then come the operation (JOB, EXEC, DD) and its parameters. Do not code anything past column 71: columns 73-80 are ignored.",
+      hint: "COLS, Enter.",
+      validator: eventIs("COLS_DISPLAYED"),
+    },
+    {
+      id: "leave",
+      instruction: "Press PF3 to leave HELLO (nothing changed).",
+      hint: "F3.",
+      validator: editorClosed,
+    },
+    {
+      id: "submit",
+      instruction: "Go to the menu and submit the other member: TSO SUBMIT JCL(BROKEN) on the Option line. It will be accepted as submitted, but it will not run.",
+      hint: "F3 to the menu, then TSO SUBMIT JCL(BROKEN), Enter.",
+      validator: eventIs("JCL_ERROR_GENERATED", (e, ctx) => brokenJob(e, ctx)),
+    },
+    {
+      id: "read",
+      instruction: "Open SDSF (=S, ST), type ? next to {HLQ}B, then S next to JESYSMSG. Read the line under STMT NO. MESSAGE.",
+      explanation:
+        "IEFC621I EXPECTED CONTINUATION NOT RECEIVED: a comma ended the last operand on a line, but the next record was not a continuation. STMT NO. is the statement number as numbered in the JESJCL listing (comments and continuation records are not numbered). A JCL error means no step ran.",
+      hint: "=S, ST, ? on {HLQ}B, S on JESYSMSG.",
+      validator: eventIs("JOB_OUTPUT_OPENED", (e) => e.ddname === "JESYSMSG"),
+    },
+    {
+      id: "fix",
+      instruction: "Edit {HLQ}.JCL(BROKEN) and fix statement 1: take the comma off the end of the JOB statement (or continue it properly with a record that starts // and a blank).",
+      explanation:
+        "To continue a statement, stop after a complete parameter and its comma, at or before column 71, and begin the next record with // and a blank in column 3. Here nothing was meant to continue, so the comma is simply a mistake. (This simulator accepts continued text from any column after column 3; IBM allows columns 4-16.)",
+      hint: "F3 out of SDSF, =2, {HLQ}.JCL(BROKEN); overtype the end of the JOB statement; Enter.",
+      validator: (ctx) => editorOpen("{HLQ}.JCL", "BROKEN", "EDIT")(ctx) && editorJclIsClean(ctx),
+    },
+    {
+      id: "rerun",
+      instruction: "Type SUBMIT. This time the job runs and ends CC 0000.",
+      hint: "SUBMIT, Enter.",
+      validator: eventIs("JOB_COMPLETED", (e, ctx) => brokenJob(e, ctx) && e.status === "OUTPUT" && e.maxRc === 0),
+    },
+    {
+      id: "save",
+      instruction: "Press PF3 to save the corrected member.",
+      hint: "F3.",
+      validator: (ctx) => editorClosed(ctx) && memberSatisfies("{HLQ}.JCL", "BROKEN", (records) => parseJcl(records).errors.length === 0)(ctx),
     },
   ],
 };

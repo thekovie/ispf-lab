@@ -39,6 +39,8 @@ export interface ParsedJcl {
   errors: JclError[];
   /** numbered listing lines for JESJCL */
   listing: string[];
+  /** record number (1-based) to the statement number JESJCL prints for it; continuation records share their statement's number */
+  statementNumbers: Record<number, number>;
 }
 
 const NAME_RE = /^[A-Z#$@][A-Z0-9#$@]{0,7}$/;
@@ -113,19 +115,29 @@ interface RawStatement {
 }
 
 /** Tokenise records into statements, joining continuations and capturing in-stream data. */
-function collect(records: string[]): { statements: RawStatement[]; instream: Map<number, string[]>; errors: JclError[]; listing: string[] } {
+function collect(records: string[]): { statements: RawStatement[]; instream: Map<number, string[]>; errors: JclError[]; listing: string[]; statementNumbers: Record<number, number> } {
   const statements: RawStatement[] = [];
   const instream = new Map<number, string[]>();
   const errors: JclError[] = [];
   const listing: string[] = [];
+  const statementNumbers: Record<number, number> = {};
   let i = 0;
   let stmtNo = 0;
-  const numbered = (text: string) => `${String(++stmtNo).padStart(2)}       ${text}`;
+  const numbered = (text: string, line: number) => {
+    statementNumbers[line] = stmtNo + 1;
+    return `${String(++stmtNo).padStart(2)}       ${text}`;
+  };
   while (i < records.length) {
     const text = records[i].slice(0, 72).trimEnd();
     const lineNo = i + 1;
     if (text.startsWith("//*") || text.trim() === "") {
       listing.push(`         ${text}`);
+      i++;
+      continue;
+    }
+    if (text === "/*" && records.slice(i + 1).every((r) => r.trim() === "")) {
+      // IBM's own sample job ends with an optional /* (JCL User's Guide); accepted when nothing follows
+      listing.push("         /*");
       i++;
       continue;
     }
@@ -137,11 +149,11 @@ function collect(records: string[]): { statements: RawStatement[]; instream: Map
       continue;
     }
     if (text === "//") {
-      listing.push(numbered("//"));
+      listing.push(numbered("//", lineNo));
       i++;
       break; // null statement ends the job
     }
-    listing.push(numbered(text));
+    listing.push(numbered(text, lineNo));
     const body = text.slice(2);
     let name = "";
     let rest = body;
@@ -163,6 +175,7 @@ function collect(records: string[]): { statements: RawStatement[]; instream: Map
       }
       i++;
       last = i + 1;
+      statementNumbers[last] = stmtNo;
       listing.push(`         ${next}`);
       operands += operandField(next.slice(2).trimStart());
     }
@@ -182,14 +195,14 @@ function collect(records: string[]): { statements: RawStatement[]; instream: Map
       instream.set(lineNo, data);
     }
   }
-  return { statements, instream, errors, listing };
+  return { statements, instream, errors, listing, statementNumbers };
 }
 
 const OPERATIONS = new Set(["JOB", "EXEC", "DD"]);
 
 export function parseJcl(records: string[]): ParsedJcl {
-  const { statements, instream, errors, listing } = collect(records);
-  const result: ParsedJcl = { jobParams: {}, steps: [], errors, listing };
+  const { statements, instream, errors, listing, statementNumbers } = collect(records);
+  const result: ParsedJcl = { jobParams: {}, steps: [], errors, listing, statementNumbers };
   let step: StepStatement | undefined;
   for (const st of statements) {
     if (!OPERATIONS.has(st.operation)) {

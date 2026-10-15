@@ -427,3 +427,126 @@ describe("b-02-dataset-types", () => {
     });
   });
 });
+
+describe("b-03-jcl-anatomy", () => {
+  const ID = "b-03-jcl-anatomy";
+  const submitBroken = (a: Attempt) => a.cmd("TSO SUBMIT JCL(BROKEN)");
+  const readSysmsg = (a: Attempt) => {
+    a.cmd("=S");
+    a.cmd("ST");
+    a.enter({ "cmd:JOB00001": "?" });
+    a.enter({ "cmd:JESYSMSG": "S" });
+  };
+  const openBroken = (a: Attempt) => {
+    a.cmd("=2");
+    a.enter(entry(`${HLQ}.JCL(BROKEN)`));
+  };
+  const removeComma = (a: Attempt) => a.enter({ [`line:${a.lineId(/JOB/)}`]: "//USER01B  JOB (ACCT),'FIX ME',CLASS=A" });
+  const addContinuation = (a: Attempt) => {
+    a.enter({ [`line:${a.lineId(/JOB/)}`]: "//USER01B  JOB (ACCT),'FIX ME',CLASS=A," });
+    a.enter({ [`prefix:${a.lineId(/JOB/)}`]: "I" });
+    a.enter({ [`line:${a.sim.state.editor!.lines[1].id}`]: "//             MSGCLASS=X" });
+  };
+
+  it("is lesson 32, advises lesson 31, and creates BROKEN for this userid", () => {
+    const c = new Attempt(lessonById(ID)!);
+    expect(c.lesson.number).toBe(32);
+    expect(c.lesson.requires).toEqual(["b-02-dataset-types"]);
+    expect(getMember(c.sim.state.catalog, `${HLQ}.JCL`, "BROKEN")!.records[0].trimEnd()).toBe("//USER01B  JOB (ACCT),'FIX ME',CLASS=A,");
+  });
+
+  it("walks the Learn steps in order", () => {
+    const c = new Attempt(lessonById(ID)!);
+    c.cmd("2");
+    c.enter(entry(`${HLQ}.JCL(HELLO)`));
+    expect(stepId(c)).toBe("cols");
+    c.enter({ command: "COLS" });
+    expect(stepId(c)).toBe("leave");
+    c.pf(3);
+    expect(stepId(c)).toBe("submit");
+    c.pf(3);
+    submitBroken(c);
+    expect(stepId(c)).toBe("read");
+    readSysmsg(c);
+    expect(stepId(c)).toBe("fix");
+    c.pf(3);
+    c.pf(3);
+    c.pf(3);
+    openBroken(c);
+    removeComma(c);
+    expect(stepId(c)).toBe("rerun");
+    c.enter({ command: "SUBMIT" });
+    expect(stepId(c)).toBe("save");
+    c.pf(3);
+    expect(c.done).toBe(true);
+    expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("editing another member does not pass the fix step", () => {
+    const c = learn(ID, (a) => {
+      a.cmd("2");
+      a.enter(entry(`${HLQ}.JCL(HELLO)`));
+      a.enter({ command: "COLS" });
+      a.pf(3);
+      a.pf(3);
+      submitBroken(a);
+      readSysmsg(a);
+      a.pf(3);
+      a.pf(3);
+      a.pf(3);
+      a.cmd("=2");
+      a.enter(entry(`${HLQ}.JCL(COPYJOB)`));
+    });
+    expect(stepId(c)).toBe("fix");
+  });
+
+  describe("Challenge", () => {
+    it("failing first, then fixing by removing the comma, completes it", () => {
+      const c = challenge(ID, (a) => {
+        submitBroken(a);
+        openBroken(a);
+        removeComma(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("fixing with a proper continuation record is also accepted", () => {
+      const c = challenge(ID, (a) => {
+        submitBroken(a);
+        openBroken(a);
+        addContinuation(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("fixing and submitting without ever having run the broken job does not complete", () => {
+      const c = challenge(ID, (a) => {
+        openBroken(a);
+        removeComma(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("a successful run of a different job does not complete", () => {
+      const c = challenge(ID, (a) => {
+        submitBroken(a);
+        a.cmd("TSO SUBMIT JCL(HELLO)");
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("submitting it again without fixing it does not complete", () => {
+      const c = challenge(ID, (a) => {
+        submitBroken(a);
+        a.cmd("TSO SUBMIT JCL(BROKEN)");
+      });
+      expect(c.done).toBe(false);
+    });
+  });
+});

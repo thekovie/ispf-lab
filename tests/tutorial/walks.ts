@@ -373,6 +373,26 @@ WALKS["b-02-dataset-types"] = (c) => {
   c.enter(entry(`${HLQ}.TYPES.SEQ(ONE)`));
 };
 
+WALKS["b-03-jcl-anatomy"] = (c) => {
+  openEdit(c, `${HLQ}.JCL(HELLO)`);
+  c.enter({ command: "COLS" });
+  c.pf(3);
+  c.pf(3);
+  c.cmd("TSO SUBMIT JCL(BROKEN)");
+  c.cmd("=S");
+  c.cmd("ST");
+  c.enter({ "cmd:JOB00001": "?" });
+  c.enter({ "cmd:JESYSMSG": "S" });
+  c.pf(3);
+  c.pf(3);
+  c.pf(3);
+  c.cmd("=2");
+  c.enter(entry(`${HLQ}.JCL(BROKEN)`));
+  c.enter({ [`line:${c.lineId(/JOB/)}`]: `//${HLQ}B  JOB (ACCT),'FIX ME',CLASS=A` });
+  c.enter({ command: "SUBMIT" });
+  c.pf(3);
+};
+
 const E = (ref: string) => entry(ref);
 
 /**

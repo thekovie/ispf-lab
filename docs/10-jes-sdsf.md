@@ -51,6 +51,8 @@ seed uses a real JCL error and S806 is simulated separately.)
 
 ## Simplifications (documented deviations)
 
+JCL conversion: the `STMT NO.` in JESYSMSG is the statement number printed in the JESJCL listing (comments and continuation records are not numbered). A single `/*` as the last record of the job is accepted, as in IBM's sample job (JCL User's Guide); a `/*` followed by more JCL is still an error. Continued operands may begin in any column after column 3 (IBM: 4-16). Only the trailing-comma trigger of `IEFC621I` is modelled.
+
 `SJ`/`SE` share one branch and open the **saved** member; real SDSF's `SJ` edits the JCL held for the job and "changes you make to the data are not saved", and `SE` edits output data sets. Both fix routes (SJ, or Edit option 2, then resubmit) stay valid. Not a deviation: Edit `SUBMIT` (ADR 0015).
 
 No input/held queues, initiators, classes or priorities — jobs run at once. No cataloged procedures (`EXEC PROC=`

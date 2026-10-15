@@ -149,7 +149,7 @@ export function submitJob(jes: JesState, catalog: Catalog, input: SubmitInput): 
   if (parsed.errors.length > 0) {
     status = "JCL_ERROR";
     sysmsg.push(" STMT NO. MESSAGE");
-    for (const e of parsed.errors) sysmsg.push(`${String(e.line).padStart(8)} ${e.id} ${e.text}`);
+    for (const e of parsed.errors) sysmsg.push(`${String(parsed.statementNumbers[e.line] ?? e.line).padStart(8)} ${e.id} ${e.text}`);
     msglg.push(` ${day} IEFC452I ${jobName} - JOB NOT RUN - JCL ERROR`);
     for (const st of parsed.steps) steps.push({ name: st.name, program: st.program ?? st.proc ?? "", executed: false });
   } else {
