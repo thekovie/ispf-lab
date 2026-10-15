@@ -233,3 +233,17 @@ Track A = ISPF fundamentals (L1 to L23). Track B/C = batch and operations (L24 t
 | Proposed Track C | TSO commands, JES lifecycle, SDSF, messages | SRC-015-017, SRC-021, SRC-022, SRC-023-024, SRC-019 | SRC-026 |
 | Proposed Track D | REXX | SRC-006, SRC-029 (landing only: **pending**) | |
 | Proposed Track E/F | Specialised, advanced | SRC-009, SRC-010, SRC-011, SRC-030 (mostly landing only: **pending**) | |
+
+## 9. M3 second-pass examination (2026-10-16)
+
+A second-pass AI source examination re-read every cited passage for lessons 29-36 against the local text extracts and recorded each claim in
+[m3-evidence-matrix.md](m3-evidence-matrix.md) (release, section, printed page, quote, verdict). **This is not an independent review** and no row
+below changes a register status to VERIFIED on its own authority. What the examination added to the register:
+
+| Item | Result |
+|---|---|
+| Printed-page offsets (printed = PDF minus) | ISPF UG Vol I 28, Vol II 38, Edit and Edit Macros 32, TSO/E Command Reference 26, TSO/E Messages 12, TSO/E User's Guide 18, JCL Reference 46, JCL User's Guide 22, System Messages Vol 8 12 / Vol 4 16 / Vol 6 16, System Codes 14, JES2 Messages 14, JES2 Init and Tuning Reference 20, SDSF User's Guide 52, SDSF Operation and Customization 60, DFSORT Application Programming Guide 28, DFSORT Messages 14, Redbook 24 |
+| Corrections to the first M3 evidence | DISP defaults are on JCL Reference p.153 (not p.147-152); IEFC630I text locates the error and does not echo the keyword (System Messages Vol 8 pp.541-542); ICE007A is documented for unbalanced parenthesis, missing comma, embedded blank and invalid format type, not for a misspelt keyword (DFSORT Messages p.18); a PDSE shows PO-E in the 3.4 list (ISPF UG Vol II p.140); zero directory blocks gives a PS only when Data set name type is blank (UG Vol II pp.107-108); MAX typed in the Scroll field is one-time (ISPF UG Vol I pp.17, 60); the TSO SUBMIT command, not JES, issues IKJ56250I (TSO/E Command Reference p.121, Messages p.544); an initiator, not JES, runs the job (Redbook p.276) |
+| Register gaps found | no per-topic HTML URL for ISPF UG Vol I/II, TSO/E books, System Messages/Codes, JES2 books, DFSORT books (book-level only); the JES2 Initialization and Tuning Guide (`hasa300`) is only a CANDIDATE in SRC-030; SRC-018 to SRC-028 carry a document code and no URL |
+| Still UNVERIFIED (expert needed) | which spool data set holds IEFC converter messages and the `STMT NO. MESSAGE` header; real placement of CSV003I/IEF450I (job log or JESYSMSG); the real ICE message for an unknown SORT keyword; whether a real DFSORT run with `SORTIN DD DUMMY` ends RC 0; real ISPF text for several simulator-only messages; the real initial Edit Scroll value |
+

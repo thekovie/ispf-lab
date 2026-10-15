@@ -32,7 +32,7 @@ manual reference; corrections go here first, then into code and tests.
 | PRIMARY_OPTION_MENU | Option | `0 1 2 3 6`, `3.x`, `=…`, `X`/`EXIT`/`LOGOFF` (logoff), `TSO …`, `HELP`, `EXPLAIN …` | 1, 3 (logoff) |
 | AUTOSAVE_PROMPT (Edit - Save or Cancel Changes) | choice 1/S/SAVE or 2/C/CANCEL | ends the edit session saving or discarding (AUTOSAVE OFF PROMPT) | 3 (back to edit) |
 | SETTINGS (0) | PF keys Y/N, Insert Y/N, Scroll (PAGE/HALF/CSR/DATA/n) | validates `ENTER Y OR N`, `INVALID SCROLL AMOUNT` | 1, 3 (applies + returns) |
-| EDIT_ENTRY (2) / VIEW (1) | Project/Group/Type/Member or Other Data Set Name | opens DSN or DSN(MEMBER); PDS without member → member list; new member in Edit | 1, 3 |
+| EDIT_ENTRY (2) / VIEW (1) | Command line (jumps such as `=S` work here), Project/Group/Type/Member or Other Data Set Name | opens DSN or DSN(MEMBER); PDS without member → member list; new member in Edit | 1, 3 |
 | UTILITY_SELECTION (3) | Option | `1`→3.1, `2`→3.2, `3`→3.3, `4`→3.4; `=x.y` jumps | 1, 3 |
 | LIBRARY_UTILITY (3.1) | Option (blank/E/B/V/D/R), library fields, Member, New name | blank → member list; D/R → confirm/rename panels | 1, 3 |
 | DATASET_UTILITY (3.2) | Option (A/R/D/blank/S), data set name | A → Allocate panel (`DATA SET ALREADY EXISTS` if present); D → confirm; R → rename; blank → information; C/U/V not available | 1, 3 |

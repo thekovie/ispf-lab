@@ -136,3 +136,27 @@ New: **F-03** (the `startLesson` event race) is recorded as an unverified hypoth
 - The most consequential rows are **GAP-01, GAP-42 (non-existent message IDs), GAP-50, GAP-60, GAP-61 and GAP-62**: they either teach a false statement about IBM behaviour or let a learner complete (or be blocked from completing) a lesson for the wrong reason.
 - Several suspected defects were **refuted** by the evidence and must not be "fixed": top-level `RECFM`/`LRECL`/`BLKSIZE`/`DSORG` on a DD is valid; DISP defaults are right; the editor submitting its buffer is consistent with IBM's Edit SUBMIT page; `S806-04` with `CSV003I` is correct; `IKJ56250I` is correct.
 - Rows marked NOT VERIFIED (GAP-21) or flagged for expert review (GAP-01 unsaved-change wording, GAP-53 O vs H visibility) should not be changed until the documentation or an expert resolves them.
+
+## 5. M3 second-pass fidelity findings (2026-10-16)
+
+Examined by a second-pass AI fidelity check (not an independent review). Status after the M3 hardening: **fixed** rows have regression tests; **open** rows are disclosed in the lesson specs.
+
+| Row | Finding | Status |
+|---|---|---|
+| GAP-37 | JESYSMSG `STMT NO.` fell back to the record number for unnumbered lines | **fixed** (stray text lines are numbered in the listing; IBM is silent) |
+| GAP-38 | `/*` with a comment was a data record; trailing `/*` before `//` was IEFC605I | **fixed** |
+| GAP-36 | `DISP=MOD` on an existing library member overwrote it (IBM terminates the job); MOD on a library without a member failed unclearly | **fixed** (step fails, nothing changes, clear message) |
+| GAP-36 | PASS and UNCATLG print KEPT and act like KEEP; KEEP of a new SMS data set prints KEPT where IBM implies CATLG; `RECATALOGED`, `PASSED`, `UNCATALOGED` never printed | open |
+| GAP-33 | IGD101I shows fixed classes whatever STORCLAS/MGMTCLAS/DATACLAS are coded; `LABEL=RETPD/EXPDT` has no effect on DELETE; `DSNTYPE=LIBRARY` makes a PDS, not a PDSE (GAP-11); RETPD, EXPDT, DDNAME and other valid DD keywords are still IEFC630I | open |
+| new | SORT `FIELDS` accepted a missing comma, a missing sequence and unknown format types | **fixed** (ICE007A, RC 16) |
+| new | ICE messages lack the trace character of `ICEnnns c text`; no SYSOUT DD gives RC 16 and no messages where IBM gives ICE158A and RC 20 | open |
+| new | IEF236I was printed before a failed allocation's IEF212I | **fixed** |
+| new | new-member quote lines vanished on the first Enter and were not offered for existing empty members; the browser sends the shown quote marks back and the editor read them as an invalid line command | **fixed** |
+| new | typing then erasing text on an input line, or typing only a blank, drops the line (IBM keeps a blank record) | open |
+| new | END/PF3 on an untouched new member creates an empty member (IBM silent) | open (lesson 12 relies on it) |
+| new | a typed `MAX` in the Scroll field stayed in the field (IBM reverts) | **fixed** |
+| new | the Edit/View entry panels had a dead Command line; PF3 from the editor lands there and the lessons say to jump with `=S` | **fixed** for the entry panels; the Allocate, Member Information, Data Set Information, Settings and dialog panels still draw a dead Command line | partly open |
+| new | `//*` after a trailing comma is rejected (IBM allows `//` plus a blank or an asterisk in column 3) | open |
+| new | SDSF help rows over 80 columns were silently cut | **fixed** (test covers every screen's help) |
+| new | JESJCL statement-number layout, IEF403I/IEF404I `TIME=`, IEF373I-376I date format and `$HASP100` programmer name differ from the templates | open (cosmetic) |
+

@@ -14,7 +14,7 @@ Command ===> ______________________________________________  Scroll ===> PAGE
 ```
 
 - Short messages replace `Columns …` on the title row.
-- 18 data rows per page; `Scroll ===>` accepts PAGE, HALF, CSR, DATA or a number.
+- 18 data rows per page; `Scroll ===>` accepts PAGE, HALF, CSR, DATA, MAX or a number. MAX typed in the field applies to one scroll only, then the field returns to its previous value (IBM ISPF User's Guide Vol I, "Using the scrolling commands"); `DOWN MAX` leaves the field alone.
 - Prefix area shows six-digit numbers; a pending command (e.g. `C`) is shown in yellow in place of the number.
 - Excluded lines collapse to `- - - … n Line(s) not Displayed`; the prefix field of that marker accepts S / F / L.
 - Special lines (`=COLS>`, `=BNDS>`, `=PROF>`) are displayed with a negative internal id, are never written to the
@@ -81,7 +81,7 @@ itself), `LINE COMMANDS NOT ALLOWED IN BROWSE`. Blanking a pending command cance
 | `HEX ON|OFF` | | accepted, display unchanged |
 | `SUBMIT` | `SUB` | submits the member or data set being edited to the virtual JES (the buffer, so unsaved JCL runs; IBM is silent on unsaved edits, ADR 0015); `JOB name(JOBnnnnn) SUBMITTED`. Operands (labels, `X`, `NX`) are refused with `SUBMIT OPERANDS NOT SUPPORTED` |
 | `CREATE member` / `REPLACE member` | `CRE`, `REP` | write the buffer to another member of the same library |
-| _(new member)_ | | a nonexistent member opens in Edit with five empty input lines (prefix `''''''`); unused ones vanish on the next Enter or SAVE and are never saved (IBM Edit and Edit Macros, "Creating a new data set") |
+| _(empty member)_ | | a nonexistent member, an existing member with no records and an empty data set open in Edit (not Browse or View) with five empty input lines (prefix `''''''`). They stay until data has been typed, then the unused ones are dropped on the next Enter; they are never saved. The quote marks the panel shows are not a line command (IBM Edit and Edit Macros, "Creating a new data set" and "Edit commands"; IBM does not say when they go away) |
 | `COPY member` | | insert another member's records after `A` / before `B` (or into an empty member) |
 | `PROFILE` | `PROF` | show two `=PROF>` lines: name, LRECL, CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE, HEX, BOUNDS |
 | `EXPLAIN term` | | simulator-only: open the glossary |

@@ -1,5 +1,7 @@
 # M3 report - foundational batch (Track B first set)
 
+> **Superseded in part (2026-10-16):** the hardening that followed the owner's review is in [m3-verification-report.md](m3-verification-report.md) (display order, draft gate, check questions, evidence matrix, simulator fixes, browser runs, CI). Facts below are as of the first M3 report; test counts, lesson modules and the RCJOB/FIXRC fault have since changed.
+
 **Date:** 2026-10-15. **Branch:** `feat/m3-foundations` (from `feat/m2-lesson-metadata`). **Status:** the eight lessons of the first set are implemented
 as **drafts**; **nothing is pushed or published**. They must not be merged or shown to learners before independent review (authoring standards, section 9).
 

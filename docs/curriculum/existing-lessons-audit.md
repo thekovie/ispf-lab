@@ -1768,3 +1768,7 @@ See also the consolidated verdicts in the [simulator gap matrix](simulator-gap-m
 - IEBGENER SYSPRINT texts ("n RECORDS COPIED...", "PROCESSING ENDED AT EOD") (EV-B §5).
 - Real handling of lowercase JCL in DSN operands.
 - Whether `M.5` exists in any current ISPF menu (Redbook-era only, EV-C h3).
+
+## Post-M3 correction (2026-10-16)
+
+Lesson 24's teaches line said "JES answers JOB name(JOBnnnnn) SUBMITTED" and the SUBMIT glossary entry said "ISPF answers IKJ56250I". The M3 b-01 second-pass examination found the message is issued by the TSO SUBMIT command (TSO/E Command Reference p.121, TSO/E Messages p.544) and JES assigns the job number; both texts now say so. No other existing lesson text changed in the M3 hardening.

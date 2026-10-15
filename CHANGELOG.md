@@ -6,10 +6,14 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Multiple-choice check questions for conceptual steps (ADR 0018); lesson 30 uses three.
+- `Lesson.draft`: draft lessons are hidden from learners unless `NEXT_PUBLIC_SHOW_DRAFT_LESSONS=1` (`next dev` and tests set it). The display order of lessons is now separate from their numbers.
 - Draft lessons 29-36 (Scroll amount; TSO/E, ISPF, JES and SDSF; sequential data sets, PDS and PDSE; reading a job; building a job; DISP; return codes and abends; batch troubleshooting), awaiting review.
 - Optional `requires` and `sources` on lessons. Lesson 13 shows a non-blocking "Before you start" note until lesson 6 is completed.
 
 ### Changed
+- A typed `MAX` in the Edit Scroll field applies to one scroll only; an empty existing member or data set opens with input lines too, and they stay until data is typed; the Edit entry panel has a working Command line; `/*` with a comment ends in-stream data; DISP=MOD on a library member no longer overwrites it; SORT control statements with a missing comma, unbalanced parenthesis or unknown format give ICE007A; IEF236I is not printed before a failed allocation; two SDSF help lines no longer overflow 80 columns.
+- Lesson 24 and the SUBMIT glossary entry say the TSO SUBMIT command reports `JOB name(JOBnnnnn) SUBMITTED` (JES assigns the number).
 - A new, empty member opens with five empty input lines (marked quotes) that vanish unused; JESYSMSG statement numbers match the JESJCL listing; a trailing `/*` is accepted; `DISP=MOD` creates or appends; valid DD keywords STORCLAS, DATACLAS, MGMTCLAS, LABEL, FREE and DSNTYPE are no longer errors; ICE007A prints `SYNTAX ERROR`.
 - PF3 on the first panel of lessons 5, 7-10 and 12 now returns to the Primary Option Menu (the menu is kept under the starting screen).
 - Errors a lesson tells the learner to provoke (lesson 1 invalid option, lesson 7 `SAVE` in Browse) no longer count as mistakes.

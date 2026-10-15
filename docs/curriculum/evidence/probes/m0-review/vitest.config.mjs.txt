@@ -1,4 +1,4 @@
-const REPO = "/Users/kovie/Documents/GitHubRepos/ispf-lab";
+const REPO = "<repo>";
 export default {
   root: ".",
   cacheDir: "./.vcache",

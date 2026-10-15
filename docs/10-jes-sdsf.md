@@ -14,7 +14,7 @@ z/OS SDSF User's Guide; Redbook SG24-6366 ch. 6.
   Errors: IEFC605I UNIDENTIFIED OPERATION FIELD, IEFC621I EXPECTED CONTINUATION NOT RECEIVED, IEFC630I UNIDENTIFIED
   KEYWORD x, IEFC019I MISPLACED … STATEMENT, IEFC662I INVALID LABEL, IEFC452I JOB NOT RUN (no JOB statement).
 - `programs.ts` — IEFBR14 (RC 0; allocation/disposition do the work), IEBGENER (SYSUT1→SYSUT2, SYSPRINT), SORT /
-  ICEMAN (`SORT FIELDS=(p,l,CH,A|D)` or `COPY`; ICE007A → RC 16), IDCAMS (`LISTCAT LEVEL(x)`, `DELETE 'dsn'`).
+  ICEMAN (`SORT FIELDS=(p,m,f,s)` groups with a known format type, or `COPY`; a missing comma, an unbalanced parenthesis, a missing sequence or an unknown format is ICE007A → RC 16), IDCAMS (`LISTCAT LEVEL(x)`, `DELETE 'dsn'`).
   Any other module → CSV003I + ABEND S806, later steps flushed.
 - `submit.ts` — allocation per DD (IEF236I/IEF237I; NEW creates the data set from SPACE/DCB, IGD17101I when the name
   exists; SHR/OLD/MOD missing → IEF212I DATA SET NOT FOUND, IEF272I STEP WAS NOT EXECUTED, job status JCL ERROR),
@@ -51,9 +51,9 @@ seed uses a real JCL error and S806 is simulated separately.)
 
 ## Simplifications (documented deviations)
 
-`DISP=MOD` creates a data set that does not exist and appends to an existing sequential one (IEBGENER output); PASS and UNCATLG behave like KEEP. If a later DD of a step fails to allocate, NEW data sets created earlier in that step stay cataloged (probed; real behaviour not verified).
+`DISP=MOD` creates a data set that does not exist and appends to an existing sequential one (IEBGENER output); on a library it fails the step and changes nothing when the member already exists (IBM terminates the job) or no member is named (IBM appends after the last member); PASS and UNCATLG behave like KEEP. If a later DD of a step fails to allocate, NEW data sets created earlier in that step stay cataloged (probed; real behaviour not verified).
 
-JCL conversion: the `STMT NO.` in JESYSMSG is the statement number printed in the JESJCL listing (comments and continuation records are not numbered). A single `/*` as the last record of the job is accepted, as in IBM's sample job (JCL User's Guide); a `/*` followed by more JCL is still an error. Continued operands may begin in any column after column 3 (IBM: 4-16). Only the trailing-comma trigger of `IEFC621I` is modelled.
+JCL conversion: the `STMT NO.` in JESYSMSG is the statement number printed in the JESJCL listing (comments and continuation records are not numbered; a stray text line is numbered, IBM is silent). A `/*` delimiter, with or without a comment, ends in-stream data (JCL Reference, Delimiter statement). As the last record of the job it is accepted, also when only the null statement `//` follows, as in IBM's sample job; a `/*` followed by more JCL is still an error. IEF236I is printed only when the step's allocation succeeded. Continued operands may begin in any column after column 3 (IBM: 4-16). Only the trailing-comma trigger of `IEFC621I` is modelled.
 
 `SJ`/`SE` share one branch and open the **saved** member; real SDSF's `SJ` edits the JCL held for the job and "changes you make to the data are not saved", and `SE` edits output data sets. Both fix routes (SJ, or Edit option 2, then resubmit) stay valid. Not a deviation: Edit `SUBMIT` (ADR 0015).
 

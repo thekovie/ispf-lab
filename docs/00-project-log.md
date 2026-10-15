@@ -506,3 +506,18 @@ Approved by the project owner after the M1 closure. Branch `feat/m2-lesson-metad
 Branch `feat/m3-foundations`. Lessons 29-31 (a-01, b-01, b-02) added as **drafts** (author-checked against the sources in their specs; independent
 source, fidelity and expert review pending). Specs: `docs/curriculum/lessons/`. New: `LessonStart.createMembers`, `EDITOR_SCROLLED{amount}`.
 Update: b-03 to b-06 and b-10 were added (lessons 32-36) with their simulator prerequisites (new-member input lines, statement numbers, trailing `/*`, DD keywords, DISP=MOD, ICE007A text); report `docs/curriculum/m3-report.md`. Final: 31 test files, 2,599 tests, `pnpm check` and `pnpm build` green. Public copy still says 28 lessons. Do not merge or publish before review.
+
+## Phase 25 - M3 hardening toward independent review (2026-10-16)
+
+Owner decisions after the M3 progress report: keep lesson ids and numbers (display order separate), keep b-01 as a trace but assess concepts with the smallest
+mechanism, keep b-10's four deterministic faults, no M4 and no new lessons, no publication. Done on `feat/m3-foundations`:
+- ADR 0018: display order is the order of `LESSONS` (new lessons sit where they teach), `Lesson.draft` hides drafts unless `NEXT_PUBLIC_SHOW_DRAFT_LESSONS=1`
+  (verified in a production build: "28 guided lessons in 10 modules", no draft in the structured data), multiple-choice check questions (b-01 uses three).
+- Claim-level evidence matrix for all eight lessons from a second-pass AI source examination (`docs/curriculum/m3-evidence-matrix.md`): 229 claims, release,
+  section, printed page, quote and verdict (124 supported, 56 partial, 18 simulator-only, 15 inferred, 8 not supported, 8 unverified); the examiners labelled 14 findings HIGH
+  (see `m3-verification-report.md`), all fixed or disclosed.
+- Simulator fidelity fixes with regression tests (one-time MAX, empty-member input lines and the browser's quote-mark round trip, delimiter with comment, statement numbers, MOD on libraries, SORT syntax, IEF236I, live Command line on the entry panel, help-row widths).
+- Browser runs through the real UI of all eight lessons in Learn and Challenge, with negative paths and alternatives (Chrome, console clean).
+- Diff review of the 141-file change set by a second-pass reviewer: scope notes and a recommendation to split into stacked pull requests; dead code and a truncated help row fixed.
+Not an independent review: the independent source, fidelity and expert reviews of lessons 29-36 are still pending (handoff in `m3-verification-report.md`).
+
