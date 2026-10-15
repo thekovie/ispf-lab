@@ -24,8 +24,8 @@ z/OS SDSF User's Guide; Redbook SG24-6366 ch. 6.
 
 ## Entry points
 
-Editor `SUBMIT`/`SUB` (the **buffer** is submitted so unsaved experiments work — real ISPF submits the data set on
-disk), member list `J`, `TSO SUBMIT dsn(member)` (unquoted names get the userid prefix).
+Editor `SUBMIT`/`SUB` (submits the member or data set being edited, as IBM's Edit manual says; IBM does not say whether
+unsaved edits are included, so the **buffer** is submitted — see ADR 0015), member list `J`, `TSO SUBMIT dsn(member)` (unquoted names get the userid prefix).
 
 ## SDSF panels
 
@@ -33,7 +33,7 @@ disk), member list `J`, `TSO SUBMIT dsn(member)` (unquoted names get the userid 
 |---|---|---|
 | SDSF menu | option `S` (`SD`, `SDSF`, `M.5`, `=S`) | ST, O, LOG; I→ST and H→O with a note; DA/PR/INIT not available |
 | ST / O | `ST` / `O` | NP JOBNAME JobID Owner Prty Queue C Pos Max-RC Date; default filter OWNER = userid, PREFIX `*` |
-| actions | NP column | `S` browse all output, `?` job data sets, `P` purge (confirm), `SJ`/`SE` edit the source member, `=` repeat; several per Enter |
+| actions | NP column | `S` browse all output, `?` job data sets, `P` purge (confirm), `SJ`/`SE` open the saved source member (real SDSF edits a copy of the job's JCL and does not save changes; `SE` edits output data sets — see ADR 0015), `=` repeat; several per Enter |
 | commands | command line | `OWNER [id|*]`, `PREFIX [name*|*]`, `SORT JOBNAME|JOBID|STATUS`, `FIND`, `ST`, `O`, `LOG`, `END` |
 | Job data set (`?`) | | JESMSGLG, JESJCL, JESYSMSG, then SYSOUT DDs by step; `S` browses one |
 | LOG | `LOG` | accumulated $HASP/IEF lines of this session in Browse |
@@ -49,6 +49,8 @@ job ends **JCL ERROR** with `IEF212I … SYSUT1 - DATA SET NOT FOUND` in JESYSMS
 seed uses a real JCL error and S806 is simulated separately.)
 
 ## Simplifications (documented deviations)
+
+`SJ`/`SE` share one branch and open the **saved** member; real SDSF's `SJ` edits the JCL held for the job and "changes you make to the data are not saved", and `SE` edits output data sets. Both fix routes (SJ, or Edit option 2, then resubmit) stay valid. Not a deviation: Edit `SUBMIT` (ADR 0015).
 
 No input/held queues, initiators, classes or priorities — jobs run at once. No cataloged procedures (`EXEC PROC=`
 → IEFC612I, JCL ERROR). COND/IF not evaluated. Programs limited to the four above. Times are not modelled (dates

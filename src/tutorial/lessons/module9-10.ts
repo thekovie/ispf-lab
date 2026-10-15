@@ -278,7 +278,7 @@ export const lesson27: Lesson = {
   title: "Debug a JCL ERROR",
   description: "Submit a job that fails, read JESYSMSG to find out why, fix the JCL from SDSF with SJ and resubmit.",
   objective: "Submit {HLQ}.JCL(PAYRPT), see JCL ERROR in SDSF, read IEF212I in JESYSMSG, fix the SYSUT1 data set name with SJ, resubmit and get CC 0000.",
-  teaches: ["JCL ERROR = the job never ran (or a step was skipped)", "JESYSMSG names the statement and the reason", "IEF212I DATA SET NOT FOUND: the DSN is wrong or not cataloged", "SJ opens the submitted JCL in Edit"],
+  teaches: ["JCL ERROR = the job never ran (or a step was skipped)", "JESYSMSG names the statement and the reason", "IEF212I names the job, step and DD that could not be allocated: DATA SET NOT FOUND", "The DD statement in the JCL names the data set to check", "SJ edits the JCL held for the job (real SDSF does not save those changes; here it opens the member)"],
   startingState: { screen: { id: "PRIMARY_OPTION_MENU" }, resetJobs: true, resetMembers: [{ dsn: "{HLQ}.JCL", member: "PAYRPT" }] },
   steps: [
     {
@@ -295,14 +295,14 @@ export const lesson27: Lesson = {
     },
     {
       id: "jesysmsg",
-      instruction: "Type ? on the job, then S next to JESYSMSG. Read the IEF212I line: which DD, which data set?",
-      explanation: "IEF212I jobname step ddname - DATA SET NOT FOUND is an allocation failure: JES converted the JCL fine, but when the step started the data set did not exist in the catalog. IEF272I then says the step was not executed.",
+      instruction: "Type ? on the job, then S next to JESYSMSG. Read the IEF212I line: which job, which step, which DD? Then find that DD in the JCL to see the data set it names.",
+      explanation: "IEF212I jobname stepname ddname - DATA SET NOT FOUND is an allocation failure: the JCL was accepted, but when the step started the system could not find the data set that DD asks for. The message names the DD, not the data set; the data set name is on the DD statement. IEF272I then says the step was not executed.",
       hint: "?, Enter, then S next to JESYSMSG.",
       validator: eventIs("JOB_OUTPUT_OPENED", (e) => e.ddname === "JESYSMSG"),
     },
     {
       id: "sj",
-      instruction: "Press PF3 twice back to ST and type SJ next to the job. The JCL that was submitted opens in Edit.",
+      instruction: "Press PF3 twice back to ST and type SJ next to the job. SDSF opens the JCL of that job in Edit - here that is {HLQ}.JCL(PAYRPT). (Real SDSF edits a copy and does not save your changes back to the member; the simulator opens the saved member so you can fix and save it. Editing the member from option 2 works too.)",
       hint: "F3, F3, then SJ on the job, Enter.",
       validator: allOf(eventIs("JOB_JCL_OPENED"), editorOpen("{HLQ}.JCL", "PAYRPT", "EDIT")),
     },
@@ -320,7 +320,7 @@ export const lesson27: Lesson = {
     },
     {
       id: "save",
-      instruction: "Press PF3 to save the corrected member and return to SDSF.",
+      instruction: "Press PF3 to save the corrected member and return to SDSF. (In real SDSF an SJ session would not save; here PF3 saves the member.)",
       hint: "F3.",
       validator: allOf(editorClosed, payrptFixed),
     },
@@ -350,7 +350,7 @@ export const lesson28: Lesson = {
     {
       id: "diagnose",
       instruction: "Find the reason in the job's output (JESYSMSG).",
-      hint: "? on the job, S next to JESYSMSG: IEF212I names the data set.",
+      hint: "? on the job, S next to JESYSMSG: IEF212I names the DD that failed; the DD statement names the data set.",
       validator: anyOf(eventIs("JOB_OUTPUT_OPENED", (e) => e.ddname === "JESYSMSG"), payrptSucceeded),
     },
     {

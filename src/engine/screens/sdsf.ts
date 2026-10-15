@@ -153,7 +153,7 @@ export const sdsfStatusScreen: ScreenHandler<StatusFrame> = {
     "action column), JOBNAME, JobID, Owner, Prty, Queue, C(lass), Pos, Max-RC",
     "(CC 0000 = ended with condition code 0, JCL ERROR = never ran, ABEND Sxxx =",
     "abnormal end). Actions: S browse all output, ? list the spool data sets,",
-    "P purge, SJ edit the JCL that was submitted, = repeat the last action.",
+    "P purge, SJ edit the JCL held for the job (changes are not saved in real SDSF), = repeat the last action.",
     "Commands: OWNER userid|*, PREFIX name*|*, SORT JOBNAME|JOBID|STATUS, ST, O, LOG.",
   ],
   render(state, frame) {

@@ -317,7 +317,7 @@ function processEnter(state: SimulatorState, fields: Fields, pfCommand: string |
     case "copy":
       return withEvents(copyIntoBuffer(base, effect.member));
     case "submit": {
-      // ISPF submits the data set on disk; submitting the buffer lets a learner try unsaved JCL (documented deviation).
+      // Edit SUBMIT submits the member or data set being edited; IBM is silent on unsaved edits, so the buffer is submitted (ADR 0015).
       const s = base.editor!;
       return withEvents(submitRecords(base, bufferRecords(s), { dsn: s.dsn, member: s.member }, base.screen.id));
     }

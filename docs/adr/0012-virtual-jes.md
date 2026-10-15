@@ -22,4 +22,4 @@ errors (IEFC6xxI → JCL ERROR), allocation failures (IEF212I → JCL ERROR with
 ## Consequences
 - Tests and lesson validators are deterministic (`JOB_COMPLETED{status,maxRc}` fires on submit).
 - "Wait for the job" is not part of the learning loop; the docs and glossary say real jobs queue.
-- The editor submits its buffer (unsaved JCL runs) — a deliberate, documented deviation for experimentation.
+- The editor submits its buffer (unsaved JCL runs). *Corrected by [0015](0015-submit-and-sj-simulation-disclosure.md): IBM's Edit SUBMIT wording is consistent with this, so it is not a deviation; the real deviation is SDSF `SJ`/`SE`.*

@@ -355,7 +355,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     term: "SDSF",
     aliases: ["system display and search facility", "spool display", "option s", "sdsf st"],
     summary: "System Display and Search Facility - the ISPF application for looking at jobs, their status, their output and the system log.",
-    detail: "ST shows the status of your jobs (JOBNAME, JobID, Owner, Max-RC), O the output queue, DA active users, LOG the system log. On a job line type S to browse all its output, ? to list its spool data sets, P to purge it, SJ to edit the JCL that was submitted. OWNER and PREFIX filter the list. The option letter that opens SDSF varies by site: S, SD or M.5 are common. Everything here is labelled (SIMULATED).",
+    detail: "ST shows the status of your jobs (JOBNAME, JobID, Owner, Max-RC), O the output queue, DA active users, LOG the system log. On a job line type S to browse all its output, ? to list its spool data sets, P to purge it, SJ to edit the JCL held for the job (real SDSF does not save those changes; the simulator opens the saved member). OWNER and PREFIX filter the list. The option letter that opens SDSF varies by site: S, SD or M.5 are common. Everything here is labelled (SIMULATED).",
     readMore: { resource: "redbook", section: "Chapter 6.3 SDSF" },
   },
   {
@@ -397,7 +397,7 @@ export const GLOSSARY: GlossaryEntry[] = [
     term: "SUBMIT",
     aliases: ["sub", "submit command", "line command j"],
     summary: "Sends JCL to JES: SUBMIT in the editor, J next to a member in a member list, or TSO SUBMIT dsn(member).",
-    detail: "ISPF answers IKJ56250I JOB name(JOB00001) SUBMITTED. Real ISPF submits the data set on disk, so an unsaved change is not submitted; this simulator submits the editor buffer so you can experiment, and says so in the docs. Then go to SDSF (option S) to see how the job ended.",
+    detail: "ISPF answers IKJ56250I JOB name(JOB00001) SUBMITTED. In Edit, SUBMIT submits the member or data set you are editing (IBM does not say whether changes you have not saved are included; this simulator submits what is in the edit session, so save first if you want the member and the job to agree). In Browse, IBM's SUBMIT submits the data set itself, not the copy on screen. Then go to SDSF (option S) to see how the job ended.",
     readMore: { resource: "redbook", section: "Chapter 6.2 JCL" },
   },
 ];
