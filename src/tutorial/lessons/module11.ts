@@ -555,3 +555,103 @@ export const lessonB05: Lesson = {
     },
   ],
 };
+
+const RCJOB_JCL = [
+  "//{HLQ}R  JOB (ACCT),'RETURN CODES',CLASS=A,MSGCLASS=X",
+  "//STEP1    EXEC PGM=IEFBR14",
+  "//STEP2    EXEC PGM=SORT",
+  "//SYSOUT   DD  SYSOUT=*",
+  "//SORTIN   DD  DUMMY",
+  "//SORTOUT  DD  SYSOUT=*",
+  "//SYSIN    DD  *",
+  "  SORT FIELDZ=(1,3,CH,A)",
+  "/*",
+  "//STEP3    EXEC PGM=IEFBR14",
+  "//",
+];
+const ABENDJOB_JCL = ["//{HLQ}A  JOB (ACCT),'ABEND',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR14", "//STEP2    EXEC PGM=NOPROG", "//STEP3    EXEC PGM=IEFBR14", "//"];
+
+/** The in-stream SYSIN of some step holds a well-formed SORT control statement. */
+const sortControlIsValid = (jcl: string[]): boolean =>
+  parseJcl(jcl).steps.some((st) => st.dds.some((dd) => dd.ddname === "SYSIN" && (dd.instream ?? []).some((l) => /^\s*SORT\s+FIELDS=\(\d+,\d+,CH,[AD]\)\s*$/i.test(l))));
+export { sortControlIsValid };
+/** The job whose output was opened belongs to {HLQ}<letter>. */
+const outputOfJob = (letter: string) => (e: { jobId: string }, ctx: LessonContext) => ctx.state.jes.jobs.find((j) => j.id === e.jobId)?.jobName === `${ctx.hlq}${letter}`;
+export { outputOfJob };
+
+export const lessonB06: Lesson = {
+  id: "b-06-multistep-rc",
+  number: 35,
+  module: MODULE,
+  title: "Multi-step jobs: return codes and abends",
+  description: "Read the condition code of every step, see that a nonzero return code does not stop a job, and compare it with an abend.",
+  objective: "Run RCJOB and read why it ends with a high return code although all three steps ran, fix it to end CC 0000, then run ABENDJOB and see how an abend differs.",
+  teaches: [
+    "IEF142I gives the condition code of each step; the job's highest code is its Max-RC",
+    "A nonzero return code does not stop later steps unless COND or IF says so",
+    "An abend ends the step abnormally; later steps are not executed (IEF272I)",
+    "S806 means the program named on EXEC was not found",
+  ],
+  requires: ["b-05-disp"],
+  sources: ["SRC-019", "SRC-003", "SRC-020", "SRC-027", "SRC-028"],
+  startingState: {
+    screen: { id: "PRIMARY_OPTION_MENU" },
+    resetJobs: true,
+    createMembers: [
+      { dsn: "{HLQ}.JCL", member: "RCJOB", records: RCJOB_JCL },
+      { dsn: "{HLQ}.JCL", member: "ABENDJOB", records: ABENDJOB_JCL },
+    ],
+  },
+  steps: [
+    {
+      id: "run",
+      instruction: "Submit RCJOB: TSO SUBMIT JCL(RCJOB). It has three steps: IEFBR14, SORT, IEFBR14.",
+      explanation: "A job can have several steps; each EXEC starts one. Each step ends with a return code that the program chose. The job as a whole is described by its highest code.",
+      hint: "TSO SUBMIT JCL(RCJOB), Enter.",
+      validator: eventIs("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}R` && e.status === "OUTPUT" && e.maxRc === 16),
+    },
+    {
+      id: "read",
+      instruction: "Open SDSF (=S, ST): {HLQ}R shows CC 0016. Put ? next to it and S next to JESYSMSG. Count the IEF142I lines and read the code on each.",
+      explanation:
+        "IEF142I is issued when a step completes processing normally; it gives the step's condition code. You should see 0000, 0016, 0000: STEP3 ran even though STEP2 ended 0016. A nonzero code is information for the next step or for you; without COND or IF, the system does not stop. (The SORT messages are in the SYSOUT data set of the job.)",
+      hint: "=S, ST, ? on {HLQ}R, S on JESYSMSG.",
+      validator: eventIs("JOB_OUTPUT_OPENED", (e, ctx) => e.ddname === "JESYSMSG" && outputOfJob("R")(e, ctx)),
+    },
+    {
+      id: "fix",
+      instruction: "Press PF3 to the menu and edit {HLQ}.JCL(RCJOB). The in-stream control statement SORT FIELDZ=(1,3,CH,A) is misspelt; make it SORT FIELDS=(1,3,CH,A).",
+      explanation:
+        "DFSORT prints ICE007A SYNTAX ERROR for a control statement it cannot read. That is a critical error: the sort ends unsuccessfully and DFSORT terminates with return code 16 (an installation option can make it abend instead). The job still ran every step.",
+      hint: "F3 to the menu, =2, {HLQ}.JCL(RCJOB); overtype FIELDZ with FIELDS, Enter.",
+      validator: (ctx) => editorOpen("{HLQ}.JCL", "RCJOB", "EDIT")(ctx) && sortControlIsValid(editorText(ctx)),
+    },
+    {
+      id: "rerun",
+      instruction: "Type SUBMIT. Every step ends 0000.",
+      hint: "SUBMIT, Enter.",
+      validator: eventIs("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}R` && e.status === "OUTPUT" && e.maxRc === 0),
+    },
+    {
+      id: "save",
+      instruction: "Press PF3 to save the corrected member.",
+      hint: "F3.",
+      validator: (ctx) => editorClosed(ctx) && memberSatisfies("{HLQ}.JCL", "RCJOB", sortControlIsValid)(ctx),
+    },
+    {
+      id: "abend",
+      instruction: "Press PF3 to the menu and submit ABENDJOB. Its second step names a program that does not exist.",
+      explanation: "An abend is an abnormal end of a step, not a return code the program chose. Here the system cannot find the program on EXEC: abend S806 (reason 04), with CSV003I REQUESTED MODULE ... NOT FOUND.",
+      hint: "F3 until the menu, TSO SUBMIT JCL(ABENDJOB).",
+      validator: eventIs("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}A` && e.abend === "S806"),
+    },
+    {
+      id: "compare",
+      instruction: "In SDSF open JESYSMSG of {HLQ}A. Find the abend for STEP2 and what happened to STEP3.",
+      explanation:
+        "After an abend, a later step that does not specify EVEN or ONLY is not executed: IEF272I STEP WAS NOT EXECUTED. That is the difference from a return code. (The simulator's abend message layout is simulated and differs from IBM's IEF450I template; it models only S806.)",
+      hint: "=S, ST, ? on {HLQ}A, S on JESYSMSG.",
+      validator: eventIs("JOB_OUTPUT_OPENED", (e, ctx) => e.ddname === "JESYSMSG" && outputOfJob("A")(e, ctx)),
+    },
+  ],
+};

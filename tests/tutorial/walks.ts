@@ -438,6 +438,29 @@ WALKS["b-05-disp"] = (c) => {
   c.pf(3);
 };
 
+WALKS["b-06-multistep-rc"] = (c) => {
+  const toMenu = () => {
+    for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(c.sim.state.screen.id); i++) c.pf(3);
+  };
+  const read = (job: string) => {
+    c.cmd("=S");
+    c.cmd("ST");
+    c.enter({ [`cmd:${job}`]: "?" });
+    c.enter({ "cmd:JESYSMSG": "S" });
+  };
+  c.cmd("TSO SUBMIT JCL(RCJOB)");
+  read("JOB00001");
+  toMenu();
+  c.cmd("=2");
+  c.enter(entry(`${HLQ}.JCL(RCJOB)`));
+  c.enter({ [`line:${c.lineId(/FIELDZ/)}`]: "  SORT FIELDS=(1,3,CH,A)" });
+  c.enter({ command: "SUBMIT" });
+  c.pf(3);
+  toMenu();
+  c.cmd("TSO SUBMIT JCL(ABENDJOB)");
+  read("JOB00003");
+};
+
 const E = (ref: string) => entry(ref);
 
 /**

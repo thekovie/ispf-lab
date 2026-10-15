@@ -798,3 +798,115 @@ describe("b-05-disp", () => {
     });
   });
 });
+
+describe("b-06-multistep-rc", () => {
+  const ID = "b-06-multistep-rc";
+  const toMenu = (a: Attempt) => {
+    for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(a.sim.state.screen.id); i++) a.pf(3);
+  };
+  const submit = (a: Attempt, member: string) => {
+    toMenu(a);
+    a.cmd(`TSO SUBMIT JCL(${member})`);
+  };
+  const readSysmsg = (a: Attempt, job: string) => {
+    a.cmd("=S");
+    a.cmd("ST");
+    a.enter({ [`cmd:${job}`]: "?" });
+    a.enter({ "cmd:JESYSMSG": "S" });
+  };
+  const fixSort = (a: Attempt, control = "  SORT FIELDS=(1,3,CH,A)") => {
+    a.cmd("=2");
+    a.enter(entry(`${HLQ}.JCL(RCJOB)`));
+    a.enter({ [`line:${a.lineId(/FIELDZ/)}`]: control });
+  };
+
+  it("is lesson 35 and advises lesson 34", () => {
+    const l = lessonById(ID)!;
+    expect(l.number).toBe(35);
+    expect(l.requires).toEqual(["b-05-disp"]);
+  });
+
+  it("walks the Learn steps in order", () => {
+    const c = new Attempt(lessonById(ID)!);
+    submit(c, "RCJOB");
+    expect(stepId(c)).toBe("read");
+    readSysmsg(c, "JOB00001");
+    expect(stepId(c)).toBe("fix");
+    toMenu(c);
+    fixSort(c);
+    expect(stepId(c)).toBe("rerun");
+    c.enter({ command: "SUBMIT" });
+    expect(stepId(c)).toBe("save");
+    c.pf(3);
+    expect(stepId(c)).toBe("abend");
+    submit(c, "ABENDJOB");
+    expect(stepId(c)).toBe("compare");
+    readSysmsg(c, "JOB00003");
+    expect(c.done).toBe(true);
+    expect(c.runner.mistakes).toBe(0);
+  });
+
+  it("opening the JESYSMSG of the abend job early does not pass the return-code read step", () => {
+    const c = learn(ID, (a) => {
+      submit(a, "ABENDJOB");
+      readSysmsg(a, "JOB00001");
+    });
+    expect(stepId(c)).toBe("run");
+  });
+
+  it("another syntax error in the control statement does not pass the fix step", () => {
+    const c = learn(ID, (a) => {
+      submit(a, "RCJOB");
+      readSysmsg(a, "JOB00001");
+      toMenu(a);
+      fixSort(a, "  SORT FIELDS=1,3,CH,A");
+    });
+    expect(stepId(c)).toBe("fix");
+  });
+
+  describe("Challenge", () => {
+    it("CC 0016, read the log, fix, CC 0000 completes it", () => {
+      const c = challenge(ID, (a) => {
+        submit(a, "RCJOB");
+        readSysmsg(a, "JOB00001");
+        toMenu(a);
+        fixSort(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("fixing without ever reading the job's JESYSMSG does not complete it", () => {
+      const c = challenge(ID, (a) => {
+        submit(a, "RCJOB");
+        fixSort(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("reading the log of the abend job instead of RCJOB does not count", () => {
+      const c = challenge(ID, (a) => {
+        submit(a, "RCJOB");
+        submit(a, "ABENDJOB");
+        readSysmsg(a, "JOB00002");
+        toMenu(a);
+        fixSort(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("running RCJOB again unchanged does not complete it", () => {
+      const c = challenge(ID, (a) => {
+        submit(a, "RCJOB");
+        readSysmsg(a, "JOB00001");
+        submit(a, "RCJOB");
+      });
+      expect(c.done).toBe(false);
+    });
+  });
+});

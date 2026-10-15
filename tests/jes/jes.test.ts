@@ -224,3 +224,29 @@ describe("valid DD keywords the simulator ignores are not errors (GAP-33)", () =
     expect(parseJcl(["//J JOB", "//S EXEC PGM=IEFBR14", "//D DD DSN=USER01.X.Y,FOO=1", "//"]).errors[0]).toMatchObject({ id: "IEFC630I" });
   });
 });
+
+describe("DFSORT critical syntax error (EV-B ICE007A; lesson b-06)", () => {
+  const bad = (control: string) => ["//USER01R  JOB (ACCT),'RC',CLASS=A,MSGCLASS=X", "//S EXEC PGM=SORT", "//SYSOUT DD SYSOUT=*", "//SORTIN DD DUMMY", "//SORTOUT DD SYSOUT=*", "//SYSIN DD *", control, "/*", "//"];
+
+  it("a bad control statement prints ICE007A with IBM's text, ends RC 16, and the job still ends normally", () => {
+    const r = submit(bad("  SORT FIELDZ=(1,3,CH,A)"));
+    expect(out(r, "SYSOUT")).toContain("ICE007A SYNTAX ERROR");
+    expect(out(r, "SYSOUT")).not.toContain("ON CONTROL STATEMENT");
+    expect(r.job.maxRc).toBe(16);
+    expect(r.job.status).toBe("OUTPUT");
+  });
+
+  it("a nonzero return code does not stop the next step (no COND)", () => {
+    const r = submit(["//USER01R  JOB (ACCT),'RC',CLASS=A", "//STEP1 EXEC PGM=IEFBR14", "//STEP2 EXEC PGM=SORT", "//SYSOUT DD SYSOUT=*", "//SORTIN DD DUMMY", "//SORTOUT DD SYSOUT=*", "//SYSIN DD *", "  SORT FIELDZ=(1,3,CH,A)", "/*", "//STEP3 EXEC PGM=IEFBR14", "//"]);
+    expect(r.job.steps.map((s) => [s.name, s.executed, s.rc])).toEqual([["STEP1", true, 0], ["STEP2", true, 16], ["STEP3", true, 0]]);
+    const iefs = out(r, "JESYSMSG").split("\n").filter((l) => l.startsWith("IEF142I"));
+    expect(iefs.map((l) => l.match(/COND CODE (\d+)/)![1])).toEqual(["0000", "0016", "0000"]);
+  });
+
+  it("an abend, unlike a return code, flushes the later steps", () => {
+    const r = submit(["//USER01A  JOB (ACCT),'ABEND',CLASS=A", "//STEP1 EXEC PGM=IEFBR14", "//STEP2 EXEC PGM=NOPROG", "//STEP3 EXEC PGM=IEFBR14", "//"]);
+    expect(r.job.abend).toBe("S806");
+    expect(r.job.steps.map((s) => [s.name, s.executed])).toEqual([["STEP1", true], ["STEP2", true], ["STEP3", false]]);
+    expect(out(r, "JESYSMSG")).toContain("IEF272I USER01A STEP3 - STEP WAS NOT EXECUTED");
+  });
+});

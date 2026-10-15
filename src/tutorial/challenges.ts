@@ -12,7 +12,7 @@
 import type { SimEvent } from "@/engine/types";
 import type { Validator } from "./types";
 import { allOf, anyOf, is, noEditSession, memberSatisfies, onScreen, sawAll, sawAllThen, sawInOrder, sawTimes } from "./validators";
-import { buildDatasetIsRight, dispKeepExists, typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
+import { buildDatasetIsRight, dispKeepExists, outputOfJob, typesLibIsRight, typesSeqIsRight } from "./lessons/module11";
 
 export interface Challenge {
   task: string;
@@ -83,6 +83,17 @@ const shown = (tail: "SEQ" | "LIB", anyForm: boolean) =>
   );
 
 export const CHALLENGES: Record<string, Challenge> = {
+  "b-06-multistep-rc": {
+    task: "Find out why RCJOB ends with a high return code although every step ran, and fix it so it ends CC 0000. It has to end CC 0016 first, you have to read its JESYSMSG, and a later run has to end CC 0000.",
+    validator: allOf(
+      sawInOrder(
+        is("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}R` && e.status === "OUTPUT" && e.maxRc === 16),
+        is("JOB_OUTPUT_OPENED", (e, ctx) => e.ddname === "JESYSMSG" && outputOfJob("R")(e, ctx)),
+        is("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}R` && e.status === "OUTPUT" && e.maxRc === 0),
+      ),
+      noEditSession,
+    ),
+  },
   "b-05-disp": {
     task: "Fix {HLQ}.JCL(KEEPIT) so that after the job runs {HLQ}.DISP.KEEP exists. The job has to create it, not the Data Set Utility.",
     validator: allOf(

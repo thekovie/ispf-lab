@@ -1,6 +1,6 @@
 # Course design
 
-Twenty-eight reviewed lessons in ten modules, plus six **draft** foundation lessons (29-34, module 11) added in M3 that await independent source, fidelity and expert review. Lessons 1–15 follow IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
+Twenty-eight reviewed lessons in ten modules, plus seven **draft** foundation lessons (29-35, module 11) added in M3 that await independent source, fidelity and expert review. Lessons 1–15 follow IBM Redbook SG24-6366 chapter 4 (logon → menu → PF keys →
 data sets → editor) and the Mainframestechhelp topic order (Settings → Utilities 3.1/3.2/3.3/3.4 → member lists →
 editor commands). Lessons 16–28 (added with the expansion spec) cover the jump function, RETRIEVE, the editor's
 power tools (COLS/BOUNDS, profiles, UNDO, exclude/FLIP), DSLIST and member-list depth, and the batch loop
@@ -46,6 +46,7 @@ Lesson files: `src/tutorial/lessons/module1.ts` … `module6.ts`, `module7-8.ts`
 | 32 | Reading a job: JOB, EXEC, DD and continuation (**draft**) | HELLO + COLS → `TSO SUBMIT JCL(BROKEN)` → JESYSMSG IEFC621I → remove the trailing comma → SUBMIT → PF3 | `COLS_DISPLAYED`, `JCL_ERROR_GENERATED`, `JOB_OUTPUT_OPENED`, `JOB_COMPLETED`, JCL parser on the edited text | SRC-003 p.13-17, 75, 313, 389, 459; SRC-019 IEFC621I; spec `b-03-jcl-anatomy.md` |
 | 33 | Build a job from scratch (**draft**) | new member `{HLQ}.JCL(NEWDS)` → JOB → EXEC IEFBR14 → DD NEW,CATLG + SPACE + DCB → `//` → SUBMIT → 3.4 | parsed editor text (job name, program, DD attributes), `JOB_COMPLETED`, `DATASET_SEARCHED`, catalog state | SRC-003 p.126, 147-148, 164, 251, 278; SRC-018 PDF p.32-33; spec `b-04-build-a-job.md` |
 | 34 | Disposition: what happens to a data set (**draft**) | DISPNEW → IEF285I CATALOGED → DISPMOD (appends) → browse → DISPDEL → KEEPIT deletes its output → fix with DISP=(NEW,CATLG) | `JOB_COMPLETED` per job, `JOB_OUTPUT_OPENED`, `MEMBER_OPENED`, catalog state, parsed DD | SRC-003 p.147-152 (EV-B 1.1); SRC-019 IEF285I; spec `b-05-disp.md` |
+| 35 | Multi-step jobs: return codes and abends (**draft**) | RCJOB (SORT syntax error, RC 16, later step still runs) → JESYSMSG IEF142I → fix control statement → CC 0000 → ABENDJOB (S806, later step not executed) | `JOB_COMPLETED{maxRc,abend}`, `JOB_OUTPUT_OPENED{JESYSMSG}` of the right job, parsed SYSIN | SRC-019 IEF142I/IEF272I/IEF450I/CSV003I; SRC-020 S806; SRC-028 ICE007A; SRC-027 p.63; spec `b-06-multistep-rc.md` |
 
 ## Step anatomy
 

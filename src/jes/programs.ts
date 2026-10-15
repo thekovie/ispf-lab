@@ -99,7 +99,7 @@ interface SortField {
 function parseSortFields(control: string[]): { fields?: SortField[]; copy?: boolean; error?: string } {
   const text = control.map((l) => l.trim()).join(" ");
   const m = text.match(/SORT\s+FIELDS=(COPY|\(([^)]*)\))/i);
-  if (!m) return { error: "ICE007A SYNTAX ERROR ON CONTROL STATEMENT" };
+  if (!m) return { error: "ICE007A SYNTAX ERROR" };
   if (m[1].toUpperCase() === "COPY") return { copy: true };
   const items = m[2].split(",").map((s) => s.trim());
   const fields: SortField[] = [];
@@ -107,10 +107,10 @@ function parseSortFields(control: string[]): { fields?: SortField[]; copy?: bool
     const pos = parseInt(items[i], 10);
     const len = parseInt(items[i + 1], 10);
     const order = (items[i + 3] ?? "A").toUpperCase();
-    if (!pos || !len || !["A", "D"].includes(order)) return { error: "ICE007A SYNTAX ERROR ON CONTROL STATEMENT" };
+    if (!pos || !len || !["A", "D"].includes(order)) return { error: "ICE007A SYNTAX ERROR" };
     fields.push({ pos, len, desc: order === "D" });
   }
-  return fields.length ? { fields } : { error: "ICE007A SYNTAX ERROR ON CONTROL STATEMENT" };
+  return fields.length ? { fields } : { error: "ICE007A SYNTAX ERROR" };
 }
 
 function sortProgram(ctx: ProgramContext): ProgramResult {
