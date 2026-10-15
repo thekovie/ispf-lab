@@ -15,7 +15,7 @@ pnpm check           # typecheck + lint + test
 
 ## Test files
 
-Run `pnpm test` for the current count (at the end of M1b: 26 files, 1,729 tests).
+Run `pnpm test` for the current count (at the M1 closure: 28 files, 1,784 tests).
 
 | File | Covers |
 |---|---|
@@ -39,6 +39,8 @@ Run `pnpm test` for the current count (at the end of M1b: 26 files, 1,729 tests)
 | `tests/tutorial/provider.test.tsx` | TutorialProvider with React Testing Library: `startLesson` never completes the previous lesson (F-03), mode switch and restart re-apply the starting state, session closes on lesson start, progress untouched by a mode switch |
 | `tests/tutorial/compat.test.tsx` | lesson ids and step ids equal the baseline commit's (`fixtures/baseline-ids.json`), progress key and shape, stored progress survives start / mode switch / restart, local-only storage |
 | `tests/components/terminal-unsent.test.tsx` | the real `Terminal` reports editor text typed but not sent (and not an unsent command) |
+| `tests/tutorial/scoring.test.ts` | instructed errors (L1 `99`, L7 `SAVE` in Browse) are not mistakes, other errors still are, Challenge counts all; every lesson's legitimate route scores 100; new lessons must define a Challenge |
+| `tests/components/progress-reset.test.tsx` | the Progress-page environment reset also clears the virtual JES |
 | `tests/tutorial/m1b-validators.test.ts` | M1b-3: each confirmed Learn-step or Challenge defect (L5, L6, L9, L11, L17, L21, L27, L28) has a negative test and a test that the legitimate route still passes |
 | `tests/tutorial/retired-claims.test.ts` | lesson and glossary text must not contain statements IBM contradicts (each names its evidence); glossary terms and aliases are unique |
 | `tests/engine/memberStats.test.ts` | modification level once per edit session and capped at 99; STATS OFF discards statistics |

@@ -41,9 +41,10 @@ export const lesson01: Lesson = {
     {
       id: "type-something",
       instruction: "Type an option that does not exist, such as 99, on the Option ===> line and press Enter. Watch the short message at the top right.",
-      explanation: "ISPF reports a mistake as a short message in the top-right corner; PF1 then shows the long explanation. Learning to look there is half of ISPF fluency.",
+      explanation: "ISPF reports a mistake as a short message in the top-right corner; PF1 then shows the long explanation. Learning to look there is half of ISPF fluency. (This error is on purpose and is not counted against you.)",
       hint: "Type 99 then Enter. The message INVALID OPTION is expected - it is the lesson.",
       validator: eventIs("MESSAGE_SHOWN", (e) => e.text === "INVALID OPTION"),
+      expectsError: true,
       highlightField: "option",
     },
     {

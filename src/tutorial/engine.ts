@@ -53,7 +53,9 @@ export function feedEvents(lesson: Lesson, runner: RunnerState, events: SimEvent
   const hlq = state.userid;
   let next: RunnerState = runner;
   const errors = events.filter((e) => e.type === "MESSAGE_SHOWN" && e.severity === "error").length;
-  if (errors > 0) next = { ...next, mistakes: next.mistakes + errors };
+  // Learn mode only: the step the learner is on may ask for an error on purpose. Challenge mode counts every error.
+  const asked = mode !== "challenge" && lesson.steps[runner.stepIndex]?.expectsError === true;
+  if (errors > 0 && !asked) next = { ...next, mistakes: next.mistakes + errors };
 
   if (mode === "challenge") {
     const validator = challengeValidator(lesson);

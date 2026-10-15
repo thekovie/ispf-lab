@@ -18,7 +18,7 @@ todo with an asserting test that cites the same finding.
 | B2, B3, B4 | **Fixed** (M1b-2, M1b-4): SUBMIT/SJ wording, `IEF374I` (no `RC=`), `IEFC606I` to `IEFC019I`, `ICE026A` to `ICE056A` or plain text, `S` vs `I`, `SORT LRECL` default, modification level once per session capped at 99, `STATS OFF` discards statistics. Still open inside B3/B4: the invented `IEFC605I` variants, other inexact layouts (`IEF376I`, `IEF237I`, `ICE000I`), `G` panel, member-info labels |
 | B1 | **Fixed (text)**: L1 pop-ups, L2 PF3 count, L3 option 0 scroll, L7 Browse look, L8 MODIFIED/AUTOSAVE, L15 screen limit, L16 jump/RETURN, L18 BNDS/default bounds, L19 CAPS/PROFILE, L20 RECOVERY/undo, L25 SDSF option and OWNER, glossary "no undo" and the duplicate `JCL` entry (and the `b` alias shadowing `B`). Guarded by `retired-claims.test.ts` |
 | B1 residual | Behaviour left as is and now disclosed: L2 the simulator keeps Utility Selection on the stack; L7 Browse shows plain line numbers; L15 each screen fills the display; L18 BNDS is accepted on the command line; L19 PROFILE shows two lines; scoring still counts the scripted errors of L1 step 4 and L7 `SAVE` as mistakes |
-| A9, B6 | Open (the "uncataloged" premise wording; housekeeping) |
+| A9, B6 | **Closed at the M1 closure** ([m1-closure-report.md](m1-closure-report.md)): the "uncataloged" wording corrected; scoring of instructed errors fixed; Progress-page reset and SUBMIT operands fixed |
 
 ## 1. The five deferred test cases
 

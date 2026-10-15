@@ -386,3 +386,27 @@ describe("M1b-3 - Learn steps that checked less than they said (L5, L6, L9, L11)
     expect(stepId(c)).toBe("exclude");
   });
 });
+
+describe("M1 closure - small assessment and wording fixes (L4, L24, L26)", () => {
+  it.each(["USER01", "USER01.*", "USER01*"])("L4: the level %s passes it", (level) => {
+    const c = learn("l04-finding-data-sets", (a) => {
+      a.cmd("3.4");
+      a.enter({ level });
+    });
+    expect(stepId(c)).not.toBe("level");
+  });
+
+  it("L26: submitting another member does not pass the TSO SUBMIT step", () => {
+    const c = learn("l26-job-output", (a) => {
+      a.cmd("TSO SUBMIT JCL(HELLO)");
+    });
+    expect(stepId(c)).toBe("tso-submit");
+  });
+
+  it("L26: submitting SORTJOB does", () => {
+    const c = learn("l26-job-output", (a) => {
+      a.cmd("TSO SUBMIT JCL(SORTJOB)");
+    });
+    expect(stepId(c)).toBe("sdsf");
+  });
+});

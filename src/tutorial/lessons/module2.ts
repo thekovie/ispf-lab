@@ -25,8 +25,8 @@ export const lesson04: Lesson = {
     },
     {
       id: "level",
-      instruction: "The Dsname Level field already shows {HLQ}. Press Enter to list every data set whose name starts with it.",
-      explanation: "A level is a name prefix. {HLQ} alone matches {HLQ}.JCL, {HLQ}.COBOL and everything else you own; {HLQ}.JCL would match only that library.",
+      instruction: "The Dsname Level field already shows {HLQ}. Press Enter to list the data sets under that level.",
+      explanation: "A level is one or more leading qualifiers, not a character prefix. With 'Include Additional Qualifiers' selected (as in this simulator), {HLQ} matches {HLQ}.JCL, {HLQ}.COBOL and everything else you own; without it, real ISPF lists only the exact name. A level of {HLQ}.JCL narrows the list to that library.",
       hint: "Leave {HLQ} in the field and press Enter.",
       validator: dslistShowing((level, ctx) => level.startsWith(ctx.hlq)),
       highlightField: "level",
@@ -34,7 +34,7 @@ export const lesson04: Lesson = {
     {
       id: "read-columns",
       instruction: "Read the list. PO means partitioned (a library of members), PS means sequential (one stream of records). FB 80 is fixed-length 80-byte records - the classic card image. Press PF3 to go back to the entry panel.",
-      explanation: "DSORG (organization), RECFM (record format) and LRECL (record length) are the attributes you will type when you create your own data sets in lesson 6.",
+      explanation: "DSORG (organization), RECFM (record format) and LRECL (record length) are the attributes you will type when you create your own data sets in lesson 6. This simulator shows these columns up front; in real ISPF you switch the list to the attributes view first.",
       hint: "Press F3.",
       validator: onScreen("DSLIST_SEARCH"),
     },

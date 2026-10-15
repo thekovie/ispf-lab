@@ -473,5 +473,20 @@ sub-item. Tracked in `docs/curriculum/m1b-backlog.md`.
   point at the z/OS 3.2 PDFs (User's Guide Vol I and II, Edit and Edit Macros); the unresolved SHARE link is removed; optional
   `.github/workflows/ci.yml` runs `pnpm check` and `pnpm build` (not runnable locally; first run happens on push).
 
-Final: 26 test files, 1,729 tests, no todo. Residual items are in the backlog (invented IEFC605I variants, other inexact message layouts,
+Final at the end of M1b: 26 test files, 1,729 tests, no todo. Residual items are in the backlog (invented IEFC605I variants, other inexact message layouts,
 `G` panel, the "uncataloged" premise, scored scripted errors in L1 and L7, browser re-check of the changed lessons).
+
+## Phase 22 - M1 closure review (2026-10-15)
+
+Branch `feat/m1-closure`. Full report: `docs/curriculum/m1-closure-report.md`. Verdict: **M1 closed, accepted with three conditions**
+(push and confirm CI; treat IBM-silent behaviour as unverified; keep the legacy fallback allow-list shrinking).
+
+- P0/P1 ledger built from the Phase 0 audit, the M0 review and the gap matrix: no open P0, no blocker; deferrals are justified and assigned.
+- `LessonStep.expectsError` (Learn mode): the invalid option in L1 and `SAVE` in Browse in L7 are no longer scored as mistakes.
+- L28 "uncataloged" wording corrected in docs and the seed `PAYRPT` comment (the data set does not exist; the create route is valid).
+- Small fixes: L4, L10 wording; L24 `teaches`; L26 submit step requires SORTJOB; Progress-page reset clears the JES (GAP-64); editor
+  `SUBMIT` refuses operands (GAP-76); stale `docs/04` SUBMIT sentence.
+- New gates: every lesson's legitimate route scores 100; a new lesson must define its own Challenge (six legacy fallbacks allow-listed);
+  the retired-claims test scans the reference docs.
+- Findings for L4, L10, L12, L13, L14, L24, L26 classified, not all implemented. Browser walkthroughs: L1, L7 (Learn and Challenge), L17, L26, L27.
+- CI: workflow exists, **never pushed or executed**. Final: 28 test files, 1,784 tests, `pnpm check` and `pnpm build` green.

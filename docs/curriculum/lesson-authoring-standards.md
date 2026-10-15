@@ -87,7 +87,9 @@ Machine-readable metadata added to the `Lesson` type in the first infrastructure
 - Validate **outcome plus necessary evidence of method** only where the method is the objective (for example "read SYSUT2" is checked with an event when reading output is the point). If the outcome is the objective, state-only validation is acceptable, but then the objective text must say "outcome only".
 - Accept every legitimate route to the outcome (see section 6). Reject only routes that skip the learning objective.
 - No reliance on unsaved editor buffers unless the lesson is explicitly about the unsaved/saved distinction.
-- Scoring is per mode (Learn, Practice, Challenge), ignores instructed errors, and never exposes the answer in the failure message.
+- Scoring is per mode (Learn, Practice, Challenge), ignores instructed errors, and never exposes the answer in the failure message. A step that tells the learner to provoke a terminal error sets `expectsError: true` (Learn mode only; Challenge counts every error). `tests/tutorial/scoring.test.ts` requires every lesson's legitimate route to score 100.
+- A new lesson must define its own `challenge` (in the lesson or in `src/tutorial/challenges.ts`); `scoring.test.ts` fails for a new lesson without one. Six legacy lessons are allow-listed there and shrink the list when they get one. Also required by `challenge.test.ts`: a legitimate route in `tests/tutorial/walks.ts`, no completion from the start state, no completion from another lesson's leftovers.
+- Challenge checks use "no Edit session open" rather than `editorClosed` when the learner ends in SDSF Browse (a Browse is an editor session in the simulator).
 
 ## 6. Validation requirements
 

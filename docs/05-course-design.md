@@ -66,6 +66,7 @@ Lesson files: `src/tutorial/lessons/module1.ts` … `module6.ts`, `module7-8.ts`
   If the start would throw away unsaved editor changes (including text typed but not sent), a learner change to a member the
   lesson restores, or leftover members/data sets with content, the learner is asked first (`confirmDiscard`, default
   `window.confirm`; cancel changes nothing). Harmless resets never prompt.
+  A step that asks the learner to provoke an error sets `expectsError` (Learn mode): that error is not scored as a mistake.
 
 ## Coaching UI
 

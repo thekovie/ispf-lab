@@ -40,6 +40,11 @@ Starting, restarting or switching mode applies the lesson's starting state throu
 - `guard.test.ts`, `scenario.test.ts`, `provider.test.tsx`: the guard, the scenario reset, and the provider wiring.
   Before the change 64 of the suite's cases failed and 5 of the 7 provider tests failed on the baseline commit.
 
+## Review at M1 closure (2026-10-15)
+The decision stands. Two additions follow from using it on all 28 lessons: instructed errors are exempt from scoring in Learn mode
+(`LessonStep.expectsError`), and the tests now require new lessons to define their own outcome check instead of falling back to
+the last step. See `docs/curriculum/m1-closure-report.md`.
+
 ## Consequences
 - No storage change; lesson ids, step ids and saved progress are unchanged.
 - Outcome checks trust the event stream: they prove the learner performed the recorded actions, not that they

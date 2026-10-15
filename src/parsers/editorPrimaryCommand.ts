@@ -138,7 +138,8 @@ export function parseEditorPrimaryCommand(raw: string): EditorPrimaryCommand {
       return { kind: "flip" };
     case "SUBMIT":
     case "SUB":
-      return { kind: "submit" };
+      // IBM accepts labels, X and NX to submit part of the data; the simulator submits the whole buffer, so refuse operands.
+      return args.length ? invalid("SUBMIT OPERANDS NOT SUPPORTED") : { kind: "submit" };
     case "UNNUM":
     case "UNNUMBER":
       return { kind: "unnum" };

@@ -3,7 +3,9 @@
  * or does not support them (docs/curriculum/m0-acceptance-review.md F-04, F-05, F-09; verified-sources.md; EV-A/B/C).
  * Each entry names the evidence. Add an entry whenever a taught statement is retired.
  */
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { buildSeed } from "@/catalog/seed";
 import { GLOSSARY } from "@/tutorial/explain";
 import { LESSONS } from "@/tutorial/lessons";
 
@@ -62,6 +64,16 @@ describe("retired claims are not taught", () => {
   });
 });
 
+describe("reference docs do not repeat retired claims", () => {
+  const docs = ["docs/03-ispf-behaviour-reference.md", "docs/04-editor-commands.md", "docs/10-jes-sdsf.md", "docs/05-course-design.md"];
+  it.each(docs)("%s", (file) => {
+    const text = readFileSync(file, "utf8");
+    const hits = RETIRED.filter((r) => r.claim.test(text)).map((r) => String(r.claim));
+    expect(hits).toEqual([]);
+    expect(text).not.toMatch(/deviation: ISPF submits the saved data set/i);
+  });
+});
+
 describe("the glossary has no shadowed entries", () => {
   it("every term and alias is unique", () => {
     const seen = new Map<string, string>();
@@ -89,5 +101,26 @@ describe("the SUBMIT and SJ disclosures are present", () => {
     const l = LESSONS.find((x) => x.id === "l27-jcl-error")!;
     const sj = l.steps.find((s) => s.id === "sj")!;
     expect(sj.instruction).toMatch(/does not save/i);
+  });
+});
+
+describe("the Day-One data set is described as nonexistent, not uncataloged", () => {
+  // The simulator has no uncataloged state (GAP-10): USER01.PAYROLL.DATA simply does not exist.
+  const premise = /(uncatalog|not catalog)[^\n]{0,80}PAYROLL|PAYROLL[^\n]{0,80}(uncatalog|not catalog)|uncataloged (data set|SYSUT1)/i;
+  const loose = /uncatalog|not cataloged/i; // the seed member says nothing else about the catalog state
+
+  it("lesson and glossary text", () => {
+    const hits = [...lessonTexts(), ...glossaryTexts()].filter((t) => premise.test(t.text)).map((t) => t.where);
+    expect(hits).toEqual([]);
+  });
+
+  it("the PAYRPT member in the seed catalog", () => {
+    const payrpt = buildSeed("USER01").datasets["USER01.JCL"].members!.PAYRPT.records.join("\n");
+    expect(loose.test(payrpt)).toBe(false);
+    expect(payrpt).not.toMatch(/FIX THE JCL/); // creating the data set is a valid repair too
+  });
+
+  it.each(["docs/03-ispf-behaviour-reference.md", "docs/10-jes-sdsf.md"])("%s", (file) => {
+    expect(premise.test(readFileSync(file, "utf8"))).toBe(false);
   });
 });

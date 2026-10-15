@@ -94,7 +94,7 @@ export function buildSeed(hlqRaw: string): Catalog {
         "//             NOTIFY=&SYSUID",
         "//*",
         "//* DAY-ONE CHALLENGE: THIS JOB ENDS WITH A JCL ERROR. FIND OUT WHY IN",
-        "//* SDSF (JESYSMSG), FIX THE JCL AND RESUBMIT UNTIL IT ENDS WITH CC 0000.",
+        "//* SDSF (JESYSMSG), FIX THE PROBLEM AND RESUBMIT UNTIL IT ENDS WITH CC 0000.",
         "//*",
         "//REPORT   EXEC PGM=IEBGENER",
         "//SYSPRINT DD  SYSOUT=*",

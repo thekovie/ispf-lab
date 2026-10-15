@@ -79,7 +79,7 @@ itself), `LINE COMMANDS NOT ALLOWED IN BROWSE`. Blanking a pending command cance
 | `BOUNDS [left right]` | `BNDS`, `BND` | no operands: show `=BNDS>` line; with operands: set the search window used by FIND/CHANGE/EXCLUDE; `INVALID BOUNDS` |
 | `COLS` | | `=COLS>` ruler above the first line |
 | `HEX ON|OFF` | | accepted, display unchanged |
-| `SUBMIT` | `SUB` | submit the buffer to the virtual JES; `JOB name(JOBnnnnn) SUBMITTED` (deviation: ISPF submits the saved data set) |
+| `SUBMIT` | `SUB` | submits the member or data set being edited to the virtual JES (the buffer, so unsaved JCL runs; IBM is silent on unsaved edits, ADR 0015); `JOB name(JOBnnnnn) SUBMITTED`. Operands (labels, `X`, `NX`) are refused with `SUBMIT OPERANDS NOT SUPPORTED` |
 | `CREATE member` / `REPLACE member` | `CRE`, `REP` | write the buffer to another member of the same library |
 | `COPY member` | | insert another member's records after `A` / before `B` (or into an empty member) |
 | `PROFILE` | `PROF` | show two `=PROF>` lines: name, LRECL, CAPS, NUMBER, STATS, RECOVERY, SETUNDO, AUTOSAVE, HEX, BOUNDS |

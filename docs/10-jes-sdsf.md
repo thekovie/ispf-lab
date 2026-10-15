@@ -42,8 +42,9 @@ Max-RC: `CC 0000` (highest step condition code), `JCL ERROR`, `ABEND Sxxx`.
 
 ## The Day-One challenge
 
-`<HLQ>.JCL(PAYRPT)` copies `<HLQ>.PAYROLL.DATA` to SYSOUT with IEBGENER. That data set is not cataloged, so the
-job ends **JCL ERROR** with `IEF212I … SYSUT1 - DATA SET NOT FOUND` in JESYSMSG. Fixing the DSN to
+`<HLQ>.JCL(PAYRPT)` copies `<HLQ>.PAYROLL.DATA` to SYSOUT with IEBGENER. That data set does not exist (the simulator models only "in the
+catalog" or "not there", with no half-way state), so allocation fails and the job ends **JCL ERROR** with
+`IEF212I … SYSUT1 - DATA SET NOT FOUND` in JESYSMSG. Editing the DSN or creating the data set both repair it. Fixing the DSN to
 `<HLQ>.DATA(EMPLOYEE)` and resubmitting ends `CC 0000` with the records in the SYSUT2 spool data set.
 (The expansion spec suggested `PGM=IEFBR15`; a missing module is an ABEND S806 on z/OS, not a JCL ERROR, so the
 seed uses a real JCL error and S806 is simulated separately.)

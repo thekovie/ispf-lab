@@ -28,9 +28,10 @@ export const lesson07: Lesson = {
     {
       id: "try-typing",
       instruction: "Try typing SAVE on the command line and press Enter. Read the message, then press PF3 twice to get back to DSLIST.",
-      explanation: "Browse has no SAVE command because nothing can be changed; the simulator answers with an error message. The message area tells you why - ISPF always explains.",
+      explanation: "Browse has no SAVE command because nothing can be changed; the simulator answers with an error message (this one is not counted against you). The message area tells you why - ISPF always explains.",
       hint: "SAVE, Enter, then F3, F3.",
       validator: onScreen("DSLIST_RESULTS"),
+      expectsError: true,
     },
     {
       id: "edit",
@@ -175,8 +176,8 @@ export const lesson10: Lesson = {
     },
     {
       id: "move-block",
-      instruction: "Move the two-record block //SYSIN DD * and SORT FIELDS to the end: type MM on both records, then A on the /* record, and press Enter.",
-      explanation: "MM...MM marks a block; M alone moves one line. Move removes the source. If you get MOVE/COPY IS PENDING, you still need the A or B.",
+      instruction: "Move the two-record block //SYSIN DD * and SORT FIELDS to just after the /* record: type MM on both records, then A on the /* record, and press Enter.",
+      explanation: "MM...MM marks a block; M alone moves one line. Move removes the source. If a copy or move stays pending (or the simulator says DESTINATION REQUIRED), you still need the A or B.",
       hint: "MM on //SYSIN, MM on the SORT FIELDS line, A on /*, Enter.",
       validator: eventIs("EDITOR_LINES_MOVED"),
     },

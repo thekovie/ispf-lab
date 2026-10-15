@@ -64,8 +64,8 @@ The commit hashes are in `git log feat/m1b-content-fidelity`.
 | Invented `IEFC605I` variants ("JOB STATEMENT NAME FIELD MISSING", "EXEC STATEMENT WITHOUT PGM OR PROC") | Real missing-jobname message is `IEFC635I`; left out of M1b scope (not shown by a lesson) |
 | Other inexact layouts (`IEF376I`, `IEF237I` DUMMY and device, `ICE000I` product number, JESMSGLG time prefix) | Documented in EV-B; not shown by lessons |
 | `G` opens a Reset panel in real ISPF; member-info labels | Disclosed in the lesson step; no panel built |
-| Scoring counts the scripted error of L1 step 4 and the Browse `SAVE` of L7 as mistakes | Needs a scoring rule change; not done |
-| A9 "uncataloged" premise for `PAYROLL.DATA` | The simulator has no uncataloged state; wording not yet changed |
+| Scoring counts the scripted error of L1 step 4 and the Browse `SAVE` of L7 as mistakes | **Fixed at the M1 closure** (`expectsError`) |
+| A9 "uncataloged" premise for `PAYROLL.DATA` | **Fixed at the M1 closure** (wording; the simulator still has no uncataloged state) |
 | IBM-silent behaviours (unsaved edits in Edit SUBMIT, SJ write-back, JCL-error jobs on SDSF O/H, PF3 count after typed 3.4, IEBGENER SYSPRINT) | Need a z/OS expert or a live system |
 | Audit findings for lessons 4, 10, 12, 13, 14, 24, 26 | They were not in the M1b list (M0 review section F) and remain open in `existing-lessons-audit.md` |
 

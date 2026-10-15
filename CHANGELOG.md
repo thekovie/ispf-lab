@@ -6,6 +6,9 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- Errors a lesson tells the learner to provoke (lesson 1 invalid option, lesson 7 `SAVE` in Browse) no longer count as mistakes.
+- Lesson 28's Day-One data set is described as nonexistent, not uncataloged; the PAYRPT seed comment no longer rules out creating it.
+- Editor `SUBMIT` refuses operands (`SUBMIT OPERANDS NOT SUPPORTED`) instead of ignoring them; the Progress-page environment reset also clears the JES.
 - Lesson and glossary statements that IBM's documentation contradicts were corrected (pop-ups, PF3 counts, Browse, MODIFIED,
   AUTOSAVE, screen limit, jump/RETURN, BNDS, CAPS, RECOVERY, undo, SDSF option letter), and Edit SUBMIT and SDSF SJ are described as
   IBM does (ADR 0015).

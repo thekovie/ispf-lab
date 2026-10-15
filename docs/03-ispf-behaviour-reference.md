@@ -107,7 +107,7 @@ See `docs/10-jes-sdsf.md`. Entry points: editor `SUBMIT` (submits the buffer —
 The job runs to completion inside the reducer; message `JOB name(JOBnnnnn) SUBMITTED`; events `JOB_SUBMITTED`,
 `JOB_COMPLETED{status,maxRc,abend}`, `JCL_ERROR_GENERATED`, `JOB_STATUS_OPENED`, `JOB_OUTPUT_OPENED{jobId,ddname}`,
 `JOB_PURGED`. Primary option `S` (also `SD`, `SDSF`, `M.5`, `=S`) opens the SDSF menu; every SDSF title carries
-`(SIMULATED)`. Jobs persist per userid (`ispf-lab:jes:v1:<USERID>`) and are cleared by *Reset training environment*.
+`(SIMULATED)`. Jobs persist per userid (`ispf-lab:jes:v1:<USERID>`) and are cleared by *Reset training environment* (top bar and Progress page).
 
 ## Catalog rules
 
@@ -119,7 +119,7 @@ The job runs to completion inside the reducer; message `JOB name(JOBnnnnn) SUBMI
 
 ## Seed catalog (per HLQ)
 
-`<HLQ>.JCL(HELLO COPYJOB PAYRPT SORTJOB)` — PAYRPT is the Day-One challenge (references an uncataloged data set) · `<HLQ>.COBOL(HELLO CUSTOMER)` · `<HLQ>.REXX(TEST01 HELLO)` ·
+`<HLQ>.JCL(HELLO COPYJOB PAYRPT SORTJOB)` — PAYRPT is the Day-One challenge (its SYSUT1 names a data set that does not exist) · `<HLQ>.COBOL(HELLO CUSTOMER)` · `<HLQ>.REXX(TEST01 HELLO)` ·
 `<HLQ>.DATA(CUSTOMER EMPLOYEE)` · `<HLQ>.NOTES.TXT` (PS) · `<HLQ>.LOADLIB` (empty PDS, RECFM U) ·
 `SYS1.PARMLIB(IEASYS00 COMMND00 PROG00)` and `SYS1.PROCLIB(COBUCL SORTD)` read-only on SYSRES.
 

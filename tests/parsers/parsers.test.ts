@@ -108,3 +108,16 @@ describe("tso commands", () => {
     expect(parseTsoCommand("foo")).toMatchObject({ kind: "invalid", error: "COMMAND FOO NOT FOUND" });
   });
 });
+
+describe("editor SUBMIT operands (GAP-76)", () => {
+  // IBM's Edit SUBMIT accepts labels, X and NX to submit part of the data. The simulator submits the whole buffer, so an
+  // operand is refused visibly instead of being ignored (silent over-submission).
+  it("plain SUBMIT and SUB are accepted", () => {
+    expect(parseEditorPrimaryCommand("SUBMIT")).toEqual({ kind: "submit" });
+    expect(parseEditorPrimaryCommand("sub")).toEqual({ kind: "submit" });
+  });
+
+  it.each(["SUBMIT .A .B", "SUBMIT X", "SUB NX", "SUBMIT 1 5"])("%s is refused with a message", (raw) => {
+    expect(parseEditorPrimaryCommand(raw)).toMatchObject({ kind: "invalid", error: "SUBMIT OPERANDS NOT SUPPORTED" });
+  });
+});

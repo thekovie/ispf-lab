@@ -8,6 +8,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { resetCatalog } from "@/persistence/catalogStore";
 import { KEYS } from "@/persistence/keys";
 import { applyBundle, buildBundle, parseBundle, serializeBundle } from "@/persistence/labBundle";
+import { resetJes } from "@/persistence/jesStore";
 import { resetProfiles } from "@/persistence/profileStore";
 import { loadProgress, resetProgress, type Progress } from "@/persistence/progressStore";
 import { createDefaultStorage } from "@/persistence/storage";
@@ -123,9 +124,10 @@ function ProgressBody() {
           type="button"
           className="crt-button"
           onClick={() => {
-            if (window.confirm(`Reset the training environment for ${userid}? All data sets return to the seed and edit profiles are cleared.`)) {
+            if (window.confirm(`Reset the training environment for ${userid}? All data sets return to the seed, edit profiles are cleared and submitted jobs are removed.`)) {
               resetCatalog(storage, userid);
               resetProfiles(storage, userid);
+              resetJes(storage, userid);
               setNote("Training environment reset to the original seed catalog.");
             }
           }}

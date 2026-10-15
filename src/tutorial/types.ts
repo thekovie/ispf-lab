@@ -27,6 +27,8 @@ export interface LessonStep {
   explanation?: string;
   hint: string;
   validator: Validator;
+  /** the step tells the learner to provoke a terminal error (invalid option, SAVE in Browse): it is not scored as a mistake */
+  expectsError?: boolean;
   /** field id to hint visually in Learn mode */
   highlightField?: string;
 }
