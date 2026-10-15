@@ -437,7 +437,7 @@ mode-switch/session tests fail on the baseline commit (5 of 7 provider tests).
 
 **Result.** 22 test files, 1,658 tests (+5 `it.todo` for M1b), `pnpm check` and `pnpm build` green. Challenge: no lesson
 completes from the start state or by any of 15 probe shortcuts; every lesson replays and runs after every other lesson;
-13 alternative routes accepted, 12 wrong answers rejected. See ADR 0016 (Provisional, validated).
+13 alternative routes accepted, 12 wrong answers rejected. See ADR 0016 (Accepted 2026-10-15, after the M1a acceptance).
 
 **Behaviour changes to know about.** Starting, restarting or switching mode now closes split screens and any open editor
 and re-applies the lesson's starting state (a mode switch used to keep leftovers and could finish a lesson instantly).

@@ -12,7 +12,7 @@ Complexity: S ≈ under a day, M ≈ a few days, L ≈ one to two weeks (single 
 
 | Milestone | Theme | Status | Exit condition |
 |---|---|---|---|
-| M0 | Review gate | **Closed** (conditionally accepted 2026-10-15) | Conditions C1-C6 applied; D1 and D2 approved; D3 provisional (ADR 0016) |
+| M0 | Review gate | **Closed** (conditionally accepted 2026-10-15) | Conditions C1-C6 applied; D1 and D2 approved; D3 accepted 2026-10-15 (ADR 0016) |
 | **M1a** | Assessment integrity and isolation | **Implemented 2026-10-15; awaiting review** | Challenge cannot complete without the learner doing the work; every lesson replays and survives a mode switch; the `startLesson` race is resolved either way; probes are asserting tests |
 | M1b | Content and fidelity corrections | Not authorised (needs review of M1a) | IBM-contradicted statements corrected with evidence; confirmed validator defects fixed; listed message IDs corrected |
 | M2 (reduced) | Optional `requires` / `sources` lesson fields | Not authorised | Only if M3 is approved |
@@ -32,7 +32,7 @@ Outcome recorded in [m0-acceptance-review.md](m0-acceptance-review.md). Decision
 |---|---|---|
 | D1 | Progress scope: keep one record per browser and document it | **Approved** ([ADR 0014](../adr/0014-progress-scope-single-learner.md)) |
 | D2 | `SJ`/`SE`/`X`: disclose now, redesign in M4; Edit `SUBMIT` matches IBM and is not a deviation | **Approved** ([ADR 0015](../adr/0015-submit-and-sj-simulation-disclosure.md)) |
-| D3 | Challenge completion: generic guard plus outcome-based validators, not "repeat every Learn step" | **Provisional**; must be validated by M1a tests before adoption across lessons ([ADR 0016](../adr/0016-challenge-completion-guard.md)) |
+| D3 | Challenge completion: generic guard plus outcome-based validators, not "repeat every Learn step" | **Accepted 2026-10-15** after validation by the M1a tests and walkthroughs ([ADR 0016](../adr/0016-challenge-completion-guard.md)) |
 | D4-D11 | Defaults in the M0 review section G | Apply in M1b where relevant |
 
 Still unresolved and deliberately not "fixed": whether Edit `SUBMIT` includes unsaved edits, whether `SJ` leaves the PDS member untouched, O/H visibility of JCL-error jobs, the PF3 count after a typed `3.4`, IEBGENER SYSPRINT text.

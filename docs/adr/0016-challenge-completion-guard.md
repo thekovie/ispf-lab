@@ -1,7 +1,7 @@
 # 0016 — Challenge completion needs a guard and an outcome check, not a repeat of the Learn steps
 
-Date: 2026-10-15 · Status: **Provisional, validated by the M1a tests** (decision D3 of the M0 acceptance review; the
-user confirms or amends it at the M1a review)
+Date: 2026-10-15 · Status: **Accepted 2026-10-15** (decision D3 of the M0 acceptance review; validated by the M1a tests and the M1a
+acceptance walkthroughs, then approved by the project owner)
 
 ## Context
 Challenge mode ignores the steps and evaluates `lesson.challenge.validator`, or the **last step's** validator when a
