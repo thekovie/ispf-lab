@@ -346,6 +346,14 @@ WALKS["a-01-panel-fields-scroll"] = (c) => {
   c.pf(3);
 };
 
+/** The right choices for b-10's four "what kind of failure" questions. */
+export const answerB10 = (c: Attempt) => {
+  c.answer("kind-J", 0);
+  c.answer("kind-Q", 1);
+  c.answer("kind-Z", 0);
+  c.answer("kind-W", 3);
+};
+
 /** The right choices for b-01's three check questions. */
 export const answerB01 = (c: Attempt) => {
   c.answer("role-session", 1);
@@ -484,6 +492,7 @@ WALKS["b-10-job-troubleshooting"] = (c) => {
   const toMenu = () => {
     for (let i = 0; i < 6 && !["PRIMARY_OPTION_MENU", "TSO_COMMAND"].includes(c.sim.state.screen.id); i++) c.pf(3);
   };
+  const KINDS: Record<string, [string, number]> = { FIXJCL: ["kind-J", 0], FIXDSN: ["kind-Q", 1], FIXPGM: ["kind-Z", 0], FIXRC: ["kind-W", 3] };
   for (const [member, [match, text]] of Object.entries(fixes)) {
     toMenu();
     c.cmd(`TSO SUBMIT JCL(${member})`);
@@ -492,6 +501,8 @@ WALKS["b-10-job-troubleshooting"] = (c) => {
     c.cmd("ST");
     c.enter({ [`cmd:${jobs[jobs.length - 1].id}`]: "?" });
     c.enter({ "cmd:JESYSMSG": "S" });
+    const [qid, choice] = KINDS[member];
+    c.answer(qid, choice);
     toMenu();
     c.cmd("=2");
     c.enter(entry(`${HLQ}.JCL(${member})`));

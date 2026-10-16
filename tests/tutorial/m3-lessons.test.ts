@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { getMember } from "@/catalog/catalog";
 import { lessonById } from "@/tutorial/lessons";
-import { answerB01, Attempt, type Script } from "./walks";
+import { answerB01, answerB10, Attempt, type Script } from "./walks";
 
 const HLQ = "USER01";
 const entry = (dsn: string) => ({ project: "", group: "", type: "", member: "", other: dsn });
@@ -84,19 +84,30 @@ describe("a-01-panel-fields-scroll", () => {
   });
 
   describe("Challenge", () => {
-    it("HALF in the field then a one-time MAX completes it", () => {
+    it("HALF in the field, a one-time number and a one-time MAX completes it", () => {
+      const c = challenge(ID, (a) => {
+        open(a);
+        a.pf(8, { scroll: "HALF" });
+        a.enter({ command: "DOWN 3" });
+        a.enter({ command: "DOWN MAX" });
+      });
+      expect(c.done).toBe(true);
+    });
+
+    it("HALF and a one-time MAX without a one-time number does not complete (the number is taught too)", () => {
       const c = challenge(ID, (a) => {
         open(a);
         a.pf(8, { scroll: "HALF" });
         a.enter({ command: "DOWN MAX" });
       });
-      expect(c.done).toBe(true);
+      expect(c.done).toBe(false);
     });
 
     it("also completes through DOWN HALF with the field set to HALF, then DOWN MAX", () => {
       const c = challenge(ID, (a) => {
         open(a);
         a.enter({ command: "DOWN HALF", scroll: "HALF" });
+        a.enter({ command: "DOWN 10" });
         a.enter({ command: "DOWN MAX" });
       });
       expect(c.done).toBe(true);
@@ -123,6 +134,7 @@ describe("a-01-panel-fields-scroll", () => {
       const c = challenge(ID, (a) => {
         open(a);
         a.pf(8, { scroll: "HALF" });
+        a.enter({ command: "DOWN 3" });
         a.pf(8, { scroll: "MAX" });
       });
       expect(c.done).toBe(true);
@@ -491,10 +503,10 @@ describe("b-02-dataset-types", () => {
 describe("b-03-jcl-anatomy", () => {
   const ID = "b-03-jcl-anatomy";
   const submitBroken = (a: Attempt) => a.cmd("TSO SUBMIT JCL(BROKEN)");
-  const readSysmsg = (a: Attempt) => {
+  const readSysmsg = (a: Attempt, job = "JOB00001") => {
     a.cmd("=S");
     a.cmd("ST");
-    a.enter({ "cmd:JOB00001": "?" });
+    a.enter({ [`cmd:${job}`]: "?" });
     a.enter({ "cmd:JESYSMSG": "S" });
   };
   const openBroken = (a: Attempt) => {
@@ -561,9 +573,10 @@ describe("b-03-jcl-anatomy", () => {
   });
 
   describe("Challenge", () => {
-    it("failing first, then fixing by removing the comma, completes it", () => {
+    it("failing first, reading the log, then fixing by removing the comma, completes it", () => {
       const c = challenge(ID, (a) => {
         submitBroken(a);
+        readSysmsg(a);
         openBroken(a);
         removeComma(a);
         a.enter({ command: "SUBMIT" });
@@ -572,9 +585,33 @@ describe("b-03-jcl-anatomy", () => {
       expect(c.done).toBe(true);
     });
 
+    it("failing and fixing without reading the log does not complete it", () => {
+      const c = challenge(ID, (a) => {
+        submitBroken(a);
+        openBroken(a);
+        removeComma(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("reading the log only after the fixed run is the wrong order", () => {
+      const c = challenge(ID, (a) => {
+        submitBroken(a);
+        openBroken(a);
+        removeComma(a);
+        a.enter({ command: "SUBMIT" });
+        a.pf(3);
+        readSysmsg(a, "JOB00001");
+      });
+      expect(c.done).toBe(false);
+    });
+
     it("fixing with a proper continuation record is also accepted", () => {
       const c = challenge(ID, (a) => {
         submitBroken(a);
+        readSysmsg(a);
         openBroken(a);
         addContinuation(a);
         a.enter({ command: "SUBMIT" });
@@ -1007,6 +1044,7 @@ describe("b-10-job-troubleshooting", () => {
       read(a);
       fix(a, m);
     }
+    answerB10(a);
   };
 
   it("is lesson 36 and advises lesson 35", () => {
@@ -1035,12 +1073,15 @@ describe("b-10-job-troubleshooting", () => {
 
   it("walks the Learn steps in order and finishes with no mistakes", () => {
     const c = new Attempt(lessonById(ID)!);
-    const order = ["jcl-read", "jcl-fix", "dsn-read", "dsn-fix", "pgm-read", "pgm-fix", "rc-read", "rc-fix"];
+    const order = ["jcl-read", "jcl-kind", "jcl-fix", "dsn-read", "dsn-kind", "dsn-fix", "pgm-read", "pgm-kind", "pgm-fix", "rc-read", "rc-kind", "rc-fix"];
+    const kind: Record<string, [string, number]> = { FIXJCL: ["kind-J", 0], FIXDSN: ["kind-Q", 1], FIXPGM: ["kind-Z", 0], FIXRC: ["kind-W", 3] };
     expect(stepId(c)).toBe(order[0]);
     let n = 0;
     for (const m of ["FIXJCL", "FIXDSN", "FIXPGM", "FIXRC"]) {
       submit(c, m);
       read(c);
+      expect(stepId(c)).toBe(order[++n]);
+      c.answer(...kind[m]);
       expect(stepId(c)).toBe(order[++n] ?? undefined);
       fix(c, m);
       n++;
@@ -1058,6 +1099,19 @@ describe("b-10-job-troubleshooting", () => {
     expect(stepId(c)).toBe("jcl-read");
   });
 
+  it("a wrong kind is a mistake and the right one then passes", () => {
+    const c = learn(ID, (a) => {
+      submit(a, "FIXJCL");
+      read(a);
+    });
+    expect(stepId(c)).toBe("jcl-kind");
+    c.answer("kind-J", 2);
+    expect(stepId(c)).toBe("jcl-kind");
+    expect(c.runner.mistakes).toBe(1);
+    c.answer("kind-J", 0);
+    expect(stepId(c)).toBe("jcl-fix");
+  });
+
   describe("Challenge", () => {
     it("failing, reading and fixing all four completes it (in the given order)", () => {
       expect(challenge(ID, all).done).toBe(true);
@@ -1070,8 +1124,36 @@ describe("b-10-job-troubleshooting", () => {
           read(a);
           fix(a, m);
         }
+        answerB10(a);
       });
       expect(c.done).toBe(true);
+    });
+
+    it("all four fixed and read but the kinds not answered does not complete it", () => {
+      const c = challenge(ID, (a) => {
+        for (const m of ["FIXJCL", "FIXDSN", "FIXPGM", "FIXRC"]) {
+          submit(a, m);
+          read(a);
+          fix(a, m);
+        }
+      });
+      expect(c.done).toBe(false);
+    });
+
+    it("three right kinds and one wrong are not enough until the fourth is right", () => {
+      const c = challenge(ID, (a) => {
+        for (const m of ["FIXJCL", "FIXDSN", "FIXPGM", "FIXRC"]) {
+          submit(a, m);
+          read(a);
+          fix(a, m);
+        }
+        a.answer("kind-J", 0);
+        a.answer("kind-Q", 1);
+        a.answer("kind-Z", 0);
+        a.answer("kind-W", 1);
+      });
+      expect(c.done).toBe(false);
+      expect(c.runner.mistakes).toBe(1);
     });
 
     it("fixing one job less than four does not complete it", () => {

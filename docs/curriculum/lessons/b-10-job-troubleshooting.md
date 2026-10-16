@@ -68,3 +68,4 @@ SRC-019 MVS System Messages: IEFC630I, IEF212I, IEF272I, IEF142I, CSV003I (via E
 | IEF236I was printed before a failed allocation's IEF212I | simulator fixed (regression test) |
 | "status" vs the Max-RC column; "suggested order" vs IBM-defined order | reworded |
 | `sources` lacked SRC-021/023/024 | added |
+| the Challenge required reading each log but never assessed the classification the lesson teaches | four check questions (ADR 0018), one per job ("what kind of failure does {HLQ}J show?": converter (syntax) error, allocation error, abend, nonzero return code); the Learn flow asks each after the log is read, the Challenge requires all four; the fix steps check state, so fixing before answering does not strand the learner |

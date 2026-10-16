@@ -35,7 +35,7 @@ Member `{HLQ}.DATA(SCROLL)` has 60 numbered lines, so a screen shows only part o
 6. PF3 to leave (nothing changed).
 
 ## Independent challenge
-"Open `{HLQ}.DATA(SCROLL)` in Edit. Set Scroll to HALF and scroll down with it, then jump to the last page with a one-time MAX, leaving the field at HALF." No steps shown.
+"Open `{HLQ}.DATA(SCROLL)` in Edit. Set Scroll to HALF and scroll down with it, scroll a one-time number of lines (for example `DOWN 3`), then jump to the last page with a one-time MAX, leaving the field at HALF." No steps shown. The one-time number was added in the M3 hardening because the lesson teaches "a number is that many lines" and the first Challenge never required one.
 
 ## Common mistakes
 - Typing HALF on the command line instead of the field: the simulator answers `COMMAND NOT RECOGNIZED`; the amount belongs in the Scroll field, or after `DOWN`/`UP`.

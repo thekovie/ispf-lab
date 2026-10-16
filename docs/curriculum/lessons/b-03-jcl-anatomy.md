@@ -37,7 +37,7 @@ Statement, identifier field, name field, operation field, operand (parameter) fi
 6. `SUBMIT` again: CC 0000. PF3 to save.
 
 ## Independent challenge
-"Make `{HLQ}.JCL(BROKEN)` run to CC 0000." No steps shown. It must first have failed with a JCL error, then a later run of the same job must end CC 0000.
+"Make `{HLQ}.JCL(BROKEN)` run to CC 0000." No steps shown. It must first have failed with a JCL error, its JESYSMSG must have been read, then a later run of the same job must end CC 0000. The log reading was added in the M3 hardening because the lesson teaches IEFC621I and the first Challenge never required reading it.
 
 ## Common mistakes
 - Adding a continuation record that starts in column 1 or has no blank in column 3.

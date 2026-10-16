@@ -92,8 +92,8 @@ const failReadFix = (letter: string): Validator =>
 
 export const CHALLENGES: Record<string, Challenge> = {
   "b-10-job-troubleshooting": {
-    task: "FIXJCL, FIXDSN, FIXPGM and FIXRC each have one fault. For each job: let it fail, read its JESYSMSG, fix it, and run it to CC 0000. Any order.",
-    validator: allOf(failReadFix("J"), failReadFix("Q"), failReadFix("Z"), failReadFix("W"), noEditSession),
+    task: "FIXJCL, FIXDSN, FIXPGM and FIXRC each have one fault. For each job: let it fail, read its JESYSMSG, fix it, and run it to CC 0000; and say what kind of failure each one showed (four questions). Any order.",
+    validator: allOf(failReadFix("J"), failReadFix("Q"), failReadFix("Z"), failReadFix("W"), answered("kind-J"), answered("kind-Q"), answered("kind-Z"), answered("kind-W"), noEditSession),
   },
   "b-06-multistep-rc": {
     task: "Find out why RCJOB ends with a high return code although every step ran, and fix it so it ends CC 0000. It has to end CC 0016 first, you have to read its JESYSMSG, and a later run has to end CC 0000.",
@@ -123,10 +123,11 @@ export const CHALLENGES: Record<string, Challenge> = {
     ),
   },
   "b-03-jcl-anatomy": {
-    task: "Make {HLQ}.JCL(BROKEN) run to CC 0000. It has to fail with a JCL error first, then a later run of the same job has to end CC 0000.",
+    task: "Make {HLQ}.JCL(BROKEN) run to CC 0000. It has to fail with a JCL error first, you have to read its JESYSMSG, and a later run of the same job has to end CC 0000.",
     validator: allOf(
       sawInOrder(
         is("JCL_ERROR_GENERATED", (e, ctx) => e.jobName === `${ctx.hlq}B`),
+        is("JOB_OUTPUT_OPENED", (e, ctx) => e.ddname === "JESYSMSG" && outputOfJob("B")(e, ctx)),
         is("JOB_COMPLETED", (e, ctx) => e.jobName === `${ctx.hlq}B` && e.status === "OUTPUT" && e.maxRc === 0),
       ),
       noEditSession,
@@ -141,9 +142,14 @@ export const CHALLENGES: Record<string, Challenge> = {
     validator: allOf(traceHelloJob, answered("role-session"), answered("role-jes"), answered("role-sdsf")),
   },
   "a-01-panel-fields-scroll": {
-    task: "Open {HLQ}.DATA(SCROLL) in Edit. Set the Scroll field to HALF and scroll down with it, then jump to the last page with a one-time MAX, leaving the field at HALF.",
+    task: "Open {HLQ}.DATA(SCROLL) in Edit. Set the Scroll field to HALF and scroll down with it, scroll a one-time number of lines (for example DOWN 3), then jump to the last page with a one-time MAX, leaving the field at HALF.",
     validator: allOf(
-      sawInOrder(opened("DATA", "SCROLL", ["EDIT"]), is("EDITOR_SCROLLED", (e) => e.amount === "HALF"), is("EDITOR_SCROLLED", (e) => e.amount === "MAX")),
+      sawInOrder(
+        opened("DATA", "SCROLL", ["EDIT"]),
+        is("EDITOR_SCROLLED", (e) => e.amount === "HALF"),
+        is("EDITOR_SCROLLED", (e) => /^\d+$/.test(e.amount ?? "")),
+        is("EDITOR_SCROLLED", (e) => e.amount === "MAX"),
+      ),
       ({ state }) => state.editor?.scrollAmount.toUpperCase() === "HALF",
     ),
   },

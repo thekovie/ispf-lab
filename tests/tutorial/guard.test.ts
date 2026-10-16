@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { Sim } from "../engine/harness";
 import type { ScreenId, SimEvent, SimulatorState } from "@/engine/types";
 import { feedEvents, startRunner } from "@/tutorial/engine";
+import { is, sawAll } from "@/tutorial/validators";
 import type { Lesson, Validator } from "@/tutorial/types";
 
 const at = (base: SimulatorState, id: ScreenId): SimulatorState => ({ ...base, screen: { id } as SimulatorState["screen"] });
@@ -96,5 +97,23 @@ describe("Challenge event history", () => {
     const lesson = lessonWith(twoFinds);
     const r = feedEvents(lesson, startRunner(lesson, base), [find("A")], base, "learn");
     expect(r.runner.history).toBeUndefined();
+  });
+});
+
+describe("Challenge history cap (found in the M3 diff review)", () => {
+  it("a required early event is still seen after 1,500 later events", () => {
+    const state = Sim.loggedOn().state;
+    const lesson = {
+      id: "t-cap", number: 98, module: "T", title: "t", description: "", objective: "", teaches: [],
+      steps: [{ id: "s", instruction: "", hint: "", validator: () => false }],
+      challenge: { task: "t", validator: sawAll(is("SETTING_CHANGED"), is("SETTING_CHANGED", (e) => e.setting === "last")) },
+    } as Lesson;
+    let runner = startRunner(lesson, state);
+    const first = { type: "SETTING_CHANGED", setting: "first" } as never;
+    runner = feedEvents(lesson, runner, [first], state, "challenge").runner;
+    const filler = Array.from({ length: 1500 }, () => ({ type: "PF_KEY_PRESSED", key: 1, screen: "PRIMARY_OPTION_MENU" }) as never);
+    runner = feedEvents(lesson, runner, filler, state, "challenge").runner;
+    const done = feedEvents(lesson, runner, [{ type: "SETTING_CHANGED", setting: "last" } as never], state, "challenge");
+    expect(done.completed).toBe(true);
   });
 });

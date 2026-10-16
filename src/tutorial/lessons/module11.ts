@@ -707,10 +707,19 @@ const FIXDSN_JCL = ["//{HLQ}Q  JOB (ACCT),'FIX ME 2',CLASS=A,MSGCLASS=X", "//STE
 const FIXPGM_JCL = ["//{HLQ}Z  JOB (ACCT),'FIX ME 3',CLASS=A,MSGCLASS=X", "//STEP1    EXEC PGM=IEFBR41", "//STEP2    EXEC PGM=IEFBR14", "//"];
 
 const trbRead = (letter: string) => eventIs("JOB_OUTPUT_OPENED", (e, ctx: LessonContext) => e.ddname === "JESYSMSG" && outputOfJob(letter)(e, ctx));
-const trbFixed = (letter: string) => eventIs("JOB_COMPLETED", (e, ctx: LessonContext) => e.jobName === `${ctx.hlq}${letter}` && e.status === "OUTPUT" && e.maxRc === 0 && !e.abend);
+/** {HLQ}<letter> has run to CC 0000 (state, so fixing before answering the kind question does not strand the learner; jobs are cleared on start). */
+const trbFixed = (letter: string): Validator => ({ state, hlq }) => state.jes.jobs.some((j) => j.jobName === `${hlq}${letter}` && j.status === "OUTPUT" && j.maxRc === 0 && !j.abend);
 /** A run of {HLQ}<letter> that did not end CC 0000 (JCL error, abend or a nonzero code). */
 export const trbFailed = (e: { jobName: string; status: string; maxRc?: number; abend?: string }, hlq: string, letter: string) =>
   e.jobName === `${hlq}${letter}` && (e.status !== "OUTPUT" || e.maxRc !== 0 || !!e.abend);
+
+/** b-10 check questions (ADR 0018): what kind of failure each job shows. Answers come from reading the job's messages. */
+const B10_QUESTIONS: Question[] = [
+  { id: "kind-J", prompt: "What kind of failure does {HLQ}J show?", options: ["converter (syntax) error", "allocation error", "abend", "nonzero return code"], correct: 0 },
+  { id: "kind-Q", prompt: "What kind of failure does {HLQ}Q show?", options: ["nonzero return code", "allocation error", "converter (syntax) error", "abend"], correct: 1 },
+  { id: "kind-Z", prompt: "What kind of failure does {HLQ}Z show?", options: ["abend", "converter (syntax) error", "nonzero return code", "allocation error"], correct: 0 },
+  { id: "kind-W", prompt: "What kind of failure does {HLQ}W show?", options: ["allocation error", "abend", "converter (syntax) error", "nonzero return code"], correct: 3 },
+];
 
 export const lessonB10: Lesson = {
   id: "b-10-job-troubleshooting",
@@ -728,6 +737,7 @@ export const lessonB10: Lesson = {
   ],
   requires: ["b-06-multistep-rc"],
   sources: ["SRC-019", "SRC-020", "SRC-018", "SRC-027", "SRC-028", "SRC-003", "SRC-021", "SRC-023", "SRC-024"],
+  questions: B10_QUESTIONS,
   startingState: {
     screen: { id: "PRIMARY_OPTION_MENU" },
     resetJobs: true,
@@ -749,6 +759,13 @@ export const lessonB10: Lesson = {
       validator: trbRead("J"),
     },
     {
+      id: "jcl-kind",
+      instruction: "Answer the question in the Check box: what kind of failure is it? The message id in the log tells you.",
+      hint: "IEFC... is the converter, IEF212I is allocation, IEF450I is an abend, IEF142I with a nonzero code is a return code.",
+      validator: answered("kind-J"),
+      questionId: "kind-J",
+    },
+    {
       id: "jcl-fix",
       instruction: "Edit FIXJCL, correct the keyword, and SUBMIT until the job ends CC 0000. PF3 to save.",
       hint: "DIPS should be DISP. F3 to the menu, =2, {HLQ}.JCL(FIXJCL), overtype, SUBMIT.",
@@ -761,6 +778,13 @@ export const lessonB10: Lesson = {
         "This also shows JCL ERROR in SDSF, but the messages tell the two apart: the converter had no complaint (no IEFC message), and IEF212I from allocation says a DD could not be allocated: DATA SET NOT FOUND. It names the job, the step and the DD, not the data set. Read the DD statement to see the name. IBM files both under JCL ERROR, so the message id is what classifies the failure.",
       hint: "TSO SUBMIT JCL(FIXDSN); =S, ST, ? on {HLQ}Q, S on JESYSMSG.",
       validator: trbRead("Q"),
+    },
+    {
+      id: "dsn-kind",
+      instruction: "Answer the question in the Check box: what kind of failure is it? The message id in the log tells you.",
+      hint: "IEFC... is the converter, IEF212I is allocation, IEF450I is an abend, IEF142I with a nonzero code is a return code.",
+      validator: answered("kind-Q"),
+      questionId: "kind-Q",
     },
     {
       id: "dsn-fix",
@@ -777,6 +801,13 @@ export const lessonB10: Lesson = {
       validator: trbRead("Z"),
     },
     {
+      id: "pgm-kind",
+      instruction: "Answer the question in the Check box: what kind of failure is it? The message id in the log tells you.",
+      hint: "IEFC... is the converter, IEF212I is allocation, IEF450I is an abend, IEF142I with a nonzero code is a return code.",
+      validator: answered("kind-Z"),
+      questionId: "kind-Z",
+    },
+    {
       id: "pgm-fix",
       instruction: "Correct the program name on STEP1 and run FIXPGM to CC 0000.",
       hint: "IEFBR41 should be IEFBR14.",
@@ -789,6 +820,13 @@ export const lessonB10: Lesson = {
         "All three steps ran and IEF142I gives each normally completed step's code; the highest, 0016, is the job's CC. The cause is in the SORT step's own output (ICE007A SYNTAX ERROR), not in JESYSMSG. A nonzero code is not a failure of the job by itself; here it points at a real problem.",
       hint: "TSO SUBMIT JCL(FIXRC); =S, ST, ? on {HLQ}W, S on JESYSMSG.",
       validator: trbRead("W"),
+    },
+    {
+      id: "rc-kind",
+      instruction: "Answer the question in the Check box: what kind of failure is it? The message id in the log tells you.",
+      hint: "IEFC... is the converter, IEF212I is allocation, IEF450I is an abend, IEF142I with a nonzero code is a return code.",
+      validator: answered("kind-W"),
+      questionId: "kind-W",
     },
     {
       id: "rc-fix",

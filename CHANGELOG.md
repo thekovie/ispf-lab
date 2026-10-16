@@ -10,34 +10,6 @@ Versioning: [SemVer](https://semver.org/).
 - `Lesson.draft`: draft lessons are hidden from learners unless `NEXT_PUBLIC_SHOW_DRAFT_LESSONS=1` (`next dev` and tests set it). The display order of lessons is now separate from their numbers.
 - Draft lessons 29-36 (Scroll amount; TSO/E, ISPF, JES and SDSF; sequential data sets, PDS and PDSE; reading a job; building a job; DISP; return codes and abends; batch troubleshooting), awaiting review.
 - Optional `requires` and `sources` on lessons. Lesson 13 shows a non-blocking "Before you start" note until lesson 6 is completed.
-
-### Changed
-- A typed `MAX` in the Edit Scroll field applies to one scroll only; an empty existing member or data set opens with input lines too, and they stay until data is typed; the Edit entry panel has a working Command line; `/*` with a comment ends in-stream data; DISP=MOD on a library member no longer overwrites it; SORT control statements with a missing comma, unbalanced parenthesis or unknown format give ICE007A; IEF236I is not printed before a failed allocation; two SDSF help lines no longer overflow 80 columns.
-- Lesson 24 and the SUBMIT glossary entry say the TSO SUBMIT command reports `JOB name(JOBnnnnn) SUBMITTED` (JES assigns the number).
-- A new, empty member opens with five empty input lines (marked quotes) that vanish unused; JESYSMSG statement numbers match the JESJCL listing; a trailing `/*` is accepted; `DISP=MOD` creates or appends; valid DD keywords STORCLAS, DATACLAS, MGMTCLAS, LABEL, FREE and DSNTYPE are no longer errors; ICE007A prints `SYNTAX ERROR`.
-- PF3 on the first panel of lessons 5, 7-10 and 12 now returns to the Primary Option Menu (the menu is kept under the starting screen).
-- Errors a lesson tells the learner to provoke (lesson 1 invalid option, lesson 7 `SAVE` in Browse) no longer count as mistakes.
-- Lesson 28's Day-One data set is described as nonexistent, not uncataloged; the PAYRPT seed comment no longer rules out creating it.
-- Editor `SUBMIT` refuses operands (`SUBMIT OPERANDS NOT SUPPORTED`) instead of ignoring them; the Progress-page environment reset also clears the JES.
-- Lesson and glossary statements that IBM's documentation contradicts were corrected (pop-ups, PF3 counts, Browse, MODIFIED,
-  AUTOSAVE, screen limit, jump/RETURN, BNDS, CAPS, RECOVERY, undo, SDSF option letter), and Edit SUBMIT and SDSF SJ are described as
-  IBM does (ADR 0015).
-- IBM resource links point at the z/OS 3.2 manuals; a CI workflow runs `pnpm check` and `pnpm build`.
-
-### Fixed
-- Lessons 5, 6, 9, 11, 17, 21, 27 and 28 now check what they ask; lesson 28's Challenge accepts any repair that makes the job run.
-- Message ids: `IEF374I` has no return code; `IEFC019I` and `ICE056A` replace the non-existent `IEFC606I` and `ICE026A`.
-- DSLIST `S` omits the directory blocks and member count of a PDS (not the space figures); `SORT LRECL` sorts descending by default.
-- The member modification level rises once per edit session (max 99), and saving with `STATS OFF` discards the statistics.
-- Challenge mode could be completed without doing the lesson (18 lessons by a few cheap actions, 7 by none) or on
-  leftover data; it now needs a completion guard plus an outcome check per lesson (ADR 0016).
-- Restarting a lesson, switching mode or starting another lesson silently discarded unsaved editor work; it now asks first,
-  and only when something would be lost.
-- Starting a lesson while another ran in Challenge mode could mark the previous lesson completed in saved progress.
-- Switching mode or restarting now re-applies a lesson's starting state; lessons 3, 6, 12, 13, 17-21, 23 and 25 replay
-  without dead ends; starting a lesson closes split screens and an open editor.
-
-### Added
 - Phase 0 curriculum audit package in `docs/curriculum/` (audit, lessons audit, verified sources and evidence,
   curriculum and implementation roadmaps, simulator gap matrix, lesson authoring standards). Documentation only.
 - Lessons 16–28 in four new modules (Navigation mastery, Editor power tools, Lists in depth, Batch jobs and SDSF),
@@ -59,10 +31,34 @@ Versioning: [SemVer](https://semver.org/).
   as Cancel in Edit / Retrieve elsewhere; keylist glossary entry; lspf listed as a reference.
 
 ### Changed
+- A typed `MAX` in the Edit Scroll field applies to one scroll only; an empty existing member or data set opens with input lines too, and they stay until data is typed; the Edit entry panel has a working Command line; `/*` with a comment ends in-stream data; DISP=MOD on a library member no longer overwrites it; SORT control statements with a missing comma, unbalanced parenthesis or unknown format give ICE007A; IEF236I is not printed before a failed allocation; two SDSF help lines no longer overflow 80 columns.
+- Lesson 24 and the SUBMIT glossary entry say the TSO SUBMIT command reports `JOB name(JOBnnnnn) SUBMITTED` (JES assigns the number).
+- A new, empty member opens with five empty input lines (marked quotes) that vanish unused; JESYSMSG statement numbers match the JESJCL listing; a trailing `/*` is accepted; `DISP=MOD` creates or appends; valid DD keywords STORCLAS, DATACLAS, MGMTCLAS, LABEL, FREE and DSNTYPE are no longer errors; ICE007A prints `SYNTAX ERROR`.
+- PF3 on the first panel of lessons 5, 7-10 and 12 now returns to the Primary Option Menu (the menu is kept under the starting screen).
+- Errors a lesson tells the learner to provoke (lesson 1 invalid option, lesson 7 `SAVE` in Browse) no longer count as mistakes.
+- Lesson 28's Day-One data set is described as nonexistent, not uncataloged; the PAYRPT seed comment no longer rules out creating it.
+- Editor `SUBMIT` refuses operands (`SUBMIT OPERANDS NOT SUPPORTED`) instead of ignoring them; the Progress-page environment reset also clears the JES.
+- Lesson and glossary statements that IBM's documentation contradicts were corrected (pop-ups, PF3 counts, Browse, MODIFIED,
+  AUTOSAVE, screen limit, jump/RETURN, BNDS, CAPS, RECOVERY, undo, SDSF option letter), and Edit SUBMIT and SDSF SJ are described as
+  IBM does (ADR 0015).
+- IBM resource links point at the z/OS 3.2 manuals; a CI workflow runs `pnpm check` and `pnpm build`.
 - PF3 is no longer described as unconditionally saving: it ends, and saves when AUTOSAVE is ON.
 - Line endings normalised to LF via `.gitattributes`.
 - Split-screen mode: PF2 SPLIT, PF9 SWAP, START, SWAP n/PREV/LIST, SWAPBAR row, per-screen panel stacks and
   editor sessions, PF3 ends a screen; lesson 15 "Working in two screens"; glossary entries SPLIT and SWAP.
+
+### Fixed
+- Lessons 5, 6, 9, 11, 17, 21, 27 and 28 now check what they ask; lesson 28's Challenge accepts any repair that makes the job run.
+- Message ids: `IEF374I` has no return code; `IEFC019I` and `ICE056A` replace the non-existent `IEFC606I` and `ICE026A`.
+- DSLIST `S` omits the directory blocks and member count of a PDS (not the space figures); `SORT LRECL` sorts descending by default.
+- The member modification level rises once per edit session (max 99), and saving with `STATS OFF` discards the statistics.
+- Challenge mode could be completed without doing the lesson (18 lessons by a few cheap actions, 7 by none) or on
+  leftover data; it now needs a completion guard plus an outcome check per lesson (ADR 0016).
+- Restarting a lesson, switching mode or starting another lesson silently discarded unsaved editor work; it now asks first,
+  and only when something would be lost.
+- Starting a lesson while another ran in Challenge mode could mark the previous lesson completed in saved progress.
+- Switching mode or restarting now re-applies a lesson's starting state; lessons 3, 6, 12, 13, 17-21, 23 and 25 replay
+  without dead ends; starting a lesson closes split screens and an open editor.
 
 ## [0.1.0] — 2026-09-12 — MVP
 
